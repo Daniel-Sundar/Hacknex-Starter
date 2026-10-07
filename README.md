@@ -17,7 +17,7 @@ Plus `POST /api/extract` (structured JSON output) as a template for classificati
 Install first: **Git** (git-scm.com), **Python 3.12** (python.org, tick "Add python.exe to PATH"), **Node.js 22 LTS** (nodejs.org).
 
 ```powershell
-git clone https://github.com/Daniel-Sundar/hacknex-starter
+git clone https://github.com/Daniel-Sundar/Hacknex-Starter
 cd hacknex-starter
 powershell -ExecutionPolicy Bypass -File .\setup.ps1 -ML   # drop -ML for the light version
 notepad backend\.env                                        # paste the API keys
