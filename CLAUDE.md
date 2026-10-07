@@ -23,4 +23,5 @@
 ## Run
 - Backend: `cd backend && uvicorn app.main:app --reload --port 8000`
 - Frontend: `cd frontend && npm run dev` (http://localhost:5173)
+- Team is on Windows: `.\setup.ps1` / `.\dev.ps1` (PowerShell). Use PowerShell syntax in any commands you suggest.
 - `LLM_PROVIDER=mock` works with no keys at all.

@@ -12,24 +12,22 @@ FastAPI backend + React/Vite/Tailwind frontend with four working modules:
 
 Plus `POST /api/extract` (structured JSON output) as a template for classification/extraction features.
 
-## Tonight: setup on every laptop
+## Tonight: setup on every laptop (Windows)
 
-```bash
-git clone <this repo> && cd hacknex-starter
-./setup.sh --ml        # or ./setup.sh for the light version (no YOLO / embeddings)
-# edit backend/.env and paste your keys
-./dev.sh               # backend :8000 + frontend :5173
-```
+Install first: **Git** (git-scm.com), **Python 3.12** (python.org, tick "Add python.exe to PATH"), **Node.js 22 LTS** (nodejs.org).
 
-Windows without Git Bash:
 ```powershell
-cd backend; python -m venv .venv; .venv\Scripts\activate; pip install -r requirements.txt
-copy .env.example .env; uvicorn app.main:app --reload --port 8000
-# new terminal
-cd frontend; npm install; npm run dev
+git clone https://github.com/Daniel-Sundar/hacknex-starter
+cd hacknex-starter
+powershell -ExecutionPolicy Bypass -File .\setup.ps1 -ML   # drop -ML for the light version
+notepad backend\.env                                        # paste the API keys
+powershell -ExecutionPolicy Bypass -File .\dev.ps1          # opens backend + frontend + browser
 ```
 
-For YOLO on Windows/macOS, install CPU torch first (`pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu`) then `pip install -r requirements-ml.txt` and run `python -m app.vision` once to download weights.
+`dev.ps1` opens two PowerShell windows (backend on :8000, frontend on :5173); close them to stop.
+`-ML` adds CPU PyTorch, YOLO, embeddings and pre-downloads the model weights (~1 GB, do it on home Wi-Fi).
+
+macOS/Linux teammates can use `./setup.sh --ml` and `./dev.sh` instead.
 
 ## LLM providers (all free tiers)
 
