@@ -1,0 +1,24 @@
+# Render Blueprint: New > Blueprint > pick this repo. Free plan sleeps after
+# 15 min idle, so open the URL a minute before you demo.
+services:
+  - type: web
+    name: hacknex-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: LLM_FALLBACKS
+        value: groq,openrouter
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false

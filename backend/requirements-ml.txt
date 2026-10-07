@@ -1,0 +1,8 @@
+# Heavier extras: real embeddings, YOLO, OpenCV, MediaPipe, ONNX.
+# Install tonight on every laptop: pip install -r requirements-ml.txt
+-r requirements.txt
+sentence-transformers>=3.0
+ultralytics>=8.3
+opencv-python-headless>=4.10
+mediapipe>=0.10
+onnxruntime>=1.19
