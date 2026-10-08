@@ -23,7 +23,7 @@ import re
 import threading
 import time
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from difflib import SequenceMatcher, get_close_matches
 from pathlib import Path
 
@@ -50,6 +50,7 @@ DEFAULT_READERS = (
 EXHAUSTED_FOR = 3600  # s; a model out of daily quota is not asked again for this long
 DEFAULT_BASELINE = "groq:qwen/qwen3.8-27b"  # same model as the first reader, plain prompt
 READ_TIMEOUT = float(os.getenv("HW_READ_TIMEOUT", "90"))  # seconds per model call
+VOTE_DEADLINE = float(os.getenv("HW_VOTE_DEADLINE", "25"))  # vote with whoever answered by then
 
 READ_PROMPT = """Transcribe the handwriting in this image exactly as written.
 Rules:
@@ -301,8 +302,18 @@ def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str]
 def read_all(data: bytes) -> dict:
     """{"readings": {reader: text}, "errors": {reader: error}}."""
     slots, claimed = _slots(), set()
-    with ThreadPoolExecutor(max_workers=len(slots)) as pool:
-        results = list(pool.map(lambda s: read_slot(data, s, claimed), slots))
+    pool = ThreadPoolExecutor(max_workers=len(slots))
+    futures = {pool.submit(read_slot, data, s, claimed): s for s in slots}
+    # Vote with whoever answered within the deadline; slow models keep running in the
+    # background and still fill the cache for next time. Wait longer only if nobody answered.
+    done, pending = wait(futures, timeout=VOTE_DEADLINE)
+    give_up = time.time() + READ_TIMEOUT * 3
+    while pending and not any(isinstance(f.result()[1], str) for f in done) and time.time() < give_up:
+        more, pending = wait(pending, timeout=give_up - time.time(), return_when=FIRST_COMPLETED)
+        done |= more
+    pool.shutdown(wait=False)
+    results = [f.result() if f in done else (_name(*s[0]), TimeoutError(f"no answer within {VOTE_DEADLINE:.0f}s"))
+               for f, s in futures.items()]
     readings = {n: t for n, t in results if isinstance(t, str) and t.strip()}
     errors = {n: (str(t)[:200] if not isinstance(t, str) else "empty reply")
               for n, t in results if n not in readings}
