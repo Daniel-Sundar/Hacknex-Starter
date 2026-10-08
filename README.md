@@ -38,7 +38,7 @@ Set `LLM_PROVIDER` in `backend/.env`; `LLM_FALLBACKS` is tried in order when a c
 | `claude` | https://platform.claude.com (API credits, separate from Claude Pro) | Chat, Docs Q&A and Vision via the Anthropic SDK. Default model `claude-opus-5-5`; set `CLAUDE_MODEL=claude-haiku-5-5` to stretch credits. The Agent tab skips Claude and uses the next provider in `LLM_FALLBACKS` |
 | `gemini` | https://aistudio.google.com/apikey | Default. Multimodal, so the Vision "Ask" button works |
 | `groq` | https://console.groq.com/keys | Very fast Llama; great for agents |
-| `openrouter` | https://openrouter.ai/keys | Use `:free` models |
+| `openrouter` | https://openrouter.ai/keys | Default `openrouter/free` picks a free model for you |
 | `ollama` | https://ollama.com | Fully offline. `ollama pull llama3.2:3b`. Your Edge AI story |
 | `mock` | none | Echo bot for UI work with zero keys |
 
