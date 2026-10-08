@@ -79,6 +79,9 @@ body {
 /* ---------- app shell (everything below is scoped; nothing reaches the intro) ---------- */
 .cs-app {
   min-height: 100vh;
+  /* in right-to-left languages the 1px screen-reader-only elements sit just past the right edge; clip them so the page never scrolls sideways */
+  position: relative;
+  overflow-x: clip;
   background: var(--color-page);
   color: var(--color-ink);
   /* declared here, not via --font-sans: the language picker sets --font-script on this element */
