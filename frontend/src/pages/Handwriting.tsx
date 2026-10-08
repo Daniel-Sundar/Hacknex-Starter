@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import {
-  Camera, Check, ClipboardCopy, Download, Feather, FlaskConical, HelpCircle, ImageUp, Loader2, Pill, ScrollText, Sparkles,
+  Camera, Check, ClipboardCopy, Download, Feather, FileText, FlaskConical, HelpCircle, ImageUp, Loader2, Pill, ScrollText, Sparkles,
   UserCheck, Wand2,
 } from "lucide-react";
 import { postForm, postJSON } from "../lib/api";
@@ -11,6 +11,9 @@ import {
 } from "../lib/handwriting";
 
 type Mode = "auto" | "review";
+
+const ACCEPT = "image/*,application/pdf"; // scanned PDFs: the backend extracts the page image
+const isPdf = (f: Blob | null) => !!f && (f.type === "application/pdf" || (f instanceof File && /\.pdf$/i.test(f.name)));
 
 const MOD = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
 
@@ -79,7 +82,7 @@ export default function Handwriting() {
   async function digitize() {
     if (!file || loading) return;
     const form = new FormData();
-    form.append("file", file, "page.jpg");
+    form.append("file", file, isPdf(file) ? "page.pdf" : "page.jpg");
     Object.entries(opts).forEach(([k, v]) => form.append(k, String(v)));
     if (writer.trim()) form.append("writer", writer.trim()); // lets the backend use this writer's confirmed words
     setLoading(true);
@@ -148,7 +151,7 @@ export default function Handwriting() {
         <div className="grid grid-cols-3 gap-2">
           <label className={`${ghostBtn} cursor-pointer`}>
             <ImageUp className="size-3.5" /> Upload
-            <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
+            <input type="file" accept={ACCEPT} hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
           </label>
           <button onClick={() => setCamOn((v) => !v)} className={ghostBtn}>
             <Camera className="size-3.5" /> {camOn ? "Close" : "Camera"}
@@ -165,21 +168,29 @@ export default function Handwriting() {
           </div>
         )}
 
-        {preview ? (
+        {preview && isPdf(file) ? (
+          <div className="drop-parchment well grid h-40 place-items-center rounded-lg border border-line px-4 text-center">
+            <span className="space-y-1.5">
+              <span className="drop-icon"><FileText className="size-5" /></span>
+              <span className="drop-lead block break-all">{file instanceof File ? file.name : "document.pdf"}</span>
+              <span className="drop-hint block">Scanned PDF: the first page is read</span>
+            </span>
+          </div>
+        ) : preview ? (
           <img src={preview} alt="Uploaded handwriting" className="well max-h-[360px] w-full rounded-lg border border-line object-contain" />
         ) : !camOn && (
           <label
             className={`drop-parchment well group grid h-40 cursor-pointer place-items-center rounded-lg border border-dashed border-line px-4 text-center text-[12px] text-muted transition-all duration-150 ease-in-out hover:border-brand hover:text-body ${over ? "is-over" : ""}`}
             onDragOver={(e) => { e.preventDefault(); setOver(true); }}
             onDragLeave={() => setOver(false)}
-            onDrop={(e) => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files?.[0]; if (f?.type.startsWith("image/")) pick(f); }}
+            onDrop={(e) => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files?.[0]; if (f && (f.type.startsWith("image/") || isPdf(f))) pick(f); }}
           >
             <span className="relative space-y-1.5">
               <span className="drop-icon"><Feather className="size-5" /></span>
               <span className="drop-lead block">Lay a page here</span>
-              <span className="drop-hint block">Drop in a photo of a prescription, form or note, or click to choose one</span>
+              <span className="drop-hint block">Drop in a photo or scanned PDF of a prescription, form or note, or click to choose one</span>
             </span>
-            <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
+            <input type="file" accept={ACCEPT} hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
           </label>
         )}
 
