@@ -269,14 +269,15 @@ def _image_msg(data: bytes, prompt: str) -> list[dict]:
 
 
 def _call_once_retry(provider: str, model: str | None, messages: list[dict]) -> str:
-    """One call; on a rate limit (429) or overload (503) wait 2 s and retry once, then give up."""
+    """One call; on a rate limit (429) or overload (503) wait HW_RETRY_WAIT s (2) and retry once, then give up.
+    Batch evaluations set a longer wait so per-minute limits can recover."""
     call = lambda: llm.chat_one(provider, messages, model=model, max_retries=0, timeout=READ_TIMEOUT)
     try:
         return call()
     except Exception as e:
         if getattr(e, "status_code", None) not in (429, 503) or _out_of_quota(e):  # a daily cap won't lift in 2 s
             raise
-        time.sleep(2)
+        time.sleep(float(os.getenv("HW_RETRY_WAIT", "2")))
         return call()
 
 
