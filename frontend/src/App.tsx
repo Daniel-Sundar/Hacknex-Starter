@@ -1,20 +1,14 @@
 import { useEffect, useState } from "react";
-import { Bot, Eye, FileText, MessageSquare, Moon, PenLine, ScanText, Sun } from "lucide-react";
-import Chat from "./pages/Chat";
+import { FileText, Moon, PenLine, ScanText, Sun } from "lucide-react";
 import Docs from "./pages/Docs";
-import Agent from "./pages/Agent";
-import Vision from "./pages/Vision";
 import Handwriting from "./pages/Handwriting";
 import { API } from "./lib/api";
 import { PenIntro } from "./components/PenAnimation";
 
-// Each tab is a real link (#/chat, #/docs, ...), so refresh, back/forward and shared links all land on the right view.
+// Each tab is a real link (#/clearscript, #/docs), so refresh, back/forward and shared links all land on the right view.
 const TABS = [
   { id: "clearscript", label: "ClearScript", icon: PenLine, el: <Handwriting />, blurb: "Upload a page, clean it, let every model read it, and compare against a single-model baseline." },
-  { id: "chat", label: "Chat", icon: MessageSquare, el: <Chat />, blurb: "Converse with the AI. Replies stream in as they are written." },
   { id: "docs", label: "Docs Q&A", icon: FileText, el: <Docs />, blurb: "Upload PDF or text files, then ask questions answered from those documents." },
-  { id: "agent", label: "Agent", icon: Bot, el: <Agent />, blurb: "Give a multi-step task; the agent picks tools, runs them, and shows each step." },
-  { id: "vision", label: "Vision", icon: Eye, el: <Vision />, blurb: "Detect objects in an image or ask questions about it." },
 ];
 type TabId = (typeof TABS)[number]["id"];
 const tabFromHash = (): TabId => {
