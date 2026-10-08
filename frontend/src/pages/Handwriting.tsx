@@ -41,6 +41,8 @@ export default function Handwriting() {
   const [rows, setRows] = useState<RxRow[] | null>(null);
   const [rowsLoading, setRowsLoading] = useState(false);
   const [rowsError, setRowsError] = useState<string | null>(null);
+  const [recontexting, setRecontexting] = useState(false);
+  const [recontextError, setRecontextError] = useState<string | null>(null);
   const video = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -124,12 +126,28 @@ export default function Handwriting() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  function answer(i: number, text: string) {
+  async function answer(i: number, text: string) {
     const original = words[i].text;
-    setWords((ws) => ws.map((w, j) => (j === i ? { ...w, text, flagged: false, confidence: 1, resolved_by: "human" } : w)));
+    const updated = words.map((w, j) => (j === i ? { ...w, text, flagged: false, confidence: 1, resolved_by: "human" } : w));
+    setWords(updated);
     setAsked((n) => n + 1);
-    // The human's answer is final; also teach this writer's word list (best effort, the UI works without it).
-    postJSON("/api/handwriting/answer", { writer, original, answer: text }).catch(() => {});
+    if (isSample) return; // the canned sample has no backend behind it
+    // The human's answer is final. Teach this writer's word list, then re-run the constrained context fix so
+    // other flagged copies of the same word can resolve too (no vision calls).
+    setRecontexting(true);
+    setRecontextError(null);
+    try {
+      await postJSON("/api/handwriting/answer", { writer, original, answer: text });
+      const r = await postJSON<{ words: Word[] }>("/api/handwriting/recontext",
+        { words: updated, writer, doc_type: result?.doc_type ?? "note" });
+      // Merge by position; never overwrite a human answer given while this request was running.
+      setWords((cur) => cur.length !== r.words.length ? cur
+        : cur.map((w, j) => (w.resolved_by === "human" || w.skipped ? w : { ...r.words[j], skipped: w.skipped })));
+    } catch (e) {
+      setRecontextError(`Answer saved here, but the follow-up check failed: ${String(e)}`);
+    } finally {
+      setRecontexting(false);
+    }
   }
 
   function skip(i: number) {
@@ -281,7 +299,15 @@ export default function Handwriting() {
             {isRx && <RxTable rows={rows} loading={rowsLoading} error={rowsError} />}
 
             {mode === "review" && (
-              <ReviewPanel words={words} queue={queue} writer={writer} onAnswer={answer} onSkip={skip} />
+              <>
+                <ReviewPanel words={words} queue={queue} writer={writer} onAnswer={answer} onSkip={skip} />
+                {recontexting && (
+                  <p className="flex items-center gap-2 text-[12px] text-muted">
+                    <Loader2 className="size-3.5 animate-spin" /> Checking other flagged words with your answer…
+                  </p>
+                )}
+                <ErrorNote error={recontextError} />
+              </>
             )}
 
             {result.baseline !== undefined && <Compare baseline={result.baseline} ours={text} />}

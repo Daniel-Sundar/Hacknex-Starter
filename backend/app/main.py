@@ -171,3 +171,22 @@ def handwriting_eval():
     return {"ablation": ablation, "ablation_split": ab_split,
             "robustness": robustness, "robustness_split": rb_split,
             "fallback": ab_split != "test"}
+
+
+class RecontextRequest(BaseModel):
+    words: list[dict]
+    writer: str | None = None
+    doc_type: str = "note"
+
+
+@app.post("/api/handwriting/recontext")
+def handwriting_recontext(req: RecontextRequest):
+    """After a human answer: run the constrained context fix again with this writer's (now larger) word
+    list, so other flagged copies of the same word can resolve. No vision calls. Words that are not
+    flagged (including the human's answers, resolved_by "human") are never changed."""
+    from . import handwriting
+    kind = req.doc_type if req.doc_type in ("prescription", "note") else "note"
+    try:
+        return {"words": handwriting.context_fix(req.words, handwriting.writer_words(req.writer), kind)}
+    except (RuntimeError, ValueError) as e:
+        raise HTTPException(502, str(e))
