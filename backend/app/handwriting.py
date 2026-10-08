@@ -32,11 +32,13 @@ CACHE = Path(__file__).resolve().parent.parent / ".cache"
 LEXICON = Path(__file__).resolve().parent.parent / "data" / "lexicon.txt"
 UNREADABLE = "[?]"
 
-# Tested 2026-10-08 on real handwriting. Two Gemini models + a non-Google model; gemma is a
-# 4th voice that is often rate-limited on the free tier (skipped when it fails).
-DEFAULT_READERS = ("gemini:gemini-3.6-flash,gemini:gemini-3.5-flash,"
-                   "openrouter:dots-studio/dots-3-note-preview:free,openrouter:google/gemma-4-31b-it:free")
-DEFAULT_BASELINE = "gemini:gemini-3.6-flash"  # strongest single reader, plain prompt
+# Tested 2026-10-08 on real handwriting. Groq's qwen goes first: fast, accurate and the most
+# generous free tier (it is also the single reader when vote=false). Gemini free tier is only
+# 20 requests/day/model; gemma is often rate-limited. Readers that fail are skipped.
+DEFAULT_READERS = ("groq:qwen/qwen3.8-27b,gemini:gemini-3.5-flash,"
+                   "openrouter:dots-studio/dots-3-note-preview:free,gemini:gemini-3.6-flash,"
+                   "openrouter:google/gemma-4-31b-it:free")
+DEFAULT_BASELINE = "groq:qwen/qwen3.8-27b"  # same model as the first reader, plain prompt
 READ_TIMEOUT = float(os.getenv("HW_READ_TIMEOUT", "90"))  # seconds per model call
 
 READ_PROMPT = """Transcribe the handwriting in this image exactly as written.
@@ -93,7 +95,11 @@ def tokens(text: str) -> list[str]:
 
 
 def norm(tok: str) -> str:
-    return re.sub(r"[^\w\[\]?]", "", tok.lower()) or tok
+    """Comparison key: lowercase, punctuation and brackets dropped ("[others]" == "others").
+    The unreadable marker [?] keeps its own key."""
+    if UNREADABLE in tok:
+        return UNREADABLE
+    return re.sub(r"[^\w]", "", tok.lower()) or tok
 
 
 def detok(toks: list[str]) -> str:
@@ -217,6 +223,9 @@ def vote(readings: dict[str, str]) -> list[dict]:
     p = _pivot(toks) if n_models > 1 else 0
     pivot = toks[p]
     columns: list[list[str | None]] = [[t] for t in pivot]
+    # Words other readers have that the pivot skipped: gaps[g] = inserted token tuples, one per
+    # reader, placed before pivot position g. Without this a word the pivot missed is silently lost.
+    gaps: dict[int, list[tuple[str, ...]]] = {}
 
     for i, other in enumerate(toks):
         if i == p:
@@ -228,11 +237,33 @@ def vote(readings: dict[str, str]) -> list[dict]:
                 for k in range(a2 - a1):
                     j = b1 + k
                     aligned[a1 + k] = other[j] if j < b2 else None
+            extra = other[b1:b2] if op == "insert" else other[b1 + (a2 - a1):b2] if op == "replace" else []
+            extra = tuple(t for t in extra if t != "\n")
+            if extra:
+                gaps.setdefault(a1 if op == "insert" else a2, []).append(extra)
         for col, tok in zip(columns, aligned):
             col.append(tok)
 
+    def surface_of(cands: list[str], key: str) -> str:  # prefer a spelling without brackets
+        same = [t for t in cands if norm(t) == key]
+        return next((t for t in same if "[" not in t), same[0]).strip("[]") or same[0]
+
+    def inserted(g: int) -> list[dict]:
+        """Majority-vote the words readers added at gap g (pivot counts as 'nothing here')."""
+        if g not in gaps:
+            return []
+        by_key = Counter(tuple(norm(t) for t in seq) for seq in gaps[g])
+        key, votes = by_key.most_common(1)[0]
+        if votes < n_models / 2:  # a minority saw extra words: the majority says nothing is there
+            return []
+        seq = next(s for s in gaps[g] if tuple(norm(t) for t in s) == key)
+        flagged = votes <= n_models / 2 or (votes < n_models and any(c.isdigit() for t in seq for c in t))
+        return [{"text": surface_of([t], norm(t)), "confidence": round(votes / n_models, 2),
+                 "flagged": flagged, "alternatives": []} for t in seq]
+
     words = []
-    for col in columns:
+    for pos, col in enumerate(columns):
+        words.extend(inserted(pos))
         if col[0] == "\n":
             words.append({"text": "\n"})
             continue
@@ -242,7 +273,7 @@ def vote(readings: dict[str, str]) -> list[dict]:
             words.append({"text": UNREADABLE, "confidence": 0.0, "flagged": True, "alternatives": []})
             continue
         best, votes = counts.most_common(1)[0]
-        surface = next(t for t in real if norm(t) == best)
+        surface = surface_of(real, best)
         alternatives = sorted({t for t in real if norm(t) != best})
         confidence = votes / n_models
         # Flag unless a strict majority of ALL models agree (a lone reader can only flag [?]).
@@ -252,6 +283,7 @@ def vote(readings: dict[str, str]) -> list[dict]:
             flagged = True
         words.append({"text": surface, "confidence": round(confidence, 2), "flagged": flagged,
                       "alternatives": alternatives})
+    words.extend(inserted(len(columns)))
     return words
 
 
