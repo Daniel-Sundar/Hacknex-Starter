@@ -50,7 +50,7 @@ DEFAULT_READERS = (
 EXHAUSTED_FOR = 3600  # s; a model out of daily quota is not asked again for this long
 DEFAULT_BASELINE = "groq:qwen/qwen3.8-27b"  # same model as the first reader, plain prompt
 READ_TIMEOUT = float(os.getenv("HW_READ_TIMEOUT", "90"))  # seconds per model call
-VOTE_DEADLINE = float(os.getenv("HW_VOTE_DEADLINE", "25"))  # vote with whoever answered by then
+VOTE_DEADLINE = float(os.getenv("HW_VOTE_DEADLINE", "60"))  # wait for every voter, at most this long per page
 
 READ_PROMPT = """Transcribe the handwriting in this image exactly as written.
 Rules:
@@ -319,8 +319,9 @@ def read_all(data: bytes) -> dict:
     slots, claimed = _slots(), set()
     pool = ThreadPoolExecutor(max_workers=len(slots))
     futures = {pool.submit(read_slot, data, s, claimed): s for s in slots}
-    # Vote with whoever answered within the deadline; slow models keep running in the
-    # background and still fill the cache for next time. Wait longer only if nobody answered.
+    # Wait for every voter to answer or fail; the vote starts as soon as the last one is in, or after
+    # VOTE_DEADLINE seconds for the whole page. Voters still running then are left out of this vote but keep
+    # running in the background and fill the cache for next time. Wait longer only if nobody answered.
     done, pending = wait(futures, timeout=VOTE_DEADLINE)
     give_up = time.time() + READ_TIMEOUT * 3
     while pending and not any(isinstance(f.result()[1], str) for f in done) and time.time() < give_up:

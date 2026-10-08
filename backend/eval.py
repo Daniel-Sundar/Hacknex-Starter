@@ -241,12 +241,13 @@ def main():
     ap.add_argument("--robustness", action="store_true",
                     help="baseline vs full pipeline on each degraded copy made by augment.py")
     ap.add_argument("--name", default="", help="suffix for the results files, e.g. gnhk")
-    ap.add_argument("--deadline", type=float, default=120,
-                    help="vote deadline in s; high in eval so slow readers still count (app uses 25)")
+    ap.add_argument("--deadline", type=float, default=None,
+                    help="vote deadline in s per page; default = the app's HW_VOTE_DEADLINE (60), so numbers match the app")
     ap.add_argument("--sleep", type=float, default=3, help="pause between samples (free-tier rate limits)")
     ap.add_argument("--variants", default="", help="comma-separated subset, e.g. 'baseline,clean + vote'")
     args = ap.parse_args()
-    hw.VOTE_DEADLINE = args.deadline
+    if args.deadline is not None:
+        hw.VOTE_DEADLINE = args.deadline
     global SLEEP
     SLEEP = args.sleep
     sys.stdout.reconfigure(encoding="utf-8")  # Windows console chokes on arrows/Tamil otherwise

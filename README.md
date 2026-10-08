@@ -72,7 +72,7 @@ answer is cached in `backend/.cache/`, so re-runs are free; `HW_CACHE_ONLY=1` re
 | `HW_DROP_MINORITY` | `1` | A word fewer than half the readers saw is dropped |
 | `HW_REREAD_MODE` | `off` | Context-aware re-read of flagged words: `vote`, `suggest`, `off` (off won on dev) |
 | `HW_PROMPT` | `v1` | Reading instruction version (`v2` also ignores printed text and crossed-out words) |
-| `HW_VOTE_DEADLINE` | `25` | Seconds to wait for readers before voting with whoever answered |
+| `HW_VOTE_DEADLINE` | `60` | Seconds per page to wait for every reader; the vote starts as soon as all have answered |
 | `HW_READ_TIMEOUT` | `90` | Seconds per model call |
 | `HW_RETRY_WAIT` | `2` | Wait before the single retry on a 429 / 503 |
 | `HW_CACHE_ONLY` | unset | `1` = never call vision models, replay the cache (experiments) |
