@@ -371,7 +371,7 @@ export default function Handwriting({ active }: { active: boolean }) {
           ) : runError ? (
             <div className="space-y-4">
               <ErrorState error={runError} onRetry={file ? digitize : undefined} preserved={!!file} limits={{ maxUploadMb: maxMb }} />
-              <Guide onSample={loadSample} ready={!!file} name={name} readers={health.readers} />
+              <Guide ready={!!file} name={name} readers={health.readers} />
             </div>
           ) : shown ? (
             <ResultView
@@ -383,7 +383,7 @@ export default function Handwriting({ active }: { active: boolean }) {
               focusWord={focusWord}
             />
           ) : (
-            <Guide onSample={loadSample} ready={!!file} name={name} readers={health.readers} />
+            <Guide ready={!!file} name={name} readers={health.readers} />
           )}
         </div>
       </div>

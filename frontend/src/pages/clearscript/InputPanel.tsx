@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Camera, ChevronDown, FileText, FlaskConical, ImageUp, RefreshCw, ScanText, SlidersHorizontal, Square, Trash2 } from "lucide-react";
+import { Camera, ChevronDown, FileText, ImageUp, RefreshCw, ScanText, SlidersHorizontal, Square, Trash2 } from "lucide-react";
 import { Button, DropZone, ErrorState, Input, Notice, Panel, Toggle } from "../../components/ui";
 import { useT } from "../../i18n";
 import { ApiError } from "../../lib/api";
@@ -69,10 +69,7 @@ export function InputPanel(p: Props) {
                 {t("cs.input.choose")}
               </span>
             </DropZone>
-            <div className="grid grid-cols-2 gap-2">
-              <Button icon={<Camera className="size-4" aria-hidden="true" />} onClick={p.onCamera} disabled={p.running}>{t("cs.input.camera")}</Button>
-              <Button icon={<FlaskConical className="size-4" aria-hidden="true" />} onClick={p.onSample} disabled={p.running}>{t("cs.input.sample")}</Button>
-            </div>
+            <Button className="w-full" icon={<Camera className="size-4" aria-hidden="true" />} onClick={p.onCamera} disabled={p.running}>{t("cs.input.camera")}</Button>
           </>
         )}
 
