@@ -101,13 +101,17 @@ async def handwriting_digitize(
     data = await file.read()
 
     def work():
-        result = handwriting.digitize(data, use_clean=clean, use_vote=vote, use_context=context, writer=writer)
-        if baseline:  # a failed baseline must not throw away the pipeline's result
-            try:
-                result["baseline"] = handwriting.baseline(data)
-            except Exception as e:
-                result["baseline"] = ""
-                result["errors"]["baseline"] = str(e)[:200]
+        from concurrent.futures import ThreadPoolExecutor
+        # The baseline is independent of the pipeline, so run both at once: same output, shorter wait.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            base = pool.submit(handwriting.baseline, data) if baseline else None
+            result = handwriting.digitize(data, use_clean=clean, use_vote=vote, use_context=context, writer=writer)
+            if base is not None:  # a failed baseline must not throw away the pipeline's result
+                try:
+                    result["baseline"] = base.result()
+                except Exception as e:
+                    result["baseline"] = ""
+                    result["errors"]["baseline"] = str(e)[:200]
         return result
 
     try:
