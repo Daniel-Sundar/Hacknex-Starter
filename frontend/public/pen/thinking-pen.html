@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Thinking Pen</title>
+<script>
+  // Embedded in ClearScript: ?embed hides this page's own captions/buttons, ?loop replays forever.
+  window.PEN_OPTS = new URLSearchParams(location.search);
+  if (PEN_OPTS.has("embed")) document.documentElement.classList.add("embed");
+</script>
+<style>
+  html.embed .hint, html.embed .ui { display: none !important; }
+
+  :root {
+    color-scheme: light;
+    --bg: #f3efe7;
+    --bg-hi: #fbfaf6;
+    --text: #23262e;
+    --muted: #6d675c;
+    --card: rgba(255, 255, 255, 0.72);
+    --line: rgba(35, 38, 46, 0.12);
+    --gold: #9a7428;
+  }
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+  }
+  body {
+    background: radial-gradient(120% 90% at 50% 38%, var(--bg-hi) 0%, var(--bg) 58%, #e7e1d5 100%);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+    outline: none;
+  }
+  .ui {
+    position: fixed;
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .caption {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 9px 14px 10px;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    max-width: min(62vw, 340px);
+  }
+  .caption .title {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 17px;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+  }
+  .caption .stage {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  #replay {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font: 600 13px/1 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 10px 15px 10px 12px;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+  #replay:hover { background: rgba(255, 255, 255, 0.92); border-color: rgba(154, 116, 40, 0.45); }
+  #replay:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  #replay svg { width: 15px; height: 15px; flex: none; }
+  .hint {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.8;
+    pointer-events: none;
+    letter-spacing: 0.02em;
+  }
+  .nogl {
+    position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    padding: 24px; text-align: center; color: var(--muted); font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<canvas id="stage" aria-label="3D animation: a fountain pen uncaps itself and writes the word thinking in cursive"></canvas>
+<div class="hint">Drag to orbit</div>
+<div class="ui">
+  <div class="caption" aria-live="polite">
+    <div class="title">thinking</div>
+    <div class="stage" id="stageText">A fountain pen study</div>
+  </div>
+  <button id="replay" type="button" aria-label="Replay the animation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+    Replay
+  </button>
+</div>
+<div class="nogl" id="nogl">This animation needs WebGL, which is not available in this browser.</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="vendor/gsap.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // Handwriting data (baked). Lowercase cursive "thinking", composed from the
+  // single-stroke EMS Allure script (SIL OFL, after Allura by Rob Leuschke) with
+  // hand-edited joins and a redesigned "k". Font units, y up.
+  //   main   = the whole word as ONE continuous stroke
+  //   tcross / dot1 / dot2 = short pen-lift strokes written afterwards
+  // ---------------------------------------------------------------------------
+  const GLYPH = {
+    bbox: [-104,-416,3445,728],
+    main: [-104,28,-58,104,54,261,110,337,183,457,217,510,183,517,9,151,-6,66,19,22,98,28,192,110,258,183,403,315,633,482,737,605,759,702,684,718,614,662,545,586,470,457,391,309,303,32,400,148,482,252,577,315,618,334,640,312,630,261,580,183,551,76,574,19,640,19,703,63,772,129,819,183,889,236,911,328,813,85,832,22,905,6,983,69,1034,129,1068,183,1140,262,1200,318,1248,328,1141,25,1283,186,1371,280,1434,318,1481,337,1494,312,1431,195,1390,101,1393,47,1428,16,1487,25,1550,69,1613,132,1648,183,1712,252,1778,337,1860,372,1951,428,2061,542,2118,627,2130,696,2086,728,1998,696,1929,617,1863,498,1806,394,1699,139,1661,13,1705,54,1793,173,1894,284,1970,343,2020,346,2052,330,2052,292,2010,258,1942,238,1870,230,1916,186,1938,120,1956,52,1986,12,2036,14,2084,56,2120,118,2146,183,2215,236,2237,328,2140,85,2159,22,2231,6,2310,69,2361,129,2395,183,2467,262,2527,318,2575,328,2468,25,2610,186,2698,280,2761,318,2808,337,2821,312,2758,195,2717,101,2720,47,2755,16,2814,25,2877,69,2940,132,2975,183,2985,199,3065,279,3193,345,3307,351,3313,350,3202,353,3076,287,2991,205,2950,164,2928,110,2947,57,2988,19,3098,69,3183,158,3272,252,3294,274,3325,274,3171,-85,3041,-331,2985,-381,2934,-410,2890,-416,2840,-381,2859,-280,2928,-220,3029,-132,3092,-88,3265,22,3376,110,3445,183],
+    tcross: [54,346,158,356,258,356],
+    dot1: [974,476,960,457,946,438],
+    dot2: [2301,476,2287,457,2272,438]
+  };
+
+  const V3 = THREE.Vector3;
+  const PI = Math.PI;
+  const UP = new V3(0, 1, 0);
+  const C = (hex) => new THREE.Color(hex).convertSRGBToLinear();
+  const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smooth = (t) => { t = clamp01(t); return t * t * (3 - 2 * t); };
+  const smoother = (t) => { t = clamp01(t); return t * t * t * (t * (t * 6 - 15) + 10); };
+  const sstep = (a, b, x) => smooth((x - a) / (b - a));
+  const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  // ---------------------------------------------------------------------------
+  // Timeline state. Every visual below is a pure function of these numbers
+  // (plus the timeline clock), so the timeline can be paused and seeked anywhere.
+  // ---------------------------------------------------------------------------
+  const S = { enter: 0, twist: 0, pull: 0, fade: 0, flip: 0, land: 0, main: 0, air1: 0, cross: 0, air2: 0, dot1: 0, air3: 0, dot2: 0, rest: 0 };
+  const WRITE_DUR = 7.6;
+  const DUR = { air1: 1.05, cross: 0.34, air2: 0.6, dot: 0.13, air3: 0.62 };
+  const tl = gsap.timeline({ paused: true });
+  tl.addLabel('enter', 0)
+    .to(S, { enter: 1, duration: 1.8, ease: 'power2.out' }, 'enter')
+    .addLabel('uncap', '+=0.15')
+    .to(S, { twist: 1, duration: 1.15, ease: 'power1.inOut' }, 'uncap')
+    .to(S, { pull: 1, duration: 0.95, ease: 'power2.inOut' }, '>-0.08')
+    .to(S, { fade: 1, duration: 0.7, ease: 'power1.in' }, '<0.45')
+    .addLabel('tilt', '+=0.1')
+    .to(S, { flip: 1, duration: 1.9, ease: 'none' }, 'tilt')
+    .to(S, { land: 1, duration: 0.45, ease: 'power2.inOut' }, '>')
+    .addLabel('write', '+=0.08')
+    .to(S, { main: 1, duration: WRITE_DUR, ease: 'none' }, 'write')
+    .addLabel('finish', '+=0.12')
+    .to(S, { air1: 1, duration: DUR.air1, ease: 'power2.inOut' }, 'finish')
+    .to(S, { cross: 1, duration: DUR.cross, ease: 'sine.inOut' }, '>')
+    .to(S, { air2: 1, duration: DUR.air2, ease: 'power2.inOut' }, '>')
+    .to(S, { dot1: 1, duration: DUR.dot, ease: 'sine.inOut' }, '>')
+    .to(S, { air3: 1, duration: DUR.air3, ease: 'power2.inOut' }, '>')
+    .to(S, { dot2: 1, duration: DUR.dot, ease: 'sine.inOut' }, '>')
+    .to(S, { rest: 1, duration: 1.7, ease: 'none' }, '>+0.05')
+    .to({}, { duration: 1.0 }, '>');   // hold on the finished frame while the last ink dries
+  // timeline time at which each ink stroke starts (read back from the tweens themselves)
+  const startOf = (key) => tl.getChildren(false, true, false).find((c) => c.vars && key in c.vars).startTime();
+  const STROKE_T0 = { main: startOf('main'), cross: startOf('cross'), dot1: startOf('dot1'), dot2: startOf('dot2') };
+
+  // ---------------------------------------------------------------------------
+  // Renderer / scene / camera
+  // ---------------------------------------------------------------------------
+  const canvas = document.getElementById('stage');
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  } catch (err) {
+    document.getElementById('nogl').style.display = 'flex';
+    window.penTimeline = tl;
+    return;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight, false);
+  renderer.setClearColor(0x000000, 0);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.08;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.3, 400);
+  const layoutCam = new THREE.PerspectiveCamera(34, 1, 0.3, 400); // un-orbited reference camera for layout maths
+
+  // Procedural environment so the gold and the polished resin have something to reflect
+  // (metals render black without an env map in r128). Built once, on boot.
+  function buildEnvironment() {
+    const env = new THREE.Scene();
+    const roomGeo = new THREE.BoxGeometry(1, 1, 1);
+    const cols = [], rp = roomGeo.attributes.position;
+    for (let i = 0; i < rp.count; i++) {
+      const c = rp.getY(i) > 0 ? [0.62, 0.61, 0.6] : [0.24, 0.22, 0.21];
+      cols.push(c[0], c[1], c[2]);
+    }
+    roomGeo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+    const room = new THREE.Mesh(roomGeo, new THREE.MeshBasicMaterial({ side: THREE.BackSide, vertexColors: true }));
+    room.scale.set(24, 14, 24);
+    room.position.y = 4;
+    env.add(room);
+    const panel = (w, h, intensity, tint, pos, look) => {
+      const m = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: true });
+      const g = new THREE.PlaneGeometry(w, h);
+      const c = tint.clone().multiplyScalar(intensity), arr = [];
+      for (let i = 0; i < g.attributes.position.count; i++) arr.push(c.r, c.g, c.b);
+      g.setAttribute('color', new THREE.Float32BufferAttribute(arr, 3));
+      const mesh = new THREE.Mesh(g, m);
+      mesh.position.copy(pos);
+      mesh.lookAt(look);
+      env.add(mesh);
+    };
+    const warm = new THREE.Color(1, 0.96, 0.9), cool = new THREE.Color(0.9, 0.95, 1);
+    panel(9, 2.2, 9, warm, new V3(0, 10.5, 0), new V3(0, 0, 0));    // overhead strip
+    panel(2.5, 7, 6, warm, new V3(-11, 5, 2), new V3(0, 3, 0));     // key softbox, left
+    panel(2.5, 7, 4, cool, new V3(11, 5, -2), new V3(0, 3, 0));     // rim softbox, right
+    panel(7, 3, 3.2, warm, new V3(0, 4, 11), new V3(0, 2, 0));      // front fill
+    panel(5, 2, 2.0, cool, new V3(0, 6, -11), new V3(0, 2, 0));     // back
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const rt = pmrem.fromScene(env, 0.035);
+    scene.environment = rt.texture;
+    pmrem.dispose();
+  }
+
+  // Lights: soft ambient + hemisphere, one shadow-casting key light, a gentle fill.
+  scene.add(new THREE.AmbientLight(0xffffff, 0.32));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d0c2, 0.34));
+  const key = new THREE.DirectionalLight(0xfff6ea, 1.55);
+  key.position.set(-6.5, 13, 7.5);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.camera.near = 1;
+  key.shadow.camera.far = 60;
+  key.shadow.camera.left = -15;
+  key.shadow.camera.right = 15;
+  key.shadow.camera.top = 15;
+  key.shadow.camera.bottom = -15;
+  key.shadow.bias = -0.0004;
+  key.shadow.normalBias = 0.02;
+  scene.add(key, key.target);
+  const fill = new THREE.DirectionalLight(0xe9f0ff, 0.38);
+  fill.position.set(9, 6, 3);
+  scene.add(fill);
+
+  // ---------------------------------------------------------------------------
+  // Paper + ground (all lit materials share one shader program on purpose)
+  // ---------------------------------------------------------------------------
+  const PAPER_W = 11.2, PAPER_D = 7.4;
+  const paper = new THREE.Mesh(
+    new THREE.PlaneGeometry(PAPER_W, PAPER_D),
+    new THREE.MeshStandardMaterial({ color: C(0xfdfaf3), roughness: 0.92, metalness: 0, envMapIntensity: 0.55 })
+  );
+  paper.rotation.x = -PI / 2;
+  paper.position.set(0, 0, 0.55);
+  paper.receiveShadow = true;
+  scene.add(paper);
+  const under = new THREE.Mesh(   // a second sheet peeking out underneath
+    new THREE.PlaneGeometry(PAPER_W, PAPER_D),
+    new THREE.MeshStandardMaterial({ color: C(0xefe9dd), roughness: 0.95, metalness: 0, envMapIntensity: 0.5 })
+  );
+  under.rotation.set(-PI / 2, 0, 0.035);
+  under.position.set(0.2, -0.006, 0.62);
+  under.receiveShadow = true;
+  scene.add(under);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({ opacity: 0.13 }));
+  ground.rotation.x = -PI / 2;
+  ground.position.y = -0.012;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // ---------------------------------------------------------------------------
+  // Fountain pen. Root origin = nib tip; pen axis = local +Y (tip -> end cap).
+  // The nib's upper (slit) face points to local -X.
+  // Hierarchy: pen (root) -> penBody (nib, feed, grip, barrel)  +  penCap (removable cap)
+  // ---------------------------------------------------------------------------
+  const PEN_S = 0.8;                                   // uniform model scale
+  const PEN = { end: 5.2 * PEN_S, capEnd: 0.42 * PEN_S, lieHeight: 0.279 * PEN_S };
+  const pen = new THREE.Group();
+  pen.name = 'pen';
+  const penBody = new THREE.Group();
+  penBody.name = 'penBody';
+  const penCap = new THREE.Group();
+  penCap.name = 'penCap';
+  const penModel = new THREE.Group();                  // carries the scale; tip stays at the origin
+  penModel.scale.setScalar(PEN_S);
+  penModel.add(penBody, penCap);
+  pen.add(penModel);
+  scene.add(pen);
+
+  const mat = {
+    resin: new THREE.MeshStandardMaterial({ color: C(0x0c0e14), roughness: 0.075, metalness: 0.05, envMapIntensity: 1.7 }),
+    grip: new THREE.MeshStandardMaterial({ color: C(0x0a0a0c), roughness: 0.16, metalness: 0.0, envMapIntensity: 1.3 }),
+    gold: new THREE.MeshStandardMaterial({ color: C(0xe6b85c), roughness: 0.2, metalness: 1.0, envMapIntensity: 1.25 }),
+    nib: new THREE.MeshStandardMaterial({ color: C(0xedc46a), roughness: 0.16, metalness: 1.0, envMapIntensity: 1.35 }),
+    iridium: new THREE.MeshStandardMaterial({ color: C(0xc9ccd2), roughness: 0.25, metalness: 1.0 }),
+    feed: new THREE.MeshStandardMaterial({ color: C(0x111113), roughness: 0.55, metalness: 0.0 }),
+    slit: new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.9, metalness: 0.0, envMapIntensity: 0 })
+  };
+  const capMat = {                                     // the cap gets its own (fadeable) material instances
+    resin: mat.resin.clone(),
+    gold: mat.gold.clone(),
+    dark: new THREE.MeshStandardMaterial({ color: C(0x08090c), roughness: 0.2, metalness: 0.1 })
+  };
+  Object.keys(capMat).forEach((k) => { capMat[k].transparent = true; capMat[k].opacity = 1; });
+
+  // Thin open shells (nib, feed) are made two-sided geometrically, so every lit
+  // material can use FrontSide and share a single shader program.
+  function twoSided(geo) {
+    const g = geo.index ? geo.toNonIndexed() : geo;
+    const names = ['position', 'normal', 'uv'];
+    const out = new THREE.BufferGeometry();
+    for (const name of names) {
+      const a = g.attributes[name];
+      if (!a) continue;
+      const n = a.count, s = a.itemSize, src = a.array, dst = new Float32Array(n * s * 2);
+      dst.set(src);
+      for (let t = 0; t < n; t += 3) {
+        const order = [0, 2, 1];
+        for (let k = 0; k < 3; k++) {
+          const from = (t + order[k]) * s, to = (n + t + k) * s;
+          for (let c = 0; c < s; c++) dst[to + c] = name === 'normal' ? -src[from + c] : src[from + c];
+        }
+      }
+      out.setAttribute(name, new THREE.BufferAttribute(dst, s));
+    }
+    return out;
+  }
+
+  const SEG = 64;
+  function part(parent, geo, material, y, rx) {
+    const m = new THREE.Mesh(geo, material);
+    m.position.y = y || 0;
+    if (rx) m.rotation.x = rx;
+    m.castShadow = true;
+    m.receiveShadow = true;
+    parent.add(m);
+    return m;
+  }
+  const cyl = (rt, rb, h, open, ts, tl, rs) => new THREE.CylinderGeometry(rt, rb, h, rs || SEG, 1, !!open, ts || 0, tl == null ? PI * 2 : tl);
+  const ring = (r, tube) => new THREE.TorusGeometry(r, tube, 12, SEG);
+  const span = (a, b) => (a + b) / 2;                 // centre of an [a,b] section along the axis
+
+  (function buildBody() {
+    // nib: tapered, curved gold sheet (partial cone into a partial-cylinder shoulder)
+    const NIB_ARC = PI * 0.78, NIB_START = -PI / 2 - NIB_ARC / 2;
+    const NIB_L = 0.64, NIB_R = 0.168;
+    part(penBody, twoSided(cyl(NIB_R, 0.0, NIB_L, true, NIB_START, NIB_ARC, 48)), mat.nib, NIB_L / 2);
+    part(penBody, twoSided(cyl(0.176, NIB_R, 0.28, true, NIB_START, NIB_ARC, 48)), mat.nib, NIB_L + 0.14);
+    part(penBody, new THREE.SphereGeometry(0.016, 16, 12), mat.iridium, 0.006);   // tipping on the very tip
+    // slit + breather hole on the nib's upper face
+    const k = NIB_R / NIB_L, alpha = Math.atan(k);
+    const holeY = 0.47, holeR = k * holeY;
+    const slit = part(penBody, new THREE.BoxGeometry(0.009, holeY - 0.02, 0.007), mat.slit, 0);
+    slit.position.set(-holeR / 2 - 0.002, holeY / 2 + 0.01, 0);
+    slit.rotation.z = alpha;
+    slit.castShadow = false;
+    const hole = part(penBody, new THREE.CircleGeometry(0.024, 24), mat.slit, 0);
+    const holeN = new V3(-Math.cos(alpha), -Math.sin(alpha), 0);
+    hole.position.set(-holeR, holeY, 0).addScaledVector(holeN, 0.003);
+    hole.lookAt(hole.position.clone().add(holeN));
+    hole.castShadow = false;
+    for (let i = 0; i < 2; i++) {                    // engraved scroll lines near the shoulder
+      const y = 0.6 + i * 0.07, r = k * y + 0.002;
+      const arc = part(penBody, new THREE.TorusGeometry(r, 0.0035, 6, 32, PI * 0.5), mat.slit, y);
+      arc.rotation.set(-PI / 2, 0, PI * 0.75);
+      arc.castShadow = false;
+    }
+    // feed (black) under the nib, with comb fins
+    part(penBody, twoSided(cyl(0.128, 0.03, 0.66, false, 0, PI, 32)), mat.feed, span(0.2, 0.86));
+    for (let i = 0; i < 5; i++) {
+      const y = 0.58 + i * 0.055, r = 0.03 + (0.128 - 0.03) * ((y - 0.2) / 0.66) + 0.008;
+      const fin = part(penBody, new THREE.TorusGeometry(r, 0.012, 6, 20, PI * 0.9), mat.feed, y);
+      fin.rotation.set(-PI / 2, 0, -PI * 0.45);
+    }
+    // grip section: glossy black, gently waisted, rolled lip, threads
+    part(penBody, ring(0.183, 0.021), mat.grip, 0.845, PI / 2);
+    part(penBody, cyl(0.176, 0.186, 0.4), mat.grip, span(0.84, 1.24));
+    part(penBody, cyl(0.214, 0.176, 0.56), mat.grip, span(1.24, 1.8));
+    part(penBody, cyl(0.222, 0.222, 0.2), mat.grip, span(1.8, 2.0));
+    for (let i = 0; i < 4; i++) part(penBody, ring(0.223, 0.0075), mat.grip, 1.83 + i * 0.045, PI / 2);
+    // gold trim ring between section and barrel
+    part(penBody, cyl(0.279, 0.279, 0.07), mat.gold, span(2.0, 2.07));
+    part(penBody, ring(0.279, 0.009), mat.gold, 2.004, PI / 2);
+    part(penBody, ring(0.279, 0.009), mat.gold, 2.066, PI / 2);
+    // barrel: dark polished resin
+    part(penBody, cyl(0.262, 0.273, 2.68), mat.resin, span(2.07, 4.75));
+    // barrel end: gold ring, tapered end piece, domed finial with a gold disc
+    part(penBody, cyl(0.266, 0.266, 0.05), mat.gold, span(4.75, 4.8));
+    part(penBody, cyl(0.2, 0.264, 0.3), mat.resin, span(4.8, 5.1));
+    const dome = part(penBody, new THREE.SphereGeometry(0.2, 48, 16, 0, PI * 2, 0, PI / 2), mat.resin, 5.1);
+    dome.scale.y = 0.45;
+    part(penBody, cyl(0.075, 0.075, 0.012), mat.gold, 5.188);
+  })();
+
+  (function buildCap() {
+    // cap covers nib + section: closed end at local -0.42, mouth at 2.0 (seats on the trim ring)
+    part(penCap, cyl(0.292, 0.277, 2.0), capMat.resin, span(0.0, 2.0));
+    part(penCap, ring(0.29, 0.011), capMat.gold, 1.995, PI / 2);
+    part(penCap, cyl(0.295, 0.295, 0.17), capMat.gold, span(1.62, 1.79));       // wide cap band
+    part(penCap, ring(0.291, 0.007), capMat.gold, 1.56, PI / 2);
+    part(penCap, ring(0.291, 0.007), capMat.gold, 1.85, PI / 2);
+    part(penCap, cyl(0.277, 0.236, 0.4), capMat.resin, span(-0.4, 0.0));       // tapered, flat-topped end
+    part(penCap, ring(0.236, 0.013), capMat.gold, -0.4, PI / 2);
+    const med = part(penCap, new THREE.RingGeometry(0.06, 0.15, 48), capMat.gold, -0.404, PI / 2);
+    med.castShadow = false;
+    const jewel = part(penCap, new THREE.CircleGeometry(0.06, 32), capMat.dark, -0.405, PI / 2);
+    jewel.castShadow = false;
+    // clip: anchored at the closed end, running toward the mouth, ball tip
+    const clip = new THREE.Group();
+    const base = part(clip, new THREE.BoxGeometry(0.13, 0.32, 0.07), capMat.gold, -0.2);
+    base.position.z = 0.285;
+    const arm = part(clip, new THREE.BoxGeometry(0.085, 1.62, 0.034), capMat.gold, 0.56);
+    arm.position.z = 0.335;
+    arm.rotation.x = -0.012;
+    const ball = part(clip, new THREE.SphereGeometry(0.05, 20, 14), capMat.gold, 1.36);
+    ball.position.z = 0.326;
+    ball.scale.set(1, 1.35, 0.9);
+    clip.rotation.y = -0.5;
+    penCap.add(clip);
+  })();
+
+  // ---------------------------------------------------------------------------
+  // Handwriting curves (world space, on the paper plane y = 0)
+  // ---------------------------------------------------------------------------
+  const B = GLYPH.bbox;
+  const WORD_W = 8.6;
+  const SC = WORD_W / (B[2] - B[0]);
+  const CX = (B[0] + B[2]) / 2, CY = (B[1] + B[3]) / 2 + 40;
+  const toWorld = (a) => { const o = []; for (let i = 0; i < a.length; i += 2) o.push(new V3((a[i] - CX) * SC, 0, -(a[i + 1] - CY) * SC)); return o; };
+  const WORD = { minX: (B[0] - CX) * SC, maxX: (B[2] - CX) * SC, minZ: -(B[3] - CY) * SC, maxZ: -(B[1] - CY) * SC };
+  function makeCurve(arr, divisions) {
+    const c = new THREE.CatmullRomCurve3(toWorld(arr), false, 'centripetal');
+    c.arcLengthDivisions = divisions;
+    c.updateArcLengths();
+    return c;
+  }
+  const mainCurve = makeCurve(GLYPH.main, 8000);
+  const extraCurves = { cross: makeCurve(GLYPH.tcross, 200), dot1: makeCurve(GLYPH.dot1, 100), dot2: makeCurve(GLYPH.dot2, 100) };
+
+  function blur(src, radius) {
+    const n = src.length, out = new Float32Array(n), w = [];
+    let ws = 0;
+    for (let k = -radius; k <= radius; k++) { const v = Math.exp(-(k * k) / (2 * (radius / 2) * (radius / 2))); w.push(v); ws += v; }
+    for (let i = 0; i < n; i++) {
+      let acc = 0;
+      for (let k = -radius; k <= radius; k++) acc += src[Math.min(n - 1, Math.max(0, i + k))] * w[k + radius];
+      out[i] = acc / ws;
+    }
+    return out;
+  }
+
+  // Natural pacing: the nib slows in tight curves and cusps (2/3-power-law style),
+  // eases in at the first touch and slows a little on the final exit stroke.
+  // uAt(p): timeline progress p -> arc-length parameter u;  pAt(u): the inverse.
+  function buildPacing(curve) {
+    const M = 4000;
+    const pts = curve.getSpacedPoints(M);
+    const len = curve.getLength(), ds = len / M;
+    const kap = new Float32Array(M + 1);
+    const a = new V3(), b = new V3();
+    for (let i = 1; i < M; i++) {
+      a.subVectors(pts[i], pts[i - 1]);
+      b.subVectors(pts[i + 1], pts[i]);
+      kap[i] = a.angleTo(b) / ds;
+    }
+    kap[0] = kap[1]; kap[M] = kap[M - 1];
+    const ks = blur(kap, 10);
+    const speed = new Float32Array(M + 1);
+    const T = new Float64Array(M + 1);
+    for (let i = 0; i <= M; i++) {
+      const s = i / M;
+      let v = Math.pow(1 + ks[i] / 2.2, -1 / 3);
+      v *= 0.3 + 0.7 * sstep(0, 0.018, s);
+      v *= 0.55 + 0.45 * sstep(1, 0.975, s);
+      speed[i] = v;
+      if (i > 0) T[i] = T[i - 1] + ds / ((speed[i] + speed[i - 1]) / 2);
+    }
+    const total = T[M];
+    for (let i = 0; i <= M; i++) T[i] /= total;
+    const Q = 3000, U = new Float32Array(Q + 1);
+    let j = 0;
+    for (let q = 0; q <= Q; q++) {
+      const target = q / Q;
+      while (j < M - 1 && T[j + 1] < target) j++;
+      const f = (target - T[j]) / Math.max(1e-9, T[j + 1] - T[j]);
+      U[q] = clamp01((j + clamp01(f)) / M);
+    }
+    return {
+      len,
+      uAt(p) { p = clamp01(p) * Q; const i = Math.min(Q - 1, Math.floor(p)); return lerp(U[i], U[i + 1], p - i); },
+      pAt(u) { u = clamp01(u) * M; const i = Math.min(M - 1, Math.floor(u)); return lerp(T[i], T[i + 1], u - i); },
+      speedAt(u) { u = clamp01(u) * M; const i = Math.min(M - 1, Math.floor(u)); return lerp(speed[i], speed[i + 1], u - i); }
+    };
+  }
+  const pacing = buildPacing(mainCurve);
+
+  // Smoothed tangents drive a small, stroke-dependent wobble of the pen while writing.
+  const WOB_N = 1200;
+  const wobble = (function () {
+    const tx = new Float32Array(WOB_N + 1), tz = new Float32Array(WOB_N + 1), t = new V3();
+    for (let i = 0; i <= WOB_N; i++) { mainCurve.getTangentAt(i / WOB_N, t); tx[i] = t.x; tz[i] = t.z; }
+    return { x: blur(tx, 24), z: blur(tz, 24) };
+  })();
+  function wobbleAt(u) {
+    const f = clamp01(u) * WOB_N, i = Math.min(WOB_N - 1, Math.floor(f));
+    const env = sstep(0, 0.03, u) * sstep(1, 0.97, u);
+    return { x: lerp(wobble.x[i], wobble.x[i + 1], f - i) * env, z: lerp(wobble.z[i], wobble.z[i + 1], f - i) * env };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Ink: a THREE.TubeGeometry along each curve, flattened into a slightly domed
+  // ribbon with pressure-dependent width, revealed with geometry.setDrawRange
+  // from the SAME arc-length parameter u that places the nib (curve.getPointAt(u)).
+  // A per-vertex "written at" time lets fresh ink look wet and dry over ~2.4 s.
+  // ---------------------------------------------------------------------------
+  const INK = { half: 0.026, h: 0.0052, y: 0.0036, dry: 2.4 };
+  const inkUniforms = { uTime: { value: 0 } };
+  const inkMat = new THREE.MeshStandardMaterial({ color: C(0x0e1a5c), roughness: 0.52, metalness: 0.0, envMapIntensity: 0.35 });
+  inkMat.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = inkUniforms.uTime;
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float aT;\nuniform float uTime;\nvarying float vWet;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWet = 1.0 - clamp((uTime - aT) / ' + INK.dry.toFixed(2) + ', 0.0, 1.0);\nvWet *= vWet;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vWet;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(1.0, 0.55, vWet);')
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.06, vWet);');
+  };
+
+  const _cp = new V3();
+  function placeCap(m, curve, u, w) {
+    curve.getPointAt(u, _cp);
+    m.position.set(_cp.x, _cp.y + INK.y, _cp.z);
+    m.scale.set(w, INK.h, w);
+  }
+  function makeStroke(curve, N, R, widthAt, timeAt) {
+    const geo = new THREE.TubeGeometry(curve, N, 1, R, false);
+    const pos = geo.attributes.position, nor = geo.attributes.normal;
+    const aT = new Float32Array(pos.count);
+    const P = new V3();
+    const widths = new Float32Array(N + 1);
+    for (let j = 0; j <= N; j++) {
+      const u = j / N;
+      curve.getPointAt(u, P);                       // TubeGeometry puts ring j at getPointAt(j / N)
+      const w = widthAt(u), t = timeAt(u);
+      widths[j] = w;
+      for (let i = 0; i <= R; i++) {
+        const idx = j * (R + 1) + i;
+        const ox = pos.getX(idx) - P.x, oy = pos.getY(idx) - P.y, oz = pos.getZ(idx) - P.z;
+        pos.setXYZ(idx, P.x + ox * w, P.y + INK.y + oy * INK.h, P.z + oz * w);
+        const nx = ox / w, ny = oy / INK.h, nz = oz / w, l = Math.hypot(nx, ny, nz) || 1;
+        nor.setXYZ(idx, nx / l, ny / l, nz / l);
+        aT[idx] = t;
+      }
+    }
+    geo.setAttribute('aT', new THREE.BufferAttribute(aT, 1));
+    pos.needsUpdate = true;
+    nor.needsUpdate = true;
+    geo.computeBoundingSphere();
+    geo.setDrawRange(0, 0);
+    const mesh = new THREE.Mesh(geo, inkMat);
+    mesh.receiveShadow = true;
+    mesh.frustumCulled = false;
+    scene.add(mesh);
+    const cap = (t) => {
+      const g = new THREE.SphereGeometry(1, 20, 10);
+      g.setAttribute('aT', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(t), 1));
+      const m = new THREE.Mesh(g, inkMat);
+      m.receiveShadow = true;
+      m.visible = false;
+      scene.add(m);
+      return m;
+    };
+    const idxPerSeg = R * 6;
+    return {
+      curve, mesh, startCap: cap(timeAt(0)), headCap: cap(timeAt(0)), headT: -1, u: 0,
+      widthAtU(u) { const f = clamp01(u) * N, i = Math.min(N - 1, Math.floor(f)); return lerp(widths[i], widths[i + 1], f - i); },
+      reveal(u) {
+        u = clamp01(u);
+        this.u = u;
+        geo.setDrawRange(0, Math.floor(u * N + 1e-6) * idxPerSeg);
+        const on = u > 0;
+        this.startCap.visible = on;
+        this.headCap.visible = on;
+        if (!on) return;
+        placeCap(this.startCap, curve, 0, this.widthAtU(0));
+        placeCap(this.headCap, curve, u, this.widthAtU(u));   // ink head = exactly curve.getPointAt(u)
+        const t = timeAt(u);
+        if (t !== this.headT) {
+          this.headT = t;
+          const at = this.headCap.geometry.attributes.aT;
+          at.array.fill(t);
+          at.needsUpdate = true;
+        }
+      }
+    };
+  }
+
+  // pressure: downstrokes (toward the writer, +z) swell, upstrokes stay hairline; tapered entry/exit
+  function pressureWidths(curve, N, base, o) {
+    const raw = new Float32Array(N + 1), t = new V3();
+    for (let j = 0; j <= N; j++) {
+      curve.getTangentAt(j / N, t);
+      raw[j] = 0.42 + 0.85 * sstep(-0.35, 0.85, t.z);
+    }
+    const sm = blur(raw, o.blur);
+    return (u) => {
+      const f = clamp01(u) * N, i = Math.min(N - 1, Math.floor(f));
+      let w = base * lerp(sm[i], sm[i + 1], f - i);
+      w *= o.in + (1 - o.in) * sstep(0, o.taperIn, u);
+      w *= o.out + (1 - o.out) * sstep(1, 1 - o.taperOut, u);
+      if (o.pool) w *= 1 + 0.16 * (1 - pacing.speedAt(u));   // ink pools a little where the nib slows
+      return w;
+    };
+  }
+
+  const MAIN_N = 2600, RAD = 10;
+  const dotWidth = (u) => INK.half * 1.25 * (0.7 + 0.3 * Math.sin(PI * u)) * (0.55 + 0.45 * sstep(1, 0.6, u));
+  const strokes = {
+    main: makeStroke(mainCurve, MAIN_N, RAD,
+      pressureWidths(mainCurve, MAIN_N, INK.half, { blur: 14, in: 0.35, taperIn: 0.012, out: 0.45, taperOut: 0.02, pool: true }),
+      (u) => STROKE_T0.main + pacing.pAt(u) * WRITE_DUR),
+    cross: makeStroke(extraCurves.cross, 80, RAD,
+      (u) => INK.half * 0.92 * (0.45 + 0.55 * sstep(0, 0.25, u)) * (0.4 + 0.6 * sstep(1, 0.7, u)),
+      (u) => STROKE_T0.cross + u * DUR.cross),
+    dot1: makeStroke(extraCurves.dot1, 24, RAD, dotWidth, (u) => STROKE_T0.dot1 + u * DUR.dot),
+    dot2: makeStroke(extraCurves.dot2, 24, RAD, dotWidth, (u) => STROKE_T0.dot2 + u * DUR.dot)
+  };
+
+  // ---------------------------------------------------------------------------
+  // Layout: camera framing + viewport-relative pen positions (recomputed on resize)
+  // ---------------------------------------------------------------------------
+  const LAY = {
+    portrait: false, yawW: -0.32, tiltW: PI / 4,
+    off: new V3(), top: new V3(), hover: new V3(), start: new V3(),
+    rest: new V3(), restYaw: -0.12,
+    lean: new THREE.Quaternion(),   // tips world-up so the upright pen reads exactly vertical on screen
+    camPos: new V3(), target: new V3()
+  };
+  const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _q3 = new THREE.Quaternion();
+  const AX_Y = new V3(0, 1, 0), AX_Z = new V3(0, 0, 1);
+  // orientation = yaw (about world Y) * tilt (about Z; 0 = nib down, PI = nib up) * roll (about the pen axis)
+  function poseQuat(out, tilt, yaw, roll) {
+    _q1.setFromAxisAngle(AX_Y, yaw);
+    _q2.setFromAxisAngle(AX_Z, -tilt);
+    _q3.setFromAxisAngle(AX_Y, roll);
+    return out.copy(_q1).multiply(_q2).multiply(_q3);
+  }
+  function penAxis(tilt, yaw) { return new V3(0, 1, 0).applyQuaternion(poseQuat(new THREE.Quaternion(), tilt, yaw, 0)); }
+
+  function layout() {
+    const w = Math.max(1, window.innerWidth), h = Math.max(1, window.innerHeight), aspect = w / h;
+    const portrait = aspect < 0.85;
+    LAY.portrait = portrait;
+    LAY.yawW = portrait ? 0.72 : -0.32;
+    camera.fov = layoutCam.fov = portrait ? 40 : 33;
+    camera.aspect = layoutCam.aspect = aspect;
+    camera.updateProjectionMatrix();
+    layoutCam.updateProjectionMatrix();
+
+    mainCurve.getPointAt(0, LAY.start);
+    LAY.hover.copy(LAY.start).add(new V3(0.12, 0.8, -0.08));
+    LAY.rest.set(WORD.minX + 2.1, PEN.lieHeight, WORD.maxZ + (portrait ? 0.95 : 0.75));
+    LAY.restYaw = portrait ? -0.22 : -0.1;
+
+    // what must stay in frame: the word, the writing pen, the resting pen
+    const pts = [];
+    const m = 0.25;
+    for (const x of [WORD.minX - m, WORD.maxX + m]) for (const z of [WORD.minZ - m, WORD.maxZ + m]) pts.push(new V3(x, 0, z));
+    const ax = penAxis(LAY.tiltW, LAY.yawW);
+    for (const p of [LAY.start, mainCurve.getPointAt(1), new V3(WORD.maxX - 0.6, 0, 0.2)]) pts.push(p.clone().addScaledVector(ax, PEN.end * 0.95));
+    const restAx = penAxis(PI / 2, LAY.restYaw);
+    pts.push(LAY.rest.clone(), LAY.rest.clone().addScaledVector(restAx, PEN.end + 0.05));
+    const box = portrait ? { x0: -0.93, x1: 0.93, y0: -0.62, y1: 0.5 } : { x0: -0.9, x1: 0.9, y0: -0.74, y1: 0.66 };
+    const elev = portrait ? 1.05 : 0.96;
+    const dir = new V3(0, Math.sin(elev), Math.cos(elev));
+    const target = new V3((WORD.minX + WORD.maxX) / 2, 0, 0.3);
+    const ndc = new V3();
+    const place = (d) => { layoutCam.position.copy(target).addScaledVector(dir, d); layoutCam.up.set(0, 1, 0); layoutCam.lookAt(target); layoutCam.updateMatrixWorld(true); };
+    const bounds = () => {
+      let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      for (const p of pts) { ndc.copy(p).project(layoutCam); x0 = Math.min(x0, ndc.x); x1 = Math.max(x1, ndc.x); y0 = Math.min(y0, ndc.y); y1 = Math.max(y1, ndc.y); }
+      return { x0, x1, y0, y1 };
+    };
+    let dist = 20;
+    for (let iter = 0; iter < 5; iter++) {
+      let lo = 2, hi = 400;
+      for (let i = 0; i < 48; i++) {
+        const mid = (lo + hi) / 2; place(mid);
+        const b = bounds();
+        if (b.x0 >= box.x0 && b.x1 <= box.x1 && b.y0 >= box.y0 && b.y1 <= box.y1) hi = mid; else lo = mid;
+      }
+      dist = hi; place(dist);
+      const b = bounds();
+      const hh = Math.tan(THREE.MathUtils.degToRad(layoutCam.fov) / 2) * dist, ww = hh * aspect;
+      const right = new V3().setFromMatrixColumn(layoutCam.matrixWorld, 0);
+      const camUp = new V3().setFromMatrixColumn(layoutCam.matrixWorld, 1);
+      target.addScaledVector(right, ((b.x0 + b.x1) - (box.x0 + box.x1)) / 2 * ww)
+            .addScaledVector(camUp, ((b.y0 + b.y1) - (box.y0 + box.y1)) / 2 * hh);
+    }
+
+    // Upright pen (nib up, cap on) standing in the top-right corner of the viewport.
+    // Slide along the view ray through the corner until the pen's lower end sits at the
+    // wanted height on screen; if that would put it below the paper, pull the camera back a bit.
+    const ray = new THREE.Raycaster();
+    const nx = portrait ? 0.56 : 0.74, nyTop = portrait ? 0.82 : 0.84;
+    const bottomTarget = portrait ? 0.3 : -0.08;
+    const penLen = PEN.end + PEN.capEnd;
+    const T = new V3(), Bt = new V3(), axisUp = new V3();
+    const screenVertical = () => {     // world-up projected into the plane that maps to the screen column x = nx
+      ray.setFromCamera({ x: nx, y: -0.6 }, layoutCam);
+      const lowDir = ray.ray.direction.clone();
+      ray.setFromCamera({ x: nx, y: nyTop }, layoutCam);
+      const n = new V3().crossVectors(ray.ray.direction, lowDir).normalize();
+      axisUp.copy(UP).addScaledVector(n, -UP.dot(n)).normalize();
+    };
+    let dRay = 10;
+    for (let attempt = 0; attempt < 40; attempt++) {
+      place(dist);
+      screenVertical();
+      let lo = 0.5, hi = 600;
+      for (let i = 0; i < 50; i++) {
+        const d = (lo + hi) / 2;
+        ray.ray.at(d, T);
+        Bt.copy(T).addScaledVector(axisUp, -penLen);
+        ndc.copy(Bt).project(layoutCam);
+        if (ndc.y < bottomTarget) lo = d; else hi = d;
+      }
+      dRay = hi;
+      ray.ray.at(dRay, T);
+      if (T.y - penLen * axisUp.y >= 0.25) break;
+      dist *= 1.04;
+    }
+    place(dist);
+    LAY.target.copy(target);
+    LAY.camPos.copy(layoutCam.position);
+    screenVertical();
+    ray.ray.at(dRay, T);
+    LAY.lean.setFromUnitVectors(UP, axisUp);
+    LAY.top.copy(T).addScaledVector(axisUp, -PEN.capEnd);
+    // off-screen start: same depth, beyond the top-right edge
+    ray.setFromCamera({ x: nx + 0.95, y: nyTop + 0.6 }, layoutCam);
+    ray.ray.at(dRay, T);
+    LAY.off.copy(T).addScaledVector(axisUp, -PEN.capEnd);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pen pose as a pure function of the timeline state
+  // ---------------------------------------------------------------------------
+  const pose = { pos: new V3(), tilt: PI, yaw: 0, roll: PI / 2, lean: 1 };
+  const _qi = new THREE.Quaternion(), _ql = new THREE.Quaternion();
+  const _c1 = new V3(), _c2 = new V3();
+  function bezier(out, p0, p1, p2, p3, t) {
+    const it = 1 - t;
+    return out.set(0, 0, 0)
+      .addScaledVector(p0, it * it * it)
+      .addScaledVector(p1, 3 * it * it * t)
+      .addScaledVector(p2, 3 * it * t * t)
+      .addScaledVector(p3, t * t * t);
+  }
+  function airMove(from, to, t, lift) {
+    _c1.copy(from).addScaledVector(UP, lift);
+    _c2.copy(to).addScaledVector(UP, lift);
+    bezier(pose.pos, from, _c1, _c2, to, t);
+  }
+  function writingPose(u) {
+    const wb = u == null ? { x: 0, z: 0 } : wobbleAt(u);
+    pose.tilt = LAY.tiltW + 0.035 * wb.z;
+    pose.yaw = LAY.yawW - 0.05 * wb.x;
+    pose.roll = 0.04 * wb.x;
+  }
+  const PT = {
+    mainEnd: mainCurve.getPointAt(1),
+    crossA: extraCurves.cross.getPointAt(0), crossB: extraCurves.cross.getPointAt(1),
+    dot1A: extraCurves.dot1.getPointAt(0), dot1B: extraCurves.dot1.getPointAt(1),
+    dot2A: extraCurves.dot2.getPointAt(0), dot2B: extraCurves.dot2.getPointAt(1)
+  };
+
+  function computePose() {
+    pose.lean = 0;
+    if (S.rest > 0) {                                  // lift off and lay the pen down beside the word
+      const r = S.rest;
+      _c1.copy(PT.dot2B).addScaledVector(UP, 1.2);
+      _c2.copy(LAY.rest).addScaledVector(UP, 1.05);
+      bezier(pose.pos, PT.dot2B, _c1, _c2, LAY.rest, smoother(r));
+      pose.tilt = lerp(LAY.tiltW, PI / 2, smoother((r - 0.2) / 0.8));
+      pose.yaw = lerp(LAY.yawW, LAY.restYaw, smoother(r));
+      pose.roll = 0;
+      return;
+    }
+    writingPose(null);
+    if (S.dot2 > 0) { extraCurves.dot2.getPointAt(S.dot2, pose.pos); return; }
+    if (S.air3 > 0) { airMove(PT.dot1B, PT.dot2A, S.air3, 0.5); return; }
+    if (S.dot1 > 0) { extraCurves.dot1.getPointAt(S.dot1, pose.pos); return; }
+    if (S.air2 > 0) { airMove(PT.crossB, PT.dot1A, S.air2, 0.5); return; }
+    if (S.cross > 0) { extraCurves.cross.getPointAt(S.cross, pose.pos); return; }
+    if (S.air1 > 0) { airMove(PT.mainEnd, PT.crossA, S.air1, 0.8); return; }
+    if (S.main > 0 || S.land >= 1) {                   // the nib rides the curve at the ink head
+      const u = pacing.uAt(S.main);
+      mainCurve.getPointAt(u, pose.pos);
+      writingPose(u);
+      return;
+    }
+    if (S.land > 0) { pose.pos.lerpVectors(LAY.hover, LAY.start, S.land); return; }
+    if (S.flip > 0) {                                  // turn nib-down, tilt to 45 deg, travel to the paper
+      // The pen pivots about its nib in a plane facing the viewer, so the barrel swings
+      // toward the camera (staying in frame) and then yaws round into the writing lean.
+      const f = S.flip;
+      _c1.lerpVectors(LAY.top, LAY.hover, 0.3);
+      _c2.copy(LAY.hover).addScaledVector(UP, 1.3);
+      bezier(pose.pos, LAY.top, _c1, _c2, LAY.hover, smoother(f));
+      pose.tilt = lerp(PI, LAY.tiltW, 1 - Math.pow(1 - smooth(f), 1.6));
+      pose.yaw = lerp(-PI / 2, LAY.yawW, smoother((f - 0.3) / 0.7));
+      pose.roll = 0;
+      pose.lean = 1 - smooth(f);
+      return;
+    }
+    const e = S.enter;                                 // fly in from off-screen, upright, cap on
+    pose.pos.lerpVectors(LAY.off, LAY.top, e);
+    pose.tilt = PI;
+    pose.yaw = -PI / 2;                                // nib up, nib face toward the viewer
+    pose.roll = -(1 - e) * 1.6;
+    pose.lean = 1;
+  }
+
+  function applyState() {
+    computePose();
+    pen.position.copy(pose.pos);
+    poseQuat(pen.quaternion, pose.tilt, pose.yaw, pose.roll);
+    if (pose.lean > 0) pen.quaternion.premultiply(_ql.copy(_qi).slerp(LAY.lean, pose.lean));
+
+    // cap: twist about its own axis, back off the thread, slide off past the nib, fade away
+    const capOff = S.twist * 0.12 + S.pull * 2.35 + S.fade * 2.6;
+    penCap.position.y = -capOff;
+    penCap.rotation.y = -(S.twist * PI * 2.5 + S.pull * PI * 0.6);
+    const op = 1 - S.fade;
+    for (const k in capMat) capMat[k].opacity = op;
+    penCap.visible = op > 0.004;
+    penCap.traverse((o) => { if (o.isMesh) o.castShadow = op > 0.35; });
+
+    // ink: driven by the same parameters that drive the nib
+    strokes.main.reveal(S.main > 0 ? pacing.uAt(S.main) : 0);
+    strokes.cross.reveal(S.cross);
+    strokes.dot1.reveal(S.dot1);
+    strokes.dot2.reveal(S.dot2);
+    inkUniforms.uTime.value = tl.time();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Controls, UI, loop
+  // ---------------------------------------------------------------------------
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.enablePan = false;
+  controls.minPolarAngle = 0.12;
+  controls.maxPolarAngle = PI / 2 - 0.12;              // never dip under the paper
+  controls.rotateSpeed = 0.7;
+  let userMoved = false;
+  controls.addEventListener('start', () => { userMoved = true; });
+
+  function frameCamera(force) {
+    layout();
+    const d = LAY.camPos.distanceTo(LAY.target);
+    controls.minDistance = d * 0.45;
+    controls.maxDistance = d * 2.2;
+    if (force || !userMoved) {
+      camera.position.copy(LAY.camPos);
+      controls.target.copy(LAY.target);
+    }
+    camera.updateProjectionMatrix();
+    controls.update();
+  }
+  frameCamera(true);
+
+  window.addEventListener('resize', () => {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    frameCamera(false);
+  });
+
+  const stageText = document.getElementById('stageText');
+  const STAGE_COPY = {
+    enter: 'Bringing in the pen',
+    uncap: 'Uncapping',
+    tilt: 'Settling to a 45° writing angle',
+    write: 'Writing',
+    finish: 'Dotting the i’s, crossing the t'
+  };
+  let lastCopy = '';
+  function updateCaption() {
+    const t = tl.time();
+    let copy;
+    if (t >= tl.duration() - 1.2) copy = 'Done — drag to look around';
+    else {
+      let best = 'enter', bt = -1;
+      for (const k in tl.labels) { const lt = tl.labels[k]; if (lt <= t + 1e-4 && lt > bt) { bt = lt; best = k; } }
+      copy = STAGE_COPY[best] || '';
+    }
+    if (copy !== lastCopy) { stageText.textContent = copy; lastCopy = copy; }
+  }
+
+  document.getElementById('replay').addEventListener('click', () => {
+    tl.restart();
+    tl.play();
+  });
+
+  function render() {
+    requestAnimationFrame(render);
+    controls.update();
+    applyState();
+    updateCaption();
+    renderer.render(scene, camera);
+  }
+
+  // GSAP animations are thenables (`await tl` resolves when it completes). Tools that await or
+  // poll window.penTimeline (e.g. Playwright's waitForFunction) would block until the animation
+  // ends, so the exposed timeline's `then` is shadowed. For a completion hook use
+  // penTimeline.eventCallback('onComplete', fn).
+  tl.then = undefined;
+  window.penTimeline = tl;
+  if (reduceMotion) tl.progress(1).pause();
+  else tl.play(0);
+  // Let the ClearScript app know when the pen has finished (intro screen closes on this).
+  tl.eventCallback('onComplete', function () {
+    try { window.parent.postMessage({ type: 'pen:done' }, '*'); } catch (e) { /* not embedded */ }
+    if (window.PEN_OPTS.has('loop')) setTimeout(function () { tl.restart(); }, 1200);
+  });
+  applyState();
+
+  // Boot the GPU work (environment + first frame) a couple of frames after the page is
+  // interactive, so slow shader compilation never blocks the first paint of the UI.
+  let bootFrames = 0;
+  requestAnimationFrame(function boot() {
+    if (++bootFrames < 3) { requestAnimationFrame(boot); return; }
+    buildEnvironment();
+    render();
+  });
+})();
+</script>
+</body>
+</html>

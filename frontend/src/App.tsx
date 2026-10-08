@@ -6,6 +6,7 @@ import Agent from "./pages/Agent";
 import Vision from "./pages/Vision";
 import Handwriting from "./pages/Handwriting";
 import { API } from "./lib/api";
+import { PenIntro } from "./components/PenAnimation";
 
 // Rename / reorder / delete tabs to fit tomorrow's problem statement.
 const TABS = [
@@ -35,6 +36,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
+      <PenIntro />
       <header className="sticky top-0 z-20 border-b border-line bg-page/85 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-2.5">
           <div className="flex items-center gap-2">

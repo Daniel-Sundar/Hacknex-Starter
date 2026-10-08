@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { postForm, postJSON } from "../lib/api";
 import { Button, Card, ErrorNote, Kbd, inputCls } from "../components/ui";
+import { PenAnimation } from "../components/PenAnimation";
 import { SAMPLE, hasDigit, isNewline, joinWords, reviewQueue, type HwResult, type Word } from "../lib/handwriting";
 
 type Mode = "auto" | "review";
@@ -167,7 +168,15 @@ export default function Handwriting() {
 
       {/* ---------- right: analytics & verification ---------- */}
       <div className="col-span-12 space-y-4 lg:col-span-7 xl:col-span-8">
-        {!result ? (
+        {loading ? (
+          <Card flush className="overflow-hidden">
+            <PenAnimation loop className="h-[420px]" />
+            <div className="flex items-center justify-between border-t border-line px-4 py-2.5 text-[12px]">
+              <span className="font-medium tracking-tight">Reading with every model…</span>
+              <span className="text-muted">Each model reads the page on its own, then they vote word by word</span>
+            </div>
+          </Card>
+        ) : !result ? (
           <Card className="grid min-h-80 place-items-center text-center">
             <div className="max-w-sm space-y-3">
               <span className="elev mx-auto grid size-10 place-items-center rounded-lg text-body"><ShieldCheck className="size-5" /></span>
