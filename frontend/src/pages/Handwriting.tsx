@@ -194,6 +194,14 @@ export default function Handwriting() {
               <span className="drop-hint block">Scanned PDF: the first page is read</span>
             </span>
           </div>
+        ) : isSample && result && !camOn ? (
+          <div className="drop-parchment well grid h-40 place-items-center rounded-lg border border-line px-4 text-center">
+            <span className="space-y-1.5">
+              <span className="drop-icon"><FlaskConical className="size-5" /></span>
+              <span className="drop-lead block">Sample prescription loaded</span>
+              <span className="drop-hint block">A saved result, so the demo works offline. Upload a real page to Digitize it.</span>
+            </span>
+          </div>
         ) : preview ? (
           <img src={preview} alt="Uploaded handwriting" className="well max-h-[360px] w-full rounded-lg border border-line object-contain" />
         ) : !camOn && (
@@ -350,9 +358,9 @@ function Toggle({ on, onChange, label, hint }: { on: boolean; onChange: (v: bool
 
 function Stat({ label, value, hint, dot }: { label: string; value: string | number; hint?: string; dot: string }) {
   return (
-    <div className="surface rounded-xl px-4 py-3">
-      <div className="engraved flex items-center gap-1.5 text-muted">
-        <span className={`size-1.5 rounded-full ${dot}`} />{label}
+    <div className="surface min-w-0 rounded-xl px-4 py-3">
+      <div className="engraved flex items-center gap-1.5 whitespace-nowrap text-muted">
+        <span className={`size-1.5 shrink-0 rounded-full ${dot}`} /><span className="truncate">{label}</span>
       </div>
       <div className="mt-2 font-display text-[24px] font-semibold leading-none tabular-nums text-ink">{value}</div>
       {hint && <div className="text-[11px] text-muted">{hint}</div>}
@@ -403,9 +411,9 @@ function Legend() {
   );
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-body">
-      {item("border border-warn-line bg-warn-bg", "Needs check")}
-      {item("border border-info-line bg-info-bg", "Fixed by context")}
-      {item("border border-ok-line bg-ok-bg", "Confirmed")}
+      {item("border border-warn-line bg-warn", "Needs check")}
+      {item("border border-info-line bg-info", "Fixed by context")}
+      {item("border border-ok-line bg-ok", "Confirmed by you")}
       <span className="ml-auto text-muted">Hover a word for details</span>
     </div>
   );
@@ -514,7 +522,7 @@ function RxTable({ rows, loading, error }: { rows: RxRow[] | null; loading: bool
               <thead>
                 <tr className="border-b border-line text-[10px] uppercase tracking-wider text-muted">
                   {cols.map(([, h]) => <th key={h} className="px-2 py-1.5 font-semibold">{h}</th>)}
-                  <th className="px-2 py-1.5" />
+                  <th className="px-2 py-1.5 text-right font-semibold">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -537,8 +545,9 @@ function RxTable({ rows, loading, error }: { rows: RxRow[] | null; loading: bool
 
 /** Word-level diff: highlights where the single-model baseline differs from ClearScript. */
 function Compare({ baseline, ours }: { baseline: string; ours: string }) {
-  const a = baseline.split(/\s+/).filter(Boolean);
-  const b = ours.split(/\s+/).filter(Boolean);
+  const notTag = (x: string) => x && x.toLowerCase() !== "[margin]"; // margin tags are layout, not words
+  const a = baseline.split(/\s+/).filter(notTag);
+  const b = ours.split(/\s+/).filter(notTag);
   const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
   for (let i = a.length - 1; i >= 0; i--)
     for (let j = b.length - 1; j >= 0; j--)
@@ -557,8 +566,8 @@ function Compare({ baseline, ours }: { baseline: string; ours: string }) {
     <Card flush>
       <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
         <span className="title">Baseline vs ClearScript</span>
-        <span className="font-mono text-[11px]">
-          <span className="text-del-fg">−{changed}</span> <span className="text-add-fg">+{b.length - keepB.size}</span>
+        <span className="text-[11px] text-muted" title="Words the single model got that ClearScript changed, and words ClearScript wrote instead">
+          <span className="font-mono text-del-fg">−{changed}</span> removed · <span className="font-mono text-add-fg">+{b.length - keepB.size}</span> added
         </span>
       </div>
       <div className="grid sm:grid-cols-2">

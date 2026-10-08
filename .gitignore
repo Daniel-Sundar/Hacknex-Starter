@@ -10,3 +10,6 @@ __pycache__/
 .DS_Store
 
 .cache/
+
+# Playwright MCP screenshots
+.playwright-mcp/

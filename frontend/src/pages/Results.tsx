@@ -42,7 +42,10 @@ export default function Results() {
   const ab = data?.ablation;
   const words = ab ? Object.values(ab.totals)[0]?.ref_words ?? 0 : 0;
   const calib = ab?.calibration?.[OURS] ?? ab?.calibration?.["clean + vote"];
+  const calibWords = calib ? Object.values(calib).reduce((n, b) => n + b.words, 0) : 0;
   const rb = data?.robustness;
+  const rbWords = rb ? Object.values(Object.values(rb.results)[0] ?? {})[0]?.ref_words ?? 0 : 0;
+  const rbEarly = data?.robustness_split === "all"; // the old 2-page run from before tuning
 
   return (
     <div className="space-y-5">
@@ -67,6 +70,7 @@ export default function Results() {
         <Card>
           <h3 className="title mb-1">Ablation: what each stage adds</h3>
           <p className="mb-3 text-[12px] text-muted">
+            A single reader cannot flag anything, so every mistake it makes is a confident error; the vote is what removes them.{" "}
             CER / WER: share of characters / words read wrong (case and punctuation ignored). Confident errors: wrong words
             that were not flagged. Flag recall: share of wrong words that got flagged.
           </p>
@@ -85,10 +89,14 @@ export default function Results() {
         <Card>
           <h3 className="title mb-1">Calibration: is reader agreement a trustworthy signal?</h3>
           {calib[BUCKETS[0]] && (
-            <p className="mb-3 text-[13px] text-body">
+            <p className="mb-1 text-[13px] text-body">
               When all readers agree, the word is right <span className="font-mono text-ink">{pct(calib[BUCKETS[0]].right, calib[BUCKETS[0]].words)}</span> of the time.
             </p>
           )}
+          <p className="mb-3 text-[12px] text-muted">
+            Counts the <span className="font-mono">{calibWords}</span> words ClearScript wrote, so the total differs slightly from the{" "}
+            <span className="font-mono">{words}</span> ground-truth words above.
+          </p>
           <Table
             head={["Reader agreement", "Words", "Right", "Accuracy"]}
             rows={BUCKETS.filter((b) => calib[b]).map((b) => ({
@@ -103,22 +111,40 @@ export default function Results() {
         <Card>
           <h3 className="title mb-1">Robustness: degraded photos</h3>
           <p className="mb-3 text-[12px] text-muted">
-            The same samples blurred, darkened, noisy, rotated and compressed like a forwarded phone photo
-            ({rb.samples ?? "?"} samples, split <span className="font-mono uppercase">{data?.robustness_split}</span>).
+            The same pages blurred, darkened, noisy, rotated and compressed like a forwarded phone photo
+            ({rb.samples ? `${rb.samples} samples, ` : ""}<span className="font-mono">{rbWords}</span> words, split{" "}
+            <span className="font-mono uppercase">{data?.robustness_split}</span>).
           </p>
-          <Table
-            head={["Image condition", "Baseline WER", "Our WER", "Baseline confident errors", "Our confident errors", "Our flag recall"]}
-            rows={Object.entries(rb.results).map(([cond, t]) => {
-              const b = t["baseline"], o = t[OURS];
-              return {
-                key: cond, highlight: false,
-                cells: [cond, pct(b.word_edits, b.ref_words), pct(o.word_edits, o.ref_words), confident(b), confident(o), pct(o.flagged_wrong, o.wrong)],
-              };
-            })}
-          />
+          {rbEarly && (
+            <p className="mb-3 rounded-lg border border-warn-line bg-warn-bg px-3 py-2 text-[12px] text-warn-fg">
+              Early check on 2 pages, run before the pipeline was tuned, so it is not comparable with the tables above.
+              The rerun on the labelled pages is pending.
+            </p>
+          )}
+          {rbEarly ? (
+            <details>
+              <summary className="cursor-pointer text-[12px] text-muted">Show the early 2-page numbers</summary>
+              <div className="mt-2"><RobustnessTable rb={rb} /></div>
+            </details>
+          ) : <RobustnessTable rb={rb} />}
         </Card>
       )}
     </div>
+  );
+}
+
+function RobustnessTable({ rb }: { rb: NonNullable<EvalData["robustness"]> }) {
+  return (
+    <Table
+      head={["Image condition", "Baseline WER", "Our WER", "Baseline confident errors", "Our confident errors", "Our flag recall"]}
+      rows={Object.entries(rb.results).map(([cond, t]) => {
+        const b = t["baseline"], o = t[OURS];
+        return {
+          key: cond, highlight: false,
+          cells: [cond, pct(b.word_edits, b.ref_words), pct(o.word_edits, o.ref_words), confident(b), confident(o), pct(o.flagged_wrong, o.wrong)],
+        };
+      })}
+    />
   );
 }
 
