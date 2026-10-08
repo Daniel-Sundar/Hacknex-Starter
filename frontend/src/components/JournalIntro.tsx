@@ -97,38 +97,14 @@ function leafQuad(theta: number, right: Quad, left: Quad) {
 // "Welcome" in page pixels, centred on the right page
 const INK_SCALE = 380 / WELCOME.w;
 const INK_X = (PAGE_W - WELCOME.w * INK_SCALE) / 2, INK_Y = 300;
-
-/** Catmull-Rom through the baked points, resampled every ~0.6 px, so long swash segments read as curves. */
-function smooth(pts: P[], step = 0.6): P[] {
-  const out: P[] = [pts[0]];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
-    const n = Math.max(1, Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) / step));
-    for (let k = 1; k <= n; k++) {
-      const t = k / n, t2 = t * t, t3 = t2 * t;
-      const f = (a: number, b: number, c: number, d: number) =>
-        0.5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (3 * b - a - 3 * c + d) * t3);
-      out.push([f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])]);
-    }
-  }
-  return out;
-}
 const STROKES: P[][] = WELCOME.strokes.map((a) => {
   const pts: P[] = [];
   for (let i = 0; i < a.length; i += 2) pts.push([INK_X + a[i] * INK_SCALE, INK_Y + a[i + 1] * INK_SCALE]);
-  return smooth(pts);
+  return pts;
 });
-const pathD = (pts: P[]) => "M" + pts.map((p) => p[0].toFixed(2) + " " + p[1].toFixed(2)).join("L");
-
-// Broad nib held at 45°: each stroke is the ribbon swept by the nib edge (thick on down-strokes, hairline
-// across), filled once so the edges stay clean. A dash-animated centreline in a mask reveals it as the pen moves.
-const NIB_W = 5.6;
-const NIB: P = [(NIB_W / 2) * Math.SQRT1_2, -(NIB_W / 2) * Math.SQRT1_2];
-const RIBBONS = STROKES.map((pts) => {
-  const a = pts.map(([x, y]) => [x - NIB[0], y - NIB[1]] as P);
-  const b = pts.map(([x, y]) => [x + NIB[0], y + NIB[1]] as P).reverse();
-  return pathD([...a, ...b]) + "Z";
-});
+const pathD = (pts: P[]) => "M" + pts.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L");
+const NIB = 9;                        // broad-nib copies, offset along a 45° nib
+const NIB_STEP = 0.55;
 const GAP = 70;                       // pen-lift between strokes, as an equivalent length
 
 const ASSETS = ["closed.jpg", "desk.jpg", "quill.webp", "page-right.jpg", "page-left.jpg", "leather.jpg", "crest.webp"].map((f) => "/intro/" + f);
@@ -188,7 +164,7 @@ export function JournalIntro() {
     const H0 = homography(PAGE_W, PAGE_H, [RIGHT[0], RIGHT[1], RIGHT[2], RIGHT[3]]);
     const nibAt = (i: number, d: number): P => {
       const pt = inkPaths[i][0].getPointAtLength(Math.max(0, Math.min(lens[i], d)));
-      return project(H0, pt.x, pt.y);
+      return project(H0, pt.x + (NIB * NIB_STEP) / 2, pt.y - (NIB * NIB_STEP) / 2);
     };
     const inkStart = nibAt(0, 0);
 
@@ -252,7 +228,7 @@ export function JournalIntro() {
         d -= lens[i] + GAP;
       }
       (el.querySelector(".ji-glisten") as HTMLElement).style.opacity = String(S.wet);
-      const rot = S.writing ? S.qrot + 2.5 * Math.sin(S.write * Math.PI * 5) : S.qrot;
+      const rot = S.writing ? S.qrot + 3 * Math.sin(S.write * 40) : S.qrot;
       const tf = `translate(${nib[0] - QUILL_REST[0]}px, ${nib[1] - QUILL_REST[1]}px) rotate(${rot}deg) scale(${1 + 0.07 * lift})`;
       quill.style.transform = tf;
       quill.style.opacity = String(S.qop);
@@ -325,17 +301,12 @@ export function JournalIntro() {
           <div className="ji-leaf ji-inkleaf">
             {face("front", (
               <svg className="ji-ink" width={PAGE_W} height={PAGE_H} viewBox={`0 0 ${PAGE_W} ${PAGE_H}`} aria-hidden="true">
-                <defs>
-                  {ink.map((d, i) => (
-                    <mask key={i} id={`ji-reveal-${i}`} maskUnits="userSpaceOnUse" x="0" y="0" width={PAGE_W} height={PAGE_H}>
-                      <path className="ji-reveal" data-s={i} d={d} />
-                    </mask>
-                  ))}
-                </defs>
-                <g className="ji-ink-fill">
-                  {RIBBONS.map((d, i) => <path key={i} d={d} mask={`url(#ji-reveal-${i})`} />)}
-                </g>
-                <g className="ji-glisten" transform="translate(0.7 -0.7)">
+                {Array.from({ length: NIB }, (_, k) => (
+                  <g key={k} transform={`translate(${k * NIB_STEP} ${-k * NIB_STEP})`}>
+                    {ink.map((d, i) => <path key={i} data-s={i} d={d} />)}
+                  </g>
+                ))}
+                <g className="ji-glisten" transform={`translate(${NIB * NIB_STEP * 0.7} ${-NIB * NIB_STEP * 0.7})`}>
                   {ink.map((d, i) => <path key={i} data-s={i} d={d} />)}
                 </g>
               </svg>
