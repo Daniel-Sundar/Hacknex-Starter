@@ -124,7 +124,7 @@ Written so a teammate or their Claude Code can pick up from here. Work top to bo
 5. **Demo-proof.** Run every image you will show (including `rx_test/`) through the app once so it is cached, then
    check the demo works with `HW_CACHE_ONLY=1` in `.env` (no internet needed for cached pages). The **Sample**
    button always works offline and shows a look-alike drug (Amlodipine).
-6. **Remove the Docs Q&A tab** (starter template leftover, off-topic for judges): `frontend/src/App.tsx` `TABS`.
+6. **Keep the Docs Q&A tab** (Daniel wants it in the demo). Do not remove it.
 7. **Pitch deck and demo script**, practised twice. Story: one model guesses confidently → voting flags
    disagreement (calibration: all agree = 100% right) → but agreement is not enough on a prescription →
    look-alike drugs and impossible doses are caught too → a human checks only the flagged words.
