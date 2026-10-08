@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import {
-  Camera, Check, ClipboardCopy, Download, Feather, FileText, FlaskConical, HelpCircle, ImageUp, Loader2, Pill, ScrollText, Sparkles,
+  AlertTriangle, Camera, Check, ClipboardCopy, Download, Feather, FileText, FlaskConical, HelpCircle, ImageUp, Loader2, Pill, ScrollText, Sparkles,
   UserCheck, Wand2,
 } from "lucide-react";
 import { postForm, postJSON } from "../lib/api";
@@ -373,6 +373,7 @@ function IconBtn(props: ButtonHTMLAttributes<HTMLButtonElement>) {
 }
 
 function wordCls(w: Word) {
+  if (w.flagged && w.lookalikes?.length) return "border border-del-line bg-del-bg text-del-fg underline decoration-del-fg decoration-wavy decoration-1 underline-offset-[4px]";
   if (w.flagged) return "border border-warn-line bg-warn-bg text-warn-fg underline decoration-warn decoration-wavy decoration-1 underline-offset-[4px]";
   if (w.resolved_by === "human") return "border border-ok-line bg-ok-bg text-ok-fg";
   if (w.resolved_by === "context") return "border border-info-line bg-info-bg text-info-fg";
@@ -397,6 +398,7 @@ function WordText({ words }: { words: Word[] }) {
               <span className="font-mono text-ink">{Math.round((w.confidence ?? 0) * 100)}%</span> of models agree
               {w.resolved_by && <> · fixed by {w.resolved_by}</>}
               {!!w.alternatives?.length && <><br />others read: <span className="font-mono">{w.alternatives.join(", ")}</span></>}
+              {!!w.lookalikes?.length && <><br /><span className="text-del-fg">looks like a different drug: <span className="font-mono">{w.lookalikes.join(", ")}</span></span></>}
             </span>
           </span>
         ),
@@ -412,6 +414,7 @@ function Legend() {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-body">
       {item("border border-warn-line bg-warn", "Needs check")}
+      {item("border border-del-line bg-del-fg", "Look-alike drug")}
       {item("border border-info-line bg-info", "Fixed by context")}
       {item("border border-ok-line bg-ok", "Confirmed by you")}
       <span className="ml-auto text-muted">Hover a word for details</span>
@@ -426,7 +429,7 @@ function ReviewPanel({ words, queue, writer, onAnswer, onSkip }: {
   const [typed, setTyped] = useState("");
   const i = queue[0];
   const w = i === undefined ? undefined : words[i];
-  const options = w ? [...new Set([w.text, ...(w.alternatives ?? [])])].filter((x) => x && x !== "[?]") : [];
+  const options = w ? [...new Set([w.text, ...(w.alternatives ?? []), ...(w.lookalikes ?? [])])].filter((x) => x && x !== "[?]") : [];
   const submit = (t: string) => { if (i !== undefined && t.trim()) { onAnswer(i, t.trim()); setTyped(""); } };
 
   // 1-9 picks a candidate, Esc skips. Digits are ignored while typing in a field.
@@ -462,6 +465,9 @@ function ReviewPanel({ words, queue, writer, onAnswer, onSkip }: {
           {hasDigit(w.text) && (
             <span className="rounded-full border border-del-line bg-del-bg px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-del-fg">number · never guessed</span>
           )}
+          {!!w.lookalikes?.length && (
+            <span className="rounded-full border border-del-line bg-del-bg px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-del-fg">look-alike drug</span>
+          )}
         </div>
         <span className="font-mono text-[11px] text-muted">{queue.length} left</span>
       </div>
@@ -470,6 +476,13 @@ function ReviewPanel({ words, queue, writer, onAnswer, onSkip }: {
         <p className="well rounded-lg border border-line px-3 py-2.5 font-mono text-xs leading-relaxed text-body">
           …{before} <span className="rounded-full border border-warn-line bg-warn-bg px-1.5 py-px text-warn-fg">{w.text}</span> {after}…
         </p>
+
+        {!!w.lookalikes?.length && (
+          <p className="rounded-lg border border-del-line bg-del-bg px-3 py-2 text-[12px] text-del-fg">
+            {w.confidence === 1 ? "Every reader agreed, but " : ""}<span className="font-mono">{w.text}</span> looks like a different drug:{" "}
+            <span className="font-mono">{w.lookalikes.join(", ")}</span>. Check the photo before confirming.
+          </p>
+        )}
 
         <div className="flex flex-wrap gap-2">
           {options.map((o, k) => (
@@ -527,12 +540,23 @@ function RxTable({ rows, loading, error }: { rows: RxRow[] | null; loading: bool
               </thead>
               <tbody>
                 {rows.map((r, i) => (
-                  <tr key={i} className={`border-b border-line ${r.flagged ? "border-warn-line bg-warn-bg text-warn-fg" : "text-ink"}`}>
-                    {cols.map(([k]) => <td key={k} className="px-2 py-1.5 font-mono">{r[k] || "-"}</td>)}
-                    <td className="px-2 py-1.5 text-right">
-                      {r.flagged && <span className="rounded-full border border-warn-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">check</span>}
-                    </td>
-                  </tr>
+                  <Fragment key={i}>
+                    <tr className={`border-b border-line ${r.warnings?.length ? "border-del-line bg-del-bg text-del-fg" : r.flagged ? "border-warn-line bg-warn-bg text-warn-fg" : "text-ink"}`}>
+                      {cols.map(([k]) => <td key={k} className="px-2 py-1.5 font-mono">{r[k] || "-"}</td>)}
+                      <td className="px-2 py-1.5 text-right">
+                        {r.warnings?.length
+                          ? <span className="whitespace-nowrap rounded-full border border-del-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">check dose</span>
+                          : r.flagged && <span className="rounded-full border border-warn-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">check</span>}
+                      </td>
+                    </tr>
+                    {!!r.warnings?.length && (
+                      <tr className="border-b border-del-line bg-del-bg text-del-fg">
+                        <td colSpan={cols.length + 1} className="px-2 pb-2 pt-0.5 text-[11px]">
+                          {r.warnings.map((m) => <div key={m} className="flex items-start gap-1.5"><AlertTriangle className="mt-0.5 size-3 shrink-0" />{m}</div>)}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

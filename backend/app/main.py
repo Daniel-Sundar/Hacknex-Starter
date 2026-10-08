@@ -189,8 +189,10 @@ def handwriting_recontext(req: RecontextRequest):
     list, so other flagged copies of the same word can resolve. No vision calls. Words that are not
     flagged (including the human's answers, resolved_by "human") are never changed."""
     from . import handwriting
+    from . import rx_safety
     kind = req.doc_type if req.doc_type in ("prescription", "note") else "note"
     try:
-        return {"words": handwriting.context_fix(req.words, handwriting.writer_words(req.writer), kind)}
+        words = handwriting.context_fix(req.words, handwriting.writer_words(req.writer), kind)
+        return {"words": rx_safety.lasa_flags(words) if kind == "prescription" else words}
     except (RuntimeError, ValueError) as e:
         raise HTTPException(502, str(e))

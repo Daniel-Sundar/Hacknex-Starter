@@ -27,7 +27,7 @@ from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from difflib import SequenceMatcher, get_close_matches
 from pathlib import Path
 
-from . import llm
+from . import llm, rx_safety
 
 CACHE = Path(__file__).resolve().parent.parent / ".cache"
 LEXICON = Path(__file__).resolve().parent.parent / "data" / "lexicon.txt"
@@ -118,8 +118,9 @@ def _cached(key_parts: list, fn):
         value = json.loads(f.read_text(encoding="utf-8"))
         if not (isinstance(value, str) and not value.strip()):  # never trust a cached empty reply
             return value
-    if os.getenv("HW_CACHE_ONLY") == "1" and key_parts[0] in ("read", "reread"):
-        raise RuntimeError("not in cache (HW_CACHE_ONLY=1)")  # experiments replay, never call vision models
+    local = len(key_parts) > 2 and key_parts[2] == "ollama"  # runs on this laptop: free, so always allowed
+    if os.getenv("HW_CACHE_ONLY") == "1" and key_parts[0] in ("read", "reread") and not local:
+        raise RuntimeError("not in cache (HW_CACHE_ONLY=1)")  # experiments replay, never call cloud vision models
     value = fn()
     if not (isinstance(value, str) and not value.strip()):
         f.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
@@ -674,7 +675,9 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
     if use_context:
         words = reread(img, words, kind)  # look again at the photo, with the sentence as a hint
         words = context_fix(words, writer_words(writer), kind)  # then lexicon / candidates only
-    flagged = sum(1 for w in words if w.get("flagged"))
+    if kind == "prescription":  # a drug name that looks like another drug is checked even if all readers agree
+        words = rx_safety.lasa_flags(words)
+    flagged =sum(1 for w in words if w.get("flagged"))
     return {
         "text": render(words),
         "marked": render(words, mark_flags=True),
@@ -715,6 +718,8 @@ def rx_table(marked: str) -> list[dict]:
     rows = out.get("rows", []) if isinstance(out, dict) else []
     source_numbers = set(_numbers(_FLAG.sub(r"\1", marked)))
     flagged_numbers = {n for m in _FLAG.findall(marked) for n in _numbers(m)}
+    # Small models drop the [[ ]] marks: a field that holds a flagged word still flags its row.
+    flagged_words = {norm(t) for m in _FLAG.findall(marked) for t in m.split() if not _numbers(t)}
     clean_rows = []
     for row in rows if isinstance(rows, list) else []:
         if not isinstance(row, dict):
@@ -722,6 +727,7 @@ def rx_table(marked: str) -> list[dict]:
         vals = {f: str(row.get(f) or "") for f in TABLE_FIELDS}
         nums = [n for v in vals.values() for n in _numbers(_FLAG.sub(r"\1", v))]
         flagged = (any(_FLAG.search(v) for v in vals.values())
-                   or any(n in flagged_numbers or n not in source_numbers for n in nums))
+                   or any(n in flagged_numbers or n not in source_numbers for n in nums)
+                   or any(norm(t) in flagged_words for v in vals.values() for t in v.split()))
         clean_rows.append({**{f: _FLAG.sub(r"\1", v).strip() for f, v in vals.items()}, "flagged": flagged})
-    return clean_rows
+    return rx_safety.check_rows(clean_rows)  # dose sanity check: usual strengths, max per day
