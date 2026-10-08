@@ -32,6 +32,7 @@ CACHE = Path(__file__).resolve().parent.parent / ".cache"
 LEXICON = Path(__file__).resolve().parent.parent / "data" / "lexicon.txt"
 WRITERS = Path(__file__).resolve().parent.parent / "data" / "writers"  # per-writer confirmed words
 UNREADABLE = "[?]"
+MARGIN = "[margin]"
 
 # Tested 2026-10-08 on real handwriting. Groq's qwen goes first: fast, accurate and the most
 # generous free tier (it is also the single reader when vote=false). Gemini free tier is only
@@ -247,6 +248,8 @@ def vote(readings: dict[str, str]) -> list[dict]:
 
     def surface_of(cands: list[str], key: str) -> str:  # prefer a spelling without brackets
         same = [t for t in cands if norm(t) == key]
+        if MARGIN in same:  # structural tag from READ_PROMPT, keep it as is
+            return MARGIN
         return next((t for t in same if "[" not in t), same[0]).strip("[]") or same[0]
 
     def inserted(g: int) -> list[dict]:

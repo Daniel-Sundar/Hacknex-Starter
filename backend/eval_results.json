@@ -1,0 +1,167 @@
+{
+ "totals": {
+  "baseline": {
+   "char_edits": 13,
+   "ref_chars": 605,
+   "word_edits": 4,
+   "ref_words": 104,
+   "wrong": 3,
+   "flagged": 0,
+   "flagged_wrong": 0
+  },
+  "vote (no clean)": {
+   "char_edits": 12,
+   "ref_chars": 605,
+   "word_edits": 4,
+   "ref_words": 104,
+   "wrong": 3,
+   "flagged": 1,
+   "flagged_wrong": 1
+  },
+  "clean (single reader)": {
+   "char_edits": 68,
+   "ref_chars": 605,
+   "word_edits": 20,
+   "ref_words": 104,
+   "wrong": 14,
+   "flagged": 0,
+   "flagged_wrong": 0
+  },
+  "clean + vote": {
+   "char_edits": 6,
+   "ref_chars": 605,
+   "word_edits": 2,
+   "ref_words": 104,
+   "wrong": 2,
+   "flagged": 1,
+   "flagged_wrong": 0
+  },
+  "clean + vote + context": {
+   "char_edits": 6,
+   "ref_chars": 605,
+   "word_edits": 2,
+   "ref_words": 104,
+   "wrong": 2,
+   "flagged": 0,
+   "flagged_wrong": 0
+  }
+ },
+ "per_sample": [
+  {
+   "sample": "001.webp",
+   "baseline": {
+    "wer": 0.029,
+    "char_edits": 10,
+    "ref_chars": 429,
+    "word_edits": 2,
+    "ref_words": 69,
+    "wrong": 1,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 1
+   },
+   "vote (no clean)": {
+    "wer": 0.043,
+    "char_edits": 11,
+    "ref_chars": 429,
+    "word_edits": 3,
+    "ref_words": 69,
+    "wrong": 2,
+    "flagged": 1,
+    "flagged_wrong": 1,
+    "readers": 3
+   },
+   "clean (single reader)": {
+    "wer": 0.188,
+    "char_edits": 45,
+    "ref_chars": 429,
+    "word_edits": 13,
+    "ref_words": 69,
+    "wrong": 8,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 1
+   },
+   "clean + vote": {
+    "wer": 0.029,
+    "char_edits": 6,
+    "ref_chars": 429,
+    "word_edits": 2,
+    "ref_words": 69,
+    "wrong": 2,
+    "flagged": 1,
+    "flagged_wrong": 0,
+    "readers": 3
+   },
+   "clean + vote + context": {
+    "wer": 0.029,
+    "char_edits": 6,
+    "ref_chars": 429,
+    "word_edits": 2,
+    "ref_words": 69,
+    "wrong": 2,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 3
+   }
+  },
+  {
+   "sample": "002.png",
+   "baseline": {
+    "wer": 0.057,
+    "char_edits": 3,
+    "ref_chars": 176,
+    "word_edits": 2,
+    "ref_words": 35,
+    "wrong": 2,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 1
+   },
+   "vote (no clean)": {
+    "wer": 0.029,
+    "char_edits": 1,
+    "ref_chars": 176,
+    "word_edits": 1,
+    "ref_words": 35,
+    "wrong": 1,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 3
+   },
+   "clean (single reader)": {
+    "wer": 0.2,
+    "char_edits": 23,
+    "ref_chars": 176,
+    "word_edits": 7,
+    "ref_words": 35,
+    "wrong": 6,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 1
+   },
+   "clean + vote": {
+    "wer": 0.0,
+    "char_edits": 0,
+    "ref_chars": 176,
+    "word_edits": 0,
+    "ref_words": 35,
+    "wrong": 0,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 5
+   },
+   "clean + vote + context": {
+    "wer": 0.0,
+    "char_edits": 0,
+    "ref_chars": 176,
+    "word_edits": 0,
+    "ref_words": 35,
+    "wrong": 0,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 5
+   }
+  }
+ ]
+}
