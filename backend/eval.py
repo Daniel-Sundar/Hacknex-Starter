@@ -103,19 +103,48 @@ def align(hyp: list[str], ref: list[str]) -> tuple[int, list[bool], set[int]]:
 # ---------- running the variants ----------
 
 def run_variant(name: str, data: bytes) -> dict:
-    """-> {"words": [(norm_word, flagged)], "readers": int, "error": str|None}"""
+    """-> {"words": [(norm_word, flagged)], "conf": [agreement per word or None], "readers": int, "error": str|None}"""
     try:
         if VARIANTS[name] is None:
             text = hw.baseline(data)
-            return {"words": [(w, False) for w in words_of(text)], "readers": 1, "error": None}
+            ws = words_of(text)
+            return {"words": [(w, False) for w in ws], "conf": [None] * len(ws), "readers": 1, "error": None}
         r = hw.digitize(data, **VARIANTS[name])
-        out = []
+        out, conf = [], []
         for w in r["words"]:
             for piece in words_of(w["text"]):  # a voted "word" can still hold e.g. "1-0-1"
                 out.append((piece, bool(w.get("flagged"))))
-        return {"words": out, "readers": len(r["readings"]), "error": None}
+                conf.append(w.get("confidence"))
+        return {"words": out, "conf": conf, "readers": len(r["readings"]), "error": None}
     except Exception as e:  # no reader answered: score as empty output, but say so
-        return {"words": [], "readers": 0, "error": str(e)[:160]}
+        return {"words": [], "conf": [], "readers": 0, "error": str(e)[:160]}
+
+
+BUCKETS = ["all agree (1.0)", "most agree (0.67-0.99)", "half agree (0.50-0.66)", "few agree (<0.50)"]
+
+
+def bucket(c: float) -> str:
+    return BUCKETS[0] if c >= 0.999 else BUCKETS[1] if c >= 0.665 else BUCKETS[2] if c >= 0.5 else BUCKETS[3]
+
+
+def calibrate(calib: dict, res: dict, ref_text: str) -> None:
+    """Reliability: for each agreement bucket, how many voted words were right."""
+    _, wrong, _ = align([w for w, _ in res["words"]], words_of(ref_text, ref=True))
+    for c, bad in zip(res["conf"], wrong):
+        if c is None:
+            continue
+        b = calib.setdefault(bucket(c), {"words": 0, "right": 0})
+        b["words"] += 1
+        b["right"] += not bad
+
+
+def calibration_table(calib: dict) -> str:
+    rows = ["| Reader agreement | Words | Right | Accuracy |", "|---|---|---|---|"]
+    for b in BUCKETS:
+        if b in calib:
+            n, r = calib[b]["words"], calib[b]["right"]
+            rows.append(f"| {b} | {n} | {r} | {pct(r, n)} |")
+    return "\n".join(rows)
 
 
 def score(hyp: list[tuple[str, bool]], ref_text: str) -> dict:
@@ -167,6 +196,7 @@ def evaluate(samples: list[Path], variants: list[str]) -> tuple[dict, dict, list
     keys = ["char_edits", "ref_chars", "word_edits", "ref_words", "wrong", "flagged", "flagged_wrong"]
     totals = {v: dict.fromkeys(keys, 0) for v in variants}
     readers = {v: [] for v in variants}
+    calib = {v: {} for v in variants}
     per_sample, notes = [], []
     for k, img in enumerate(samples, 1):
         data, ref = img.read_bytes(), img.with_suffix(".txt").read_text(encoding="utf-8")
@@ -175,6 +205,7 @@ def evaluate(samples: list[Path], variants: list[str]) -> tuple[dict, dict, list
         for v in variants:
             res = run_variant(v, data)
             s = score(res["words"], ref)
+            calibrate(calib[v], res, ref)
             for key in keys:
                 totals[v][key] += s[key]
             readers[v].append(res["readers"])
@@ -185,7 +216,7 @@ def evaluate(samples: list[Path], variants: list[str]) -> tuple[dict, dict, list
         print(f"  [{k}/{len(samples)}] {row['sample']} done in {time.time() - t0:.0f}s", flush=True)
         if time.time() - t0 > 1:  # only pause when real API calls were made (not cache hits)
             time.sleep(SLEEP)
-    return totals, readers, per_sample, notes
+    return totals, readers, per_sample, notes, calib
 
 
 def robustness_table(results: dict) -> str:
@@ -229,7 +260,7 @@ def main():
         for cond, folder in conds.items():
             samples = find_samples(folder, args.split)[:args.limit or None]
             print(f"{cond}: {len(samples)} samples", flush=True)
-            totals, _, _, notes = evaluate(samples, ["baseline", "clean + vote + context"])
+            totals, _, _, notes, _ = evaluate(samples, ["baseline", "clean + vote + context"])
             results[cond], all_notes = totals, all_notes + notes
         n = len(find_samples(Path(args.samples), args.split)[:args.limit or None])
         md = (f"## Robustness ({n} samples x {len(conds)} image conditions, split={args.split})\n\n"
@@ -243,7 +274,7 @@ def main():
         if not samples:
             sys.exit(f"No image + .txt pairs in {args.samples} for split={args.split}")
         variants = [v.strip() for v in args.variants.split(",") if v.strip()] or list(VARIANTS)
-        totals, readers, per_sample, notes = evaluate(samples, variants)
+        totals, readers, per_sample, notes, calib = evaluate(samples, variants)
         md = (f"## Handwriting ablation ({len(samples)} samples, split={args.split}, "
               f"{next(iter(totals.values()))['ref_words']} ground-truth words)\n\n"
               + table(totals, readers, len(samples))
@@ -251,7 +282,16 @@ def main():
                 "Confident errors = wrong words that were not flagged.\n")
         if notes:
             md += "\n### Failures (scored as empty output)\n" + "\n".join(notes) + "\n"
-        payload = {"split": args.split, "totals": totals, "per_sample": per_sample}
+        main_v = next((v for v in ["clean + vote + context", "clean + vote"] if v in calib and calib[v]), None)
+        if main_v:
+            top = calib[main_v].get(BUCKETS[0])
+            md += (f"\n### Calibration ({main_v}): is agreement a trustworthy signal?\n\n"
+                   + calibration_table(calib[main_v]) + "\n")
+            if top:
+                md += (f"\nWhen all readers agree, the word is right {pct(top['right'], top['words'])} of the time "
+                       f"({top['right']}/{top['words']} words).\n")
+        payload = {"split": args.split, "samples": len(samples), "totals": totals, "calibration": calib,
+                   "per_sample": per_sample}
 
     print("\n" + md)
     out.with_suffix(".md").write_text(md, encoding="utf-8")
