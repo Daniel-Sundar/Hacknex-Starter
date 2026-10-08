@@ -26,11 +26,11 @@ settings (which readers vote, how many must agree) were chosen on a dev split an
 
 Code: `backend/app/handwriting.py` (pipeline), `backend/app/main.py` (routes `/api/handwriting`, `/answer`,
 `/recontext`, `/table`, `/eval`), `backend/eval.py` (ablation, calibration, robustness), `backend/tune.py`
-(settings search), `backend/augment.py` (degraded copies), `frontend/src/pages/Handwriting.tsx` and `Results.tsx`.
+(settings search), `backend/augment.py` (degraded copies), `frontend/src/pages/Handwriting.tsx`.
 
 ## Results
 > **Dev split so far** (14 labelled samples, 1146 words). The held-out **test split** numbers replace this after
-> the final run (`eval.py --split test`); the app's **Results** tab always shows the latest.
+> the final run (`eval.py --split test`); `GET /api/handwriting/eval` always returns the latest.
 
 | Variant | CER | WER | Confident errors (wrong, not flagged) | Flag recall |
 |---|---|---|---|---|
