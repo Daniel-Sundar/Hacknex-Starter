@@ -1,58 +1,69 @@
 @import "tailwindcss";
 
-/* ClearScript, "Scholastic" edition: an enchanted-library manuscript look.
-   Parchment is the default (<html data-theme="light">); no attribute = the "Ravenclaw night" dark theme.
-   Burgundy for actions, brass for borders, gold only as a small accent. All text pairs >= 4.5:1 (WCAG AA). */
+/* ClearScript design system: calm, clinical, high legibility.
+   Light is the default (<html data-theme="light">); no attribute = dark. Every text pair is >= 4.5:1 and every
+   control border >= 3:1 (WCAG 2.2 AA). The app's look is scoped to .cs-app, so the journal intro and the
+   pen loading card keep their own styling. Spacing uses only the 4/8/12/16/24/32 steps (Tailwind 1,2,3,4,6,8);
+   text uses four sizes: xs 12, sm 14, base 16, lg 20. */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* One sans family. Indic / Urdu glyphs fall through to the Noto face the language picker loads
+     (--font-script), then to the OS (Nirmala UI on Windows). */
+  --font-sans: "Inter", var(--font-script, "Nirmala UI"), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
-  --font-display: "Cinzel", "Trajan Pro", "Times New Roman", serif;          /* logo, section labels */
-  --font-serif: "Cormorant Garamond", "Garamond", "Times New Roman", serif;  /* card titles */
 
-  /* Ravenclaw night (dark) */
-  --color-page: #0e1320;
-  --color-panel: #161c2c;
-  --color-elev: #1e2537;
-  --color-elev-hover: #262e43;
-  --color-well: #0e1320;
-  --color-line: #4a4232;      /* dim brass */
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
 
-  --color-ink: #f4ede0;
-  --color-body: #d9cfbd;
-  --color-muted: #a39885;
+  /* surfaces */
+  --color-page: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-subtle: #eef0f3;
+  --color-line: #dde1e7;          /* dividers (decorative) */
+  --color-line-strong: #7f8998;   /* control borders, 3.4:1 on surface */
 
-  --color-brand: #9b1c20;         /* Gryffindor burgundy: CTAs + active states */
-  --color-brand-strong: #8c181c;  /* white text 8:1 */
-  --color-brand-soft: #e2c36b;    /* icon / link accent */
-  --color-gold: #d4af37;
-  --color-gold-deep: #b45309;
+  /* text */
+  --color-ink: #111827;
+  --color-body: #374151;
+  --color-muted: #5b6574;         /* 5.5:1 on page */
 
-  --color-warn: #d97706; --color-warn-bg: rgb(69 26 3 / 0.45); --color-warn-fg: #fcd34d; --color-warn-line: rgb(146 64 14 / 0.55);
-  --color-info: #3b5bdb; --color-info-bg: rgb(30 58 138 / 0.35); --color-info-fg: #a5b8f5; --color-info-line: rgb(30 58 138 / 0.7);
-  --color-ok: #2f855a;   --color-ok-bg: rgb(2 44 34 / 0.5);    --color-ok-fg: #8fd8b0;   --color-ok-line: rgb(6 95 70 / 0.55);
-  --color-del-bg: rgb(69 10 10 / 0.4);  --color-del-fg: #f6a19b; --color-del-line: rgb(153 27 27 / 0.5);
-  --color-add-bg: rgb(2 44 34 / 0.4);   --color-add-fg: #8fd8b0; --color-add-line: rgb(6 95 70 / 0.5);
+  /* action */
+  --color-accent: #1d4ed8;        /* white text 6.7:1 */
+  --color-accent-hover: #1e40af;
+  --color-accent-fg: #ffffff;
+  --color-accent-text: #1d4ed8;
+  --color-accent-soft: #e8efff;
+  --color-brand: var(--color-accent); /* old name, kept for the starter pages */
+
+  /* meaning: flag = needs verification, danger = look-alike drug / error, info = fixed by context,
+     ok = agreed or confirmed by a person */
+  --color-flag-bg: #fff4d6;   --color-flag-fg: #7a4300;   --color-flag-line: #b07400;
+  --color-danger-bg: #fdeceb; --color-danger-fg: #a3151b; --color-danger-line: #d9787c;
+  --color-info-bg: #eef1ff;   --color-info-fg: #2b3a99;   --color-info-line: #8f9fe0;
+  --color-ok-bg: #e6f5ec;     --color-ok-fg: #0f5f38;     --color-ok-line: #6fb58f;
+
+  --shadow-pop: 0 1px 2px rgb(17 24 39 / 0.08), 0 12px 32px -8px rgb(17 24 39 / 0.24);
 }
 
-/* Parchment (default) */
-:root[data-theme="light"] {
-  --color-page: #efe6d5;
-  --color-panel: #faf6ee;
-  --color-elev: #fdfaf3;
-  --color-elev-hover: #f4ecdc;
-  --color-well: #f3ecdd;
-  --color-line: #c8b293;          /* brass */
-  --color-ink: #231a12;           /* iron-gall ink */
-  --color-body: #3a2e24;
-  --color-muted: #6b5a47;         /* 5.0:1 on parchment */
-  --color-brand: #7b1113;
-  --color-brand-strong: #7b1113;  /* white text 11:1 */
-  --color-brand-soft: #7b1113;
-  --color-warn-bg: #fbf1d9; --color-warn-fg: #92400e; --color-warn-line: #e8c98a;
-  --color-info-bg: #eaeefa; --color-info-fg: #1e3a8a; --color-info-line: #b9c5ea;   /* Ravenclaw navy */
-  --color-ok-bg: #e8f2ea;   --color-ok-fg: #1f5c3a;   --color-ok-line: #b5d3bd;
-  --color-del-bg: #f8e6e2;  --color-del-fg: #8f1d1d;  --color-del-line: #e3b7ae;
-  --color-add-bg: #e8f2ea;  --color-add-fg: #1f5c3a;  --color-add-line: #b5d3bd;
+/* dark */
+:root:not([data-theme="light"]) {
+  --color-page: #0e1116;
+  --color-surface: #151a21;
+  --color-subtle: #1b212a;
+  --color-line: #2a323d;
+  --color-line-strong: #5f6b7c;
+  --color-ink: #eef1f5;
+  --color-body: #c9d0da;
+  --color-muted: #9aa4b2;
+  --color-accent: #2f62d9;
+  --color-accent-hover: #3b6fe6;
+  --color-accent-fg: #ffffff;
+  --color-accent-text: #8fb2ff;
+  --color-accent-soft: #1a2440;
+  --color-flag-bg: #33260a;   --color-flag-fg: #f5c451;   --color-flag-line: #a07a1c;
+  --color-danger-bg: #3a1416; --color-danger-fg: #ff9e9e; --color-danger-line: #a0444a;
+  --color-info-bg: #1c2350;   --color-info-fg: #aebcff;   --color-info-line: #5566c0;
+  --color-ok-bg: #10301f;     --color-ok-fg: #86dcae;     --color-ok-line: #2f8a5c;
+  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -8px rgb(0 0 0 / 0.6);
 }
 
 html { color-scheme: dark; }
@@ -62,78 +73,71 @@ body {
   background: var(--color-page);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scholar's study (default): the main app's look lives in src/styles/study.css, scoped to the app shell. */
-html[data-theme="light"] body {
-  background: #120d09;
-}
-
-/* Ravenclaw night: a faint star-chart grid instead of the parchment */
-body {
-  background-image:
-    linear-gradient(to right, rgb(212 175 55 / 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(212 175 55 / 0.035) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-/* Panels sit on the parchment like bound vellum: brass hairline plus a soft ambient shadow */
-html[data-theme="light"] .surface { box-shadow: 0 1px 2px rgb(92 64 30 / 0.08), 0 4px 14px -6px rgb(92 64 30 / 0.16); }
-html[data-theme="light"] .elev { box-shadow: 0 1px 2px rgb(92 64 30 / 0.07); }
-
-/* Card / section titles in a bookish serif */
-@utility title {
-  font-family: var(--font-serif);
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-  line-height: 1.2;
+/* ---------- app shell (everything below is scoped; nothing reaches the intro) ---------- */
+.cs-app {
+  min-height: 100vh;
+  background: var(--color-page);
   color: var(--color-ink);
+  /* declared here, not via --font-sans: the language picker sets --font-script on this element */
+  font-family: "Inter", var(--font-script, "Nirmala UI"), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-feature-settings: "cv11";
+}
+.cs-app :focus-visible {
+  outline: 2px solid var(--color-accent-text);
+  outline-offset: 2px;
+}
+.cs-app ::selection { background: var(--color-accent-soft); color: var(--color-ink); }
+.cs-app h1, .cs-app h2, .cs-app h3 { text-wrap: balance; }
+
+/* Urdu (Nastaliq) needs more line height */
+.cs-app[lang="ur"] { line-height: 2; }
+
+/* Transcribed text: tabular, slashed zero, l with a tail, so 0/O and l/1 read apart */
+@utility transcript {
+  font-feature-settings: "tnum", "zero", "cv05", "cv08";
+  font-size: 1rem;
+  line-height: 2.25rem;
 }
 
-/* Small engraved labels (INPUT, PIPELINE, stat names) */
-@utility engraved {
-  font-family: var(--font-display);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-/* Card: flat surface with a crisp 1px border */
-@utility surface {
-  background: var(--color-panel);
+/* Native <dialog>: centred card on desktop, bottom sheet on phones */
+.cs-dialog {
+  margin: auto;
+  padding: 0;
   border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-pop);
+  width: min(100% - 2rem, var(--dialog-w, 32rem));
+  max-height: min(100dvh - 2rem, 48rem);
 }
-
-/* Raised control: secondary buttons, toggle cards, chips */
-@utility elev {
-  background: var(--color-elev);
-  border: 1px solid var(--color-line);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
-  transition: all 150ms ease-in-out;
-  &:hover { background: var(--color-elev-hover); }
+.cs-dialog::backdrop { background: rgb(9 12 17 / 0.5); }
+@media (max-width: 639px) {
+  .cs-dialog {
+    margin: auto 0 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0.75rem 0.75rem 0 0;
+    max-height: 90dvh;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
-
-/* Recessed output box */
-@utility well {
-  background: var(--color-well);
+@media (prefers-reduced-motion: no-preference) {
+  .cs-dialog[open] { animation: cs-rise 160ms ease-out; }
 }
+@keyframes cs-rise { from { opacity: 0; transform: translateY(8px); } }
 
-/* Keyboard shortcut badge */
-@utility kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0 0.3rem;
-  border-radius: 0.3rem;
-  border: 1px solid currentColor;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  line-height: 1;
-  opacity: 0.8;
+@media (prefers-reduced-motion: reduce) {
+  .cs-app *, .cs-app *::before, .cs-app *::after,
+  .cs-dialog, .cs-dialog * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

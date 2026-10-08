@@ -1,0 +1,96 @@
+// Docs Q&A screen.
+export default {
+  // How it works (before any document is loaded)
+  "docs.empty.title": "How it works",
+  "docs.empty.step1": "Add PDF, TXT, MD or CSV files under Documents.",
+  "docs.empty.step2": "Ask a question in plain language.",
+  "docs.empty.step3": "Check the cited passages. Each answer links to the parts of your files it comes from.",
+  "docs.noAnswers.title": "No questions yet",
+  "docs.noAnswers.body": "Answers appear here, with links to the passages they come from.",
+
+  // Documents panel
+  "docs.files.title": "Documents",
+  "docs.files.loading": "Loading your documents…",
+  "docs.files.none": "No documents loaded yet.",
+  "docs.files.listLabel": "Loaded documents",
+  "docs.files.count_one": "{count} document loaded",
+  "docs.files.count_other": "{count} documents loaded",
+  "docs.files.passages_one": "{count} passage",
+  "docs.files.passages_other": "{count} passages",
+  "docs.files.added": "Added",
+  "docs.files.replaced": "Replaced",
+  "docs.files.remove": "Remove {name}",
+  "docs.files.removed": "Removed {name}.",
+  "docs.files.removeAll": "Remove all",
+  "docs.files.memoryNote": "Documents stay in server memory until you remove them or the server restarts.",
+  "docs.files.localNote": "This server can't list its documents, so only files added in this session are shown.",
+
+  // Upload
+  "docs.upload.title": "Add documents",
+  "docs.upload.titleMore": "Add more documents",
+  "docs.upload.hint": "Drop files here or choose them. PDF, TXT, MD or CSV, up to {limit} MB each.",
+  "docs.upload.listLabel": "Uploads",
+  "docs.upload.waiting": "Waiting…",
+  "docs.upload.uploading": "Uploading and reading…",
+  "docs.upload.retry": "Try again: {name}",
+  "docs.upload.dismiss": "Dismiss {name}",
+  "docs.upload.done": "Added {name}, {passages}.",
+  "docs.upload.failed": "Couldn't add {name}. {reason}",
+
+  // Checks before uploading, and upload errors with copy specific to documents
+  "docs.check.type.title": "This file type can't be added",
+  "docs.check.type.body": "Use a PDF, TXT, MD or CSV file.",
+  "docs.check.size.body": "This file is {size} MB. The limit is {limit} MB. Split it or upload a smaller file.",
+  "docs.check.pdf.title": "This isn't a real PDF",
+  "docs.check.pdf.body": "The name ends in .pdf but the contents don't match. Export it as PDF again, or save it as a TXT file.",
+  "docs.err.tooLarge.body": "The limit is {limit} MB. Split it or upload a smaller file.",
+  "docs.err.model.title": "The AI model didn't answer",
+  "docs.err.model.body": "It may be busy or out of quota. Wait a minute and try again.",
+
+  // Remove all
+  "docs.clear.title": "Remove all documents?",
+  "docs.clear.body_one": "This removes {count} document from the server. To ask about it again, upload it again.",
+  "docs.clear.body_other": "This removes {count} documents from the server. To ask about them again, upload them again.",
+  "docs.clear.confirm": "Remove all documents",
+  "docs.clear.done": "All documents removed.",
+
+  // Question form
+  "docs.ask.title": "Ask a question",
+  "docs.ask.label": "Your question",
+  "docs.ask.hint": "Press Enter to ask. Shift+Enter starts a new line.",
+  "docs.ask.submit": "Ask",
+  "docs.ask.counter": "{count} of {max} characters",
+  "docs.ask.over_one": "{count} character over the limit",
+  "docs.ask.over_other": "{count} characters over the limit",
+  "docs.ask.empty": "Type a question first.",
+  "docs.ask.tooLong": "Shorten your question to {max} characters or fewer.",
+  "docs.ask.needDocs": "Add a document first. Answers come only from your documents.",
+  "docs.ask.waitUpload": "You can ask once a document has finished uploading.",
+  "docs.ask.waitList": "Checking which documents are loaded…",
+  "docs.ask.pending": "Searching your documents and writing an answer…",
+  "docs.ask.ready_one": "Answer ready, based on {count} passage.",
+  "docs.ask.ready_other": "Answer ready, based on {count} passages.",
+  "docs.ask.readyUngrounded": "Answer ready. No matching passage was found in your documents.",
+  "docs.ask.readyElsewhere": "Your answer is ready in Docs Q&A.",
+
+  // Answers
+  "docs.answers.title": "Answers",
+  "docs.answers.note": "Kept only until you reload the page.",
+  "docs.answer.asked": "You asked",
+  "docs.answer.show": "Show answer",
+  "docs.answer.hide": "Hide answer",
+  "docs.answer.grounded": "Grounded in your documents",
+  "docs.answer.checkCited": "Check the cited passages before relying on the answer.",
+  "docs.answer.ungrounded.title": "No matching passage found",
+  "docs.answer.ungrounded.body": "This answer is not backed by your documents. Rephrase the question, or add a document that covers it.",
+  "docs.answer.noCites": "The answer doesn't point to a specific passage. Check the sources below before relying on it.",
+  "docs.answer.badCites": "Some citation numbers in the answer don't match a returned passage, so they are shown as plain text.",
+  "docs.answer.newTab": "(opens in a new tab)",
+
+  // Sources and citations
+  "docs.sources.title": "Sources",
+  "docs.sources.number": "Source {n}:",
+  "docs.sources.more": "Show full passage",
+  "docs.sources.less": "Show less",
+  "docs.cite.label": "Source {n}: {name}",
+};

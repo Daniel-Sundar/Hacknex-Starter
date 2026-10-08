@@ -1,0 +1,36 @@
+/* The "Consulting every model…" pen card shown while a page is digitized. It is part of the loading
+   experience and must look exactly as it did before the redesign, so its colours and type are frozen here
+   (light = the old parchment frame, dark = the old night theme) instead of reading the app's tokens. */
+.legacy-loading {
+  overflow: hidden;
+  border: 1px solid #c8b293;
+  border-radius: 0.75rem;
+  background: #faf6ee;
+  box-shadow: 0 1px 2px rgb(92 64 30 / 0.08), 0 4px 14px -6px rgb(92 64 30 / 0.16);
+  color: #21150e;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.legacy-loading__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #c8b293;
+  padding: 10px 16px;
+  font-size: 12px;
+}
+.legacy-loading__title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+  color: #231a12;
+}
+.legacy-loading__hint { color: #6b5a47; }
+
+:root:not([data-theme="light"]) .legacy-loading { border-color: #4a4232; background: #161c2c; box-shadow: none; color: #f4ede0; }
+:root:not([data-theme="light"]) .legacy-loading__bar { border-color: #4a4232; }
+:root:not([data-theme="light"]) .legacy-loading__title { font-family: "Cormorant Garamond", "Garamond", "Times New Roman", serif; color: #f4ede0; }
+:root:not([data-theme="light"]) .legacy-loading__hint { color: #a39885; }

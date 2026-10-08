@@ -11,11 +11,13 @@ persistence or >10k chunks.
 import io
 import math
 import re
+import threading
 from collections import Counter
 
 from . import llm
 
 STORE: list[dict] = []  # {"source", "text", "vec"}
+_lock = threading.Lock()  # uploads, deletes and searches can run at the same time
 _model = None
 
 
@@ -58,18 +60,43 @@ def extract_text(filename: str, data: bytes) -> str:
     return data.decode("utf-8", errors="ignore")
 
 
-def ingest(filename: str, data: bytes) -> int:
-    chunks = _chunks(extract_text(filename, data))
-    for text, vec in zip(chunks, _embed(chunks)):
-        STORE.append({"source": filename, "text": text, "vec": vec})
+def ingest(filename: str, data: bytes, text: str | None = None) -> int:
+    """Add a document. A file with the same name replaces its old chunks.
+    text: already extracted text (skips extracting it again)."""
+    chunks = _chunks(extract_text(filename, data) if text is None else text)
+    vecs = _embed(chunks) if chunks else []
+    with _lock:
+        _remove(filename)
+        STORE.extend({"source": filename, "text": t, "vec": v} for t, v in zip(chunks, vecs))
     return len(chunks)
 
 
+def _remove(source: str) -> int:
+    before = len(STORE)
+    STORE[:] = [c for c in STORE if c["source"] != source]  # in place: other modules hold this list
+    return before - len(STORE)
+
+
+def remove(source: str) -> int:
+    """Drop one document. Returns how many chunks were removed (0 = no such document)."""
+    with _lock:
+        return _remove(source)
+
+
+def list_docs() -> list[dict]:
+    """[{"source", "chunks"}] in upload order."""
+    with _lock:
+        counts = Counter(c["source"] for c in STORE)
+    return [{"source": s, "chunks": n} for s, n in counts.items()]
+
+
 def search(query: str, k: int = 4) -> list[dict]:
-    if not STORE:
+    with _lock:
+        store = list(STORE)
+    if not store:
         return []
     q = _embed([query])[0]
-    ranked = sorted(STORE, key=lambda c: _sim(q, c["vec"]), reverse=True)[:k]
+    ranked = sorted(store, key=lambda c: _sim(q, c["vec"]), reverse=True)[:k]
     return [{"source": c["source"], "text": c["text"]} for c in ranked]
 
 
@@ -83,4 +110,5 @@ def answer(question: str) -> dict:
 
 
 def clear():
-    STORE.clear()
+    with _lock:
+        STORE.clear()

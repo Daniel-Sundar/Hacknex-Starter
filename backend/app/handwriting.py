@@ -99,6 +99,29 @@ def _name(provider: str, model: str | None) -> str:
     return f"{provider}:{model}" if model else provider
 
 
+def reader_names() -> list[str]:
+    """First model name of every reader slot, in slot order."""
+    return [_name(*r) for r in _readers()]
+
+
+class InputError(RuntimeError):
+    """The upload itself is unreadable (bad image or PDF), as opposed to a model failure."""
+
+
+def _emit(progress, event: dict) -> None:
+    """Send one progress event. A broken callback must never break the pipeline."""
+    if progress is None:
+        return
+    try:
+        progress(event)
+    except Exception:
+        pass
+
+
+def _ms(t0: float) -> int:
+    return int((time.monotonic() - t0) * 1000)
+
+
 _exhausted: dict[str, float] = {}  # model name -> time it ran out of quota (this process only)
 _lock = threading.Lock()
 
@@ -175,7 +198,7 @@ def _pdf_image(data: bytes) -> bytes:
     xobjects = page.get("/Resources", {}).get("/XObject", {})
     images = [x.get_object() for x in xobjects.values() if x.get_object().get("/Subtype") == "/Image"]
     if not images:
-        raise RuntimeError("This PDF has no scanned image on page 1 (typed PDFs are not handwriting).")
+        raise InputError("This PDF has no scanned image on page 1 (typed PDFs are not handwriting).")
     im = max(images, key=lambda x: int(x["/Width"]) * int(x["/Height"]))
     filters = im.get("/Filter")
     filters = filters if isinstance(filters, list) else [filters]
@@ -185,7 +208,7 @@ def _pdf_image(data: bytes) -> bytes:
     raw = np.frombuffer(im.get_data(), np.uint8)
     channels = raw.size // (w * h)
     if channels not in (1, 3) or int(im.get("/BitsPerComponent", 8)) != 8:
-        raise RuntimeError("Unsupported image format inside this PDF. Export the page as JPG instead.")
+        raise InputError("Unsupported image format inside this PDF. Export the page as JPG instead.")
     pixels = raw[: w * h * channels].reshape(h, w, channels)
     return cv2.imencode(".png", pixels[..., ::-1] if channels == 3 else pixels)[1].tobytes()
 
@@ -196,18 +219,22 @@ def prepare(data: bytes) -> bytes:
     if data[:5] == b"%PDF-":
         try:
             data = _pdf_image(data)
-        except RuntimeError:
+        except InputError:
             raise
         except Exception as e:
-            raise RuntimeError(f"Could not read this PDF ({type(e).__name__}). Try a JPG photo of the page.") from e
+            raise InputError(f"Could not read this PDF ({type(e).__name__}). Try a JPG photo of the page.") from e
     try:
         import cv2
         import numpy as np
     except ImportError:
         return data
-    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+    try:
+        img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+    except cv2.error as e:  # over OPENCV_IO_MAX_IMAGE_PIXELS (decompression bomb) or a broken header
+        raise InputError("This image is too large or damaged to open. Resize it below 60 megapixels "
+                         "or take a new photo.") from e
     if img is None:
-        raise RuntimeError("Could not open this file as an image. Use JPG, PNG, WEBP or a scanned PDF.")
+        raise InputError("Could not open this file as an image. Use JPG, PNG, WEBP or a scanned PDF.")
     h, w = img.shape[:2]
     if max(h, w) <= MAX_SIDE and len(data) <= MAX_BYTES:
         return data
@@ -288,11 +315,15 @@ def read_one(data: bytes, provider: str, model: str | None, prompt: str = READ_P
                    lambda: _strip_reasoning(_call_once_retry(provider, model, _image_msg(data, prompt))))
 
 
-def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str]) -> tuple[str, str | Exception]:
+def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str], progress=None,
+              index: int = 0) -> tuple[str, str | Exception]:
     """Try the slot's models in order until one answers. `claimed` (shared by all slots of one
     request) stops two voters from using the same model, which would count one opinion twice.
-    Returns (name of the model that answered, text) or (slot's first name, Exception)."""
+    Returns (name of the model that answered, text) or (slot's first name, Exception).
+    progress gets {"type": "reader", "slot": index, ...}: a "start" per model tried (a spare that stands in
+    sends a new "start"), then "done" (model = the one that answered) or "failed" (model = slot's first name)."""
     tried = []
+    t0 = time.monotonic()
     for provider, model in slot:
         name = _name(provider, model)
         with _lock:
@@ -302,9 +333,11 @@ def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str]
                 tried.append(f"{name}: out of quota")
                 continue
             claimed.add(name)
+        _emit(progress, {"type": "reader", "slot": index, "model": name, "status": "start"})
         try:
             text = read_one(data, provider, model)
             if text.strip():
+                _emit(progress, {"type": "reader", "slot": index, "model": name, "status": "done", "ms": _ms(t0)})
                 return name, text
             tried.append(f"{name}: empty reply")
         except Exception as e:
@@ -312,14 +345,27 @@ def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str]
                 with _lock:
                     _exhausted[name] = time.time()
             tried.append(f"{name}: {str(e)[:120]}")
-    return _name(*slot[0]), RuntimeError(" | ".join(tried) or "all models already in use")
+    error = RuntimeError(" | ".join(tried) or "all models already in use")
+    _emit(progress, {"type": "reader", "slot": index, "model": _name(*slot[0]), "status": "failed",
+                     "error": str(error)[:200], "ms": _ms(t0)})
+    return _name(*slot[0]), error
 
 
-def read_all(data: bytes) -> dict:
+def read_all(data: bytes, progress=None) -> dict:
     """{"readings": {reader: text}, "errors": {reader: error}}."""
     slots, claimed = _slots(), set()
+    t0 = time.monotonic()
+    gate, stopped = threading.Lock(), set()  # slots the vote stopped waiting for: their late events are dropped
+
+    def relay(i):
+        def send(event):
+            with gate:
+                if i not in stopped:
+                    _emit(progress, event)
+        return send
+
     pool = ThreadPoolExecutor(max_workers=len(slots))
-    futures = {pool.submit(read_slot, data, s, claimed): s for s in slots}
+    futures = {pool.submit(read_slot, data, s, claimed, relay(i), i): s for i, s in enumerate(slots)}
     # Wait for every voter to answer or fail; the vote starts as soon as the last one is in, or after
     # VOTE_DEADLINE seconds for the whole page. Voters still running then are left out of this vote but keep
     # running in the background and fill the cache for next time. Wait longer only if nobody answered.
@@ -329,6 +375,12 @@ def read_all(data: bytes) -> dict:
         more, pending = wait(pending, timeout=give_up - time.time(), return_when=FIRST_COMPLETED)
         done |= more
     pool.shutdown(wait=False)
+    with gate:
+        for i, f in enumerate(futures):
+            if f not in done:
+                stopped.add(i)
+                _emit(progress, {"type": "reader", "slot": i, "model": _name(*slots[i][0]), "status": "timeout",
+                                 "error": f"no answer within {VOTE_DEADLINE:.0f}s", "ms": _ms(t0)})
     results = [f.result() if f in done else (_name(*s[0]), TimeoutError(f"no answer within {VOTE_DEADLINE:.0f}s"))
                for f, s in futures.items()]
     readings = {n: t for n, t in results if isinstance(t, str) and t.strip()}
@@ -381,8 +433,9 @@ def vote(readings: dict[str, str], rule: str | None = None, digits_strict: bool 
          drop_minority: bool | None = None) -> list[dict]:
     """Align every reading to a pivot reading and majority-vote each word.
 
-    Returns [{text, confidence, flagged, alternatives}] where confidence = share of
-    models that agree on the chosen word. Newlines come through as {"text": "\\n"}.
+    Returns [{text, confidence, flagged, alternatives, votes, readers, by_model}] where confidence = share
+    of models that agree on the chosen word and by_model = {reader: what it wrote here, or None}.
+    Newlines come through as {"text": "\\n"}.
     """
     digits_strict = DIGITS_STRICT if digits_strict is None else digits_strict
     drop_minority = DROP_MINORITY if drop_minority is None else drop_minority
@@ -392,9 +445,11 @@ def vote(readings: dict[str, str], rule: str | None = None, digits_strict: bool 
     p = _pivot(toks) if n_models > 1 else 0
     pivot = toks[p]
     columns: list[list[str | None]] = [[t] for t in pivot]
+    order = [p] + [i for i in range(n_models) if i != p]  # reader behind each column entry
     # Words other readers have that the pivot skipped: gaps[g] = inserted token tuples, one per
     # reader, placed before pivot position g. Without this a word the pivot missed is silently lost.
     gaps: dict[int, list[tuple[str, ...]]] = {}
+    gap_names: dict[int, list[str]] = {}  # who inserted each gaps[g] entry, same order
 
     for i, other in enumerate(toks):
         if i == p:
@@ -410,6 +465,7 @@ def vote(readings: dict[str, str], rule: str | None = None, digits_strict: bool 
             extra = tuple(t for t in extra if t != "\n")
             if extra:
                 gaps.setdefault(a1 if op == "insert" else a2, []).append(extra)
+                gap_names.setdefault(a1 if op == "insert" else a2, []).append(names[i])
         for col, tok in zip(columns, aligned):
             col.append(tok)
 
@@ -418,6 +474,13 @@ def vote(readings: dict[str, str], rule: str | None = None, digits_strict: bool 
         if MARGIN in same:  # structural tag from READ_PROMPT, keep it as is
             return MARGIN
         return next((t for t in same if "[" not in t), same[0]).strip("[]") or same[0]
+
+    def by_model(col: list[str | None]) -> dict:
+        """What each reader wrote at this position (None = no word there)."""
+        out = dict.fromkeys(names)
+        for r, t in zip(order, col):
+            out[names[r]] = t if t and t != "\n" else None
+        return out
 
     def inserted(g: int) -> list[dict]:
         """Majority-vote the words readers added at gap g (pivot counts as 'nothing here')."""
@@ -430,9 +493,12 @@ def vote(readings: dict[str, str], rule: str | None = None, digits_strict: bool 
         seq = next(s for s in gaps[g] if tuple(norm(t) for t in s) == key)
         flagged = not trusted(votes, n_models, rule) or (
             digits_strict and votes < n_models and any(c.isdigit() for t in seq for c in t))
+        theirs = dict(zip(gap_names[g], gaps[g]))  # readers that did not insert here get None
         return [{"text": surface_of([t], norm(t)), "confidence": round(votes / n_models, 2),
                  "flagged": flagged, "alternatives": [], "votes": {surface_of([t], norm(t)): votes},
-                 "readers": n_models} for t in seq]
+                 "readers": n_models,
+                 "by_model": {n: theirs[n][k] if k < len(theirs.get(n, ())) else None for n in names}}
+                for k, t in enumerate(seq)]
 
     words = []
     for pos, col in enumerate(columns):
@@ -448,7 +514,7 @@ def vote(readings: dict[str, str], rule: str | None = None, digits_strict: bool 
         counts = Counter(norm(t) for t in real)
         if not counts:
             words.append({"text": UNREADABLE, "confidence": 0.0, "flagged": True, "alternatives": [],
-                          "votes": {}, "readers": n_models})
+                          "votes": {}, "readers": n_models, "by_model": by_model(col)})
             continue
         best, votes = counts.most_common(1)[0]
         surface = surface_of(real, best)
@@ -461,7 +527,8 @@ def vote(readings: dict[str, str], rule: str | None = None, digits_strict: bool 
             flagged = True
         words.append({"text": surface, "confidence": round(confidence, 2), "flagged": flagged,
                       "alternatives": alternatives,
-                      "votes": {surface_of(real, k): c for k, c in counts.items()}, "readers": n_models})
+                      "votes": {surface_of(real, k): c for k, c in counts.items()}, "readers": n_models,
+                      "by_model": by_model(col)})
     words.extend(inserted(len(columns)))
     return words
 
@@ -657,26 +724,55 @@ def baseline(data: bytes, provider: str | None = None, model: str | None = None)
 
 
 def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_context: bool = True,
-             writer: str | None = None) -> dict:
+             writer: str | None = None, progress=None) -> dict:
+    """progress (optional) gets one dict per event, in order: {"type": "plan", ...}, then
+    {"type": "stage", "stage": prepare|clean|read|vote|context|safety, "status": start|done|skipped}
+    with {"type": "reader", ...} events (see read_slot / read_all) between read start and read done."""
+    def stage(name: str, status: str, **extra):
+        _emit(progress, {"type": "stage", "stage": name, "status": status, **extra})
+
+    names = reader_names()
+    _emit(progress, {"type": "plan", "readers": names if use_vote else names[:1],
+                     "vote": use_vote, "clean": use_clean, "context": use_context})
+    stage("prepare", "start")
     data = prepare(data)
-    img = clean(data) if use_clean else data
+    stage("prepare", "done")
+    if use_clean:
+        stage("clean", "start")
+        img = clean(data)
+        stage("clean", "done")
+    else:
+        img = data
+        stage("clean", "skipped")
+    stage("read", "start")
     if use_vote:
-        r = read_all(img)
+        r = read_all(img, progress)
         readings, errors = r["readings"], r["errors"]
     else:
-        name, text = read_slot(img, _slots()[0], set())
+        name, text = read_slot(img, _slots()[0], set(), progress)
         if isinstance(text, Exception):
             raise RuntimeError(f"{name} failed: {str(text)[:200]}")
         readings, errors = {name: text}, {}
+    stage("read", "done", answered=len(readings), failed=len(errors))
+    stage("vote", "start")
     words = vote(readings)
     kind = doc_type(words)
     if kind == "prescription" and FLAG_RULE_RX != FLAG_RULE:
         words = vote(readings, rule=FLAG_RULE_RX)  # drugs and doses: every reader must agree
+    stage("vote", "done", doc_type=kind)
     if use_context:
+        stage("context", "start")
         words = reread(img, words, kind)  # look again at the photo, with the sentence as a hint
         words = context_fix(words, writer_words(writer), kind)  # then lexicon / candidates only
+        stage("context", "done")
+    else:
+        stage("context", "skipped")
     if kind == "prescription":  # a drug name that looks like another drug is checked even if all readers agree
+        stage("safety", "start")
         words = rx_safety.lasa_flags(words)
+        stage("safety", "done")
+    else:
+        stage("safety", "skipped")
     flagged =sum(1 for w in words if w.get("flagged"))
     return {
         "text": render(words),
