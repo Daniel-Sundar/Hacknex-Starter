@@ -20,6 +20,7 @@ import hashlib
 import json
 import os
 import re
+import threading
 import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -36,10 +37,17 @@ MARGIN = "[margin]"
 
 # Tested 2026-10-08 on real handwriting. Groq's qwen goes first: fast, accurate and the most
 # generous free tier (it is also the single reader when vote=false). Gemini free tier is only
-# 20 requests/day/model; gemma is often rate-limited. Readers that fail are skipped.
-DEFAULT_READERS = ("groq:qwen/qwen3.8-27b,gemini:gemini-3.5-flash,"
-                   "openrouter:dots-studio/dots-3-note-preview:free,gemini:gemini-3.6-flash,"
-                   "openrouter:google/gemma-4-31b-it:free")
+# 20 requests/day *per model*, so Gemini slots list spares after "|": when a model is used up
+# the next one stands in. Spares 3.7-flash / 3.8-flash / 3.1-flash-lite are not yet tested.
+# Readers that fail are skipped.
+DEFAULT_READERS = (
+    "groq:qwen/qwen3.8-27b,"
+    "gemini:gemini-3.5-flash|gemini:gemini-3.7-flash|gemini:gemini-3.1-flash-lite,"
+    "openrouter:dots-studio/dots-3-note-preview:free,"
+    "gemini:gemini-3.6-flash|gemini:gemini-3.8-flash|gemini:gemini-3.7-flash|gemini:gemini-3.1-flash-lite,"
+    "openrouter:google/gemma-4-31b-it:free|openrouter:google/gemma-4-26b-a4b-it:free"
+)
+EXHAUSTED_FOR = 3600  # s; a model out of daily quota is not asked again for this long
 DEFAULT_BASELINE = "groq:qwen/qwen3.8-27b"  # same model as the first reader, plain prompt
 READ_TIMEOUT = float(os.getenv("HW_READ_TIMEOUT", "90"))  # seconds per model call
 
@@ -61,11 +69,32 @@ def _parse(item: str) -> tuple[str, str | None]:
     return provider, model or None
 
 
-def _readers() -> list[tuple[str, str | None]]:
+def _slots() -> list[list[tuple[str, str | None]]]:
+    """Reader slots from HW_READERS: comma = next voter, "|" = spare models for that voter."""
     spec = os.getenv("HW_READERS", DEFAULT_READERS)
     if os.getenv("ANTHROPIC_API_KEY") and "claude" not in spec:
         spec += ",claude"
-    return [_parse(s) for s in spec.split(",") if s.strip()]
+    return [[_parse(m) for m in slot.split("|") if m.strip()] for slot in spec.split(",") if slot.strip()]
+
+
+def _readers() -> list[tuple[str, str | None]]:
+    """First choice of every slot."""
+    return [slot[0] for slot in _slots()]
+
+
+def _name(provider: str, model: str | None) -> str:
+    return f"{provider}:{model}" if model else provider
+
+
+_exhausted: dict[str, float] = {}  # model name -> time it ran out of quota (this process only)
+_lock = threading.Lock()
+
+
+def _out_of_quota(e: Exception) -> bool:
+    """Daily quota gone (or model removed): no point asking again soon. Per-minute limits don't count."""
+    msg = str(e).lower().replace("-", "").replace("_", "")
+    return getattr(e, "status_code", None) == 404 or (
+        getattr(e, "status_code", None) == 429 and "perday" in msg)
 
 
 def _cached(key_parts: list, fn):
@@ -230,7 +259,7 @@ def _call_once_retry(provider: str, model: str | None, messages: list[dict]) -> 
     try:
         return call()
     except Exception as e:
-        if getattr(e, "status_code", None) not in (429, 503):
+        if getattr(e, "status_code", None) not in (429, 503) or _out_of_quota(e):  # a daily cap won't lift in 2 s
             raise
         time.sleep(2)
         return call()
@@ -242,20 +271,38 @@ def read_one(data: bytes, provider: str, model: str | None, prompt: str = READ_P
                    lambda: _strip_reasoning(_call_once_retry(provider, model, _image_msg(data, prompt))))
 
 
+def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str]) -> tuple[str, str | Exception]:
+    """Try the slot's models in order until one answers. `claimed` (shared by all slots of one
+    request) stops two voters from using the same model, which would count one opinion twice.
+    Returns (name of the model that answered, text) or (slot's first name, Exception)."""
+    tried = []
+    for provider, model in slot:
+        name = _name(provider, model)
+        with _lock:
+            if name in claimed:
+                continue
+            if time.time() - _exhausted.get(name, 0) < EXHAUSTED_FOR:
+                tried.append(f"{name}: out of quota")
+                continue
+            claimed.add(name)
+        try:
+            text = read_one(data, provider, model)
+            if text.strip():
+                return name, text
+            tried.append(f"{name}: empty reply")
+        except Exception as e:
+            if _out_of_quota(e):
+                with _lock:
+                    _exhausted[name] = time.time()
+            tried.append(f"{name}: {str(e)[:120]}")
+    return _name(*slot[0]), RuntimeError(" | ".join(tried) or "all models already in use")
+
+
 def read_all(data: bytes) -> dict:
     """{"readings": {reader: text}, "errors": {reader: error}}."""
-    readers = _readers()
-
-    def run(r):
-        provider, model = r
-        name = f"{provider}:{model}" if model else provider
-        try:
-            return name, read_one(data, provider, model)
-        except Exception as e:
-            return name, e
-
-    with ThreadPoolExecutor(max_workers=len(readers)) as pool:
-        results = list(pool.map(run, readers))
+    slots, claimed = _slots(), set()
+    with ThreadPoolExecutor(max_workers=len(slots)) as pool:
+        results = list(pool.map(lambda s: read_slot(data, s, claimed), slots))
     readings = {n: t for n, t in results if isinstance(t, str) and t.strip()}
     errors = {n: (str(t)[:200] if not isinstance(t, str) else "empty reply")
               for n, t in results if n not in readings}
@@ -451,11 +498,10 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
         r = read_all(img)
         readings, errors = r["readings"], r["errors"]
     else:
-        provider, model = _readers()[0]
-        try:
-            readings, errors = {provider: read_one(img, provider, model)}, {}
-        except Exception as e:
-            raise RuntimeError(f"{provider}:{model} failed: {str(e)[:200]}") from e
+        name, text = read_slot(img, _slots()[0], set())
+        if isinstance(text, Exception):
+            raise RuntimeError(f"{name} failed: {str(text)[:200]}")
+        readings, errors = {name: text}, {}
     words = vote(readings)
     if use_context:
         words = context_fix(words, writer_words(writer))
