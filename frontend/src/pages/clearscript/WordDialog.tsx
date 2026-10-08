@@ -58,7 +58,7 @@ export function WordDialog({ open, index, words, models, writer, review, onClose
       ) : <Button onClick={onClose}>{t("common.cancel")}</Button>}
     >
       <div ref={box} className="space-y-4" onKeyDown={onKey}>
-        <p className="transcript rounded-md bg-subtle px-3 text-body">
+        <p dir="auto" className="transcript rounded-md bg-subtle px-3 text-body">
           {before && <>…{before} </>}
           <mark className={`rounded px-1 ${st === "lookalike" ? "bg-danger-bg text-danger-fg" : st === "flagged" ? "bg-flag-bg text-flag-fg" : "bg-accent-soft text-accent-text"}`}>{w.text}</mark>
           {after && <> {after}…</>}

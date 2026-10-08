@@ -42,12 +42,12 @@ export function Guide({ onSample, ready, name, readers }: { onSample: () => void
         <div className="space-y-4">
           <div className="space-y-1">
             <p className="text-xs font-semibold text-muted">{t("cs.example.consensus")}</p>
-            <p className="transcript rounded-md bg-subtle px-3 text-ink">Tab. Paracetamol 500 mg</p>
+            <p dir="ltr" className="transcript rounded-md bg-subtle px-3 text-ink">Tab. Paracetamol 500 mg</p>
             <p className="text-xs text-muted">{t("cs.example.consensus.hint")}</p>
           </div>
           <div className="space-y-1">
             <p className="text-xs font-semibold text-muted">{t("cs.example.flag")}</p>
-            <p className="transcript rounded-md bg-subtle px-3 text-ink">
+            <p dir="ltr" className="transcript rounded-md bg-subtle px-3 text-ink">
               Tab.{" "}
               <span className="rounded bg-flag-bg px-1 text-flag-fg underline decoration-flag-line decoration-dashed decoration-2 underline-offset-4">
                 Amoxyclav<span aria-hidden="true" className="ms-0.5 align-super text-xs font-bold">?</span>

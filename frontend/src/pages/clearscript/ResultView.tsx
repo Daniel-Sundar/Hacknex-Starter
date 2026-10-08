@@ -150,7 +150,7 @@ function Transcript({ words, onOpen, focusWord }: { words: Word[]; onOpen: (i: n
   return (
     <div>
       <p id="cs-transcript-help" className="sr-only">{t("cs.transcript.help")}</p>
-      <div role="group" aria-label={t("cs.transcript.title")} aria-describedby="cs-transcript-help"
+      <div role="group" dir="auto" aria-label={t("cs.transcript.title")} aria-describedby="cs-transcript-help"
         className="transcript overflow-x-auto rounded-md border border-line bg-subtle px-3 py-2 text-ink">
         {lines.map((line, li) => (
           <p key={li} className="break-words">
@@ -227,7 +227,7 @@ function RxTable({ rows, loading, error, onRetry }: { rows: RxRow[] | null; load
               {rows.map((r, i) => (
                 <Fragment key={i}>
                   <tr className={`border-b border-line ${r.warnings?.length ? "bg-danger-bg" : r.flagged ? "bg-flag-bg" : ""}`}>
-                    {cols.map((c) => <td key={c} className="px-2 py-2 align-top tabular-nums text-ink">{r[c] || <span className="text-muted">-</span>}</td>)}
+                    {cols.map((c) => <td key={c} dir="auto" className="px-2 py-2 align-top tabular-nums text-ink">{r[c] || <span className="text-muted">-</span>}</td>)}
                     <td className="px-2 py-2 text-end align-top">
                       {r.warnings?.length ? <Badge tone="danger">{t("cs.rx.checkDose")}</Badge>
                         : r.flagged ? <Badge tone="flag">{t("cs.rx.check")}</Badge>
@@ -285,11 +285,11 @@ function Compare({ baseline, ours, failed }: { baseline: string; ours: string; f
           <div className="grid sm:grid-cols-2">
             <div className="min-w-0 border-line sm:border-e">
               <h3 className="px-4 pt-3 text-xs font-semibold text-muted">{t("cs.compare.one")}</h3>
-              <p className="px-4 py-2 text-sm leading-7 text-body">{show(a, keepA, "bg-danger-bg text-danger-fg line-through")}</p>
+              <p dir="auto" className="px-4 py-2 text-sm leading-7 text-body">{show(a, keepA, "bg-danger-bg text-danger-fg line-through")}</p>
             </div>
             <div className="min-w-0 border-t border-line sm:border-t-0">
               <h3 className="px-4 pt-3 text-xs font-semibold text-muted">{t("cs.compare.ours")}</h3>
-              <p className="px-4 py-2 text-sm leading-7 text-body">{show(b, keepB, "bg-ok-bg text-ok-fg underline decoration-2 underline-offset-4")}</p>
+              <p dir="auto" className="px-4 py-2 text-sm leading-7 text-body">{show(b, keepB, "bg-ok-bg text-ok-fg underline decoration-2 underline-offset-4")}</p>
             </div>
           </div>
         </>
@@ -313,7 +313,7 @@ function Readings({ readings, errors }: { readings: Record<string, string>; erro
         {Object.entries(readings).map(([name, text]) => (
           <div key={name} className="min-w-0">
             <h3 className="mb-1 break-all font-mono text-xs text-muted">{modelLabel(name)}</h3>
-            <pre className="whitespace-pre-wrap break-words rounded-md border border-line bg-subtle p-3 font-sans text-sm text-body">{text}</pre>
+            <pre dir="auto" className="whitespace-pre-wrap break-words rounded-md border border-line bg-subtle p-3 font-sans text-sm text-body">{text}</pre>
           </div>
         ))}
         {failed.map(([name, e]) => (
