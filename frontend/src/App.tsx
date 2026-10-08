@@ -3,7 +3,7 @@ import { FileText, Moon, PenLine, ScanText, Sun } from "lucide-react";
 import Docs from "./pages/Docs";
 import Handwriting from "./pages/Handwriting";
 import { API } from "./lib/api";
-import { PenIntro } from "./components/PenAnimation";
+import { JournalIntro } from "./components/JournalIntro";
 
 // Each tab is a real link (#/clearscript, #/docs), so refresh, back/forward and shared links all land on the right view.
 const TABS = [
@@ -46,7 +46,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <PenIntro />
+      <JournalIntro />
       <header className="sticky top-0 z-20 border-b border-line bg-page/85 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-2.5">
           <div className="flex items-center gap-2">

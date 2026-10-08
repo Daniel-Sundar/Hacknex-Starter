@@ -1,0 +1,239 @@
+/* Journal intro. Geometry is in the desk photo's 1536x1024 pixels; JournalIntro.tsx drives transforms. */
+.ji-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  background: #0b0806;
+  cursor: default;
+  user-select: none;
+}
+.ji-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1536px;
+  height: 1024px;
+  transform-origin: 50% 50%;
+  overflow: hidden;
+}
+.ji-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1536px;
+  height: 1024px;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.ji-desk {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1536px;
+  height: 1024px;
+  max-width: none;
+}
+/* hides the photo's left page while the book is still shut */
+.ji-deskmask {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(668px 318px, 200px 352px, 250px 945px, 785px 850px);
+  background:
+    radial-gradient(ellipse 60% 50% at 40% 60%, rgba(70, 40, 18, 0.55), transparent 70%),
+    linear-gradient(170deg, #2a1a0f 0%, #1a0f08 60%, #120a05 100%);
+  opacity: 0.96;
+}
+
+/* page leaves: flat 500x670 sheets warped by matrix3d */
+.ji-leaf {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 500px;
+  height: 670px;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.ji-front,
+.ji-back {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.ji-page-r { background: #e9dcc0 url(/intro/page-right.jpg) 0 0 / 100% 100% no-repeat; }
+.ji-page-l { background: #e9dcc0 url(/intro/page-left.jpg) 0 0 / 100% 100% no-repeat; }
+.ji-leather {
+  background: #3b2214 url(/intro/leather.jpg) 0 0 / 100% 100%;
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.55);
+}
+.ji-tooling {
+  position: absolute;
+  inset: 22px;
+  border: 2px solid rgba(201, 162, 74, 0.7);
+  outline: 1px solid rgba(201, 162, 74, 0.45);
+  outline-offset: 8px;
+  border-radius: 4px;
+}
+.ji-crest {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 46%;
+  max-width: none;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+.ji-shade {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* calligraphy */
+.ji-ink {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+}
+.ji-ink path {
+  fill: none;
+  stroke: #121016;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ji-glisten { opacity: 0; }
+.ji-glisten path {
+  stroke: rgba(255, 255, 255, 0.45);
+  stroke-width: 0.5;
+}
+
+/* quill: transform-origin is the nib tip, so rotations pivot on the writing point */
+.ji-quill,
+.ji-quill-shadow {
+  position: absolute;
+  left: 1150px;
+  top: 300px;
+  width: 290px;
+  height: 640px;
+  max-width: none;
+  transform-origin: 238px 602px;
+  will-change: transform, opacity;
+  z-index: 40;
+}
+.ji-quill-shadow {
+  filter: brightness(0) blur(4px);
+  z-index: 39;
+}
+
+/* the opening shot (closed journal) sits above the world and fades out */
+.ji-closed {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform-origin: 750px 473px;
+  will-change: transform, opacity;
+}
+.ji-closed img {
+  position: absolute;
+  left: 0;
+  top: -256px;
+  width: 1536px;
+  height: 1536px;
+  max-width: none;
+}
+.ji-aura {
+  position: absolute;
+  left: 600px;
+  top: 323px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 120, 0.55) 0%, rgba(212, 175, 55, 0.22) 38%, transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: ji-pulse 1.1s ease-in-out infinite alternate;
+}
+@keyframes ji-pulse {
+  from { transform: scale(0.92); filter: brightness(0.9); }
+  to { transform: scale(1.08); filter: brightness(1.25); }
+}
+.ji-wash {
+  position: absolute;
+  inset: 0;
+  background: #efe6d5;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* HUD + skip */
+.ji-hud {
+  position: fixed;
+  left: 50%;
+  bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.ji-title {
+  font-family: "Cinzel", "Cormorant Garamond", Georgia, serif;
+  font-size: 15px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #e2c36b;
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.45);
+}
+.ji-bar {
+  display: block;
+  width: 180px;
+  height: 2px;
+  background: rgba(226, 195, 107, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ji-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #b45309, #e2c36b);
+  transform: scaleX(0);
+  transform-origin: left center;
+  box-shadow: 0 0 8px rgba(226, 195, 107, 0.8);
+}
+.ji-skip {
+  position: fixed;
+  top: calc(18px + env(safe-area-inset-top, 0px));
+  right: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f4ede0;
+  background: rgba(20, 12, 6, 0.55);
+  border: 1px solid rgba(201, 162, 74, 0.55);
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.2s, border-color 0.2s;
+}
+.ji-skip:hover { background: rgba(123, 17, 19, 0.7); border-color: #e2c36b; }
+.ji-skip kbd {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0;
+  padding: 1px 5px;
+  border: 1px solid rgba(201, 162, 74, 0.45);
+  border-radius: 3px;
+  color: #e2c36b;
+}
