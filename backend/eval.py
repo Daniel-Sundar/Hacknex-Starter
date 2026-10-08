@@ -268,7 +268,7 @@ def main():
         if all_notes:
             md += "\n### Failures (scored as empty output)\n" + "\n".join(all_notes) + "\n"
         out = out.with_name(out.name.replace("eval_results", "eval_robustness"))
-        payload = {"split": args.split, "results": results}
+        payload = {"split": args.split, "samples": n, "conditions": len(conds), "results": results}
     else:
         samples = find_samples(Path(args.samples), args.split)[:args.limit or None]
         if not samples:

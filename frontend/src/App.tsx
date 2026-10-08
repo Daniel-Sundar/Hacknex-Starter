@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Feather, FileText, Moon, ScrollText, Sun } from "lucide-react";
+import { BarChart3, Feather, FileText, Moon, ScrollText, Sun } from "lucide-react";
 import Docs from "./pages/Docs";
 import Handwriting from "./pages/Handwriting";
+import Results from "./pages/Results";
 import { API } from "./lib/api";
 import { JournalIntro } from "./components/JournalIntro";
 import "./styles/study.css";
@@ -10,6 +11,7 @@ import "./styles/study.css";
 const TABS = [
   { id: "clearscript", label: "ClearScript", icon: Feather, el: <Handwriting />, blurb: "Upload a page, clean it, let every model read it, and compare against a single-model baseline." },
   { id: "docs", label: "Docs Q&A", icon: ScrollText, el: <Docs />, blurb: "Upload PDF or text files, then ask questions answered from those documents." },
+  { id: "results", label: "Results", icon: BarChart3, el: <Results />, blurb: "How accurate ClearScript is, measured against a single-model baseline on labelled handwriting." },
 ];
 type TabId = (typeof TABS)[number]["id"];
 const tabFromHash = (): TabId => {

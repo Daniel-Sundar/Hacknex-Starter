@@ -146,3 +146,28 @@ def handwriting_table(req: TableRequest):
         return {"rows": handwriting.rx_table(req.marked)}
     except RuntimeError as e:
         raise HTTPException(502, str(e))
+
+
+@app.get("/api/handwriting/eval")
+def handwriting_eval():
+    """Ablation, calibration and robustness results for the Results tab.
+    Prefers the held-out test split; falls back to dev (and says so) when test files are missing."""
+    import json
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent
+
+    def first(*names):
+        for name, split in names:
+            f = root / name
+            if f.exists():
+                return split, json.loads(f.read_text(encoding="utf-8"))
+        return None, None
+
+    ab_split, ablation = first(("eval_results_test.json", "test"), ("eval_results_dev.json", "dev"))
+    rb_split, robustness = first(("eval_robustness_test.json", "test"), ("eval_robustness_dev.json", "dev"),
+                                 ("eval_robustness.json", "all"))
+    if ablation:
+        ablation.pop("per_sample", None)  # the tab only needs the totals
+    return {"ablation": ablation, "ablation_split": ab_split,
+            "robustness": robustness, "robustness_split": rb_split,
+            "fallback": ab_split != "test"}
