@@ -29,17 +29,17 @@ export default function App() {
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <ScanText className="size-6 text-brand-soft" />
-          <h1 className="text-xl font-semibold">ClearScript</h1>
-          <span className="text-sm text-slate-400">messy handwriting in, trusted text out</span>
+          <h1 className="text-xl font-bold text-ink">ClearScript</h1>
+          <span className="text-sm text-muted">messy handwriting in, trusted text out</span>
         </div>
-        <span className="rounded-full border border-line px-3 py-1 text-xs text-slate-400">LLM: {provider}</span>
+        <span className="neu rounded-full px-3 py-1 text-xs text-body">LLM: {provider}</span>
       </header>
-      <nav className="mb-4 flex gap-1 overflow-x-auto rounded-2xl bg-panel p-1">
+      <nav className="mb-4 flex gap-1 overflow-x-auto rounded-2xl glass p-1">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm whitespace-nowrap transition ${tab === t.id ? "bg-brand-strong text-white ring-1 ring-brand" : "text-slate-400 hover:text-slate-100"}`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm whitespace-nowrap transition ${tab === t.id ? "bg-brand-strong text-white shadow-md shadow-blue-600/20" : "text-muted hover:text-ink"}`}
           >
             <t.icon className="size-4" /> {t.label}
           </button>

@@ -42,7 +42,7 @@ export default function Chat() {
   return (
     <Card className="flex h-[70vh] flex-col">
       <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-        {messages.length === 0 && <p className="text-sm text-slate-400">Ask anything to get started.</p>}
+        {messages.length === 0 && <p className="text-sm text-muted">Ask anything to get started.</p>}
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "flex justify-end" : ""}>
             <div className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm leading-relaxed ${m.role === "user" ? "bg-brand-strong text-white" : "bg-line"}`}>

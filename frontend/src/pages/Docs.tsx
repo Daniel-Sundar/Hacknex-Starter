@@ -43,12 +43,12 @@ export default function Docs() {
   return (
     <div className="grid gap-4 md:grid-cols-[280px_1fr]">
       <Card>
-        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-slate-500 p-6 text-center text-sm text-slate-400 hover:border-brand">
+        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-muted hover:border-brand">
           <FileUp className="size-6" />
           Upload PDF or text files
           <input type="file" multiple accept=".pdf,.txt,.md,.csv" className="hidden" onChange={(e) => upload(e.target.files)} />
         </label>
-        <ul className="mt-3 space-y-1 text-xs text-slate-400">{files.map((f) => <li key={f}>• {f}</li>)}</ul>
+        <ul className="mt-3 space-y-1 text-xs text-muted">{files.map((f) => <li key={f}>• {f}</li>)}</ul>
       </Card>
       <Card className="space-y-3">
         <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); ask(); }}>
@@ -61,7 +61,7 @@ export default function Docs() {
             <div className="text-sm leading-relaxed"><Markdown>{answer.answer}</Markdown></div>
             <div className="space-y-2">
               {answer.sources.map((s, i) => (
-                <details key={i} className="rounded-lg bg-page p-2 text-xs text-slate-400">
+                <details key={i} className="rounded-lg recessed p-2 text-xs text-muted">
                   <summary className="cursor-pointer">[{i + 1}] {s.source}</summary>
                   <p className="mt-1">{s.text}</p>
                 </details>

@@ -99,19 +99,19 @@ export default function Handwriting() {
       {/* ---------- input ---------- */}
       <Card className="space-y-4 self-start">
         <div className="flex flex-wrap gap-2">
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm hover:border-brand">
+          <label className="inline-flex cursor-pointer items-center gap-2 neu rounded-xl px-3 py-2 text-sm font-medium text-ink transition hover:border-brand hover:text-brand-soft">
             <ImageUp className="size-4" /> Upload page
             <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
           </label>
           <button
             onClick={() => setCamOn((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm hover:border-brand"
+            className="inline-flex items-center gap-2 neu rounded-xl px-3 py-2 text-sm font-medium text-ink transition hover:border-brand hover:text-brand-soft"
           >
             <Camera className="size-4" /> {camOn ? "Close camera" : "Camera"}
           </button>
           <button
             onClick={() => { setPreview(null); setFile(null); load(SAMPLE, true); }}
-            className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm text-slate-400 hover:border-brand hover:text-slate-100"
+            className="neu inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-body transition hover:border-brand hover:text-brand-soft"
           >
             <FlaskConical className="size-4" /> Load sample
           </button>
@@ -125,9 +125,9 @@ export default function Handwriting() {
         )}
 
         {preview ? (
-          <img src={preview} alt="handwriting" className="max-h-[420px] w-full rounded-xl border border-line object-contain bg-page" />
+          <img src={preview} alt="handwriting" className="max-h-[420px] w-full rounded-xl border border-line object-contain recessed" />
         ) : !camOn && (
-          <div className="grid h-48 place-items-center rounded-xl border border-dashed border-line text-sm text-slate-400">
+          <div className="grid h-48 place-items-center rounded-xl border border-dashed border-line text-sm text-muted">
             A photo of a prescription, form or note
           </div>
         )}
@@ -139,9 +139,9 @@ export default function Handwriting() {
             ["context", "Context fix", "only from candidates"],
             ["baseline", "Compare baseline", "one model, one pass"],
           ] as const).map(([k, label, hint]) => (
-            <label key={k} className="flex cursor-pointer items-start gap-2 rounded-xl border border-line p-2 hover:border-slate-500">
+            <label key={k} className="flex cursor-pointer items-start gap-2 neu rounded-xl p-2 text-ink hover:border-slate-300">
               <input type="checkbox" className="mt-1 accent-[var(--color-brand)]" checked={opts[k]} onChange={(e) => setOpts({ ...opts, [k]: e.target.checked })} />
-              <span><span className="block">{label}</span><span className="text-xs text-slate-400">{hint}</span></span>
+              <span><span className="block">{label}</span><span className="text-xs text-muted">{hint}</span></span>
             </label>
           ))}
         </div>
@@ -155,7 +155,7 @@ export default function Handwriting() {
       {/* ---------- output ---------- */}
       <div className="space-y-4">
         {!result ? (
-          <Card className="grid h-full min-h-64 place-items-center text-center text-sm text-slate-400">
+          <Card className="grid h-full min-h-64 place-items-center text-center text-sm text-muted">
             <div className="space-y-2">
               <ShieldCheck className="mx-auto size-8 text-brand-soft" />
               <p>Every word is read by several AI models.<br />Where they disagree, ClearScript flags it instead of guessing.</p>
@@ -172,12 +172,12 @@ export default function Handwriting() {
 
             <Card className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex rounded-xl bg-page p-1 text-sm">
+                <div className="flex rounded-xl recessed p-1 text-sm">
                   {(["auto", "review"] as Mode[]).map((m) => (
                     <button
                       key={m}
                       onClick={() => setMode(m)}
-                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 ${mode === m ? "bg-brand-strong text-white" : "text-slate-400 hover:text-slate-100"}`}
+                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 ${mode === m ? "bg-brand-strong text-white" : "text-muted hover:text-ink"}`}
                     >
                       {m === "auto" ? <Sparkles className="size-4" /> : <UserCheck className="size-4" />}
                       {m === "auto" ? "Auto" : "Ask the human"}
@@ -185,7 +185,7 @@ export default function Handwriting() {
                   ))}
                 </div>
                 <div className="flex items-center gap-2">
-                  {isSample && <span className="rounded-full bg-line px-2 py-0.5 text-xs text-slate-200">sample data</span>}
+                  {isSample && <span className="rounded-full bg-line px-2 py-0.5 text-xs text-body">sample data</span>}
                   <IconBtn title="Copy text" onClick={() => navigator.clipboard.writeText(text)}><ClipboardCopy className="size-4" /></IconBtn>
                   <IconBtn title="Download .txt" onClick={() => download(text)}><Download className="size-4" /></IconBtn>
                 </div>
@@ -211,35 +211,36 @@ export default function Handwriting() {
 // ---------- pieces ----------
 
 function Stat({ label, value, hint, tone }: { label: string; value: string | number; hint?: string; tone?: "amber" | "emerald" }) {
-  const color = tone === "amber" ? "text-warn" : tone === "emerald" ? "text-ok" : "text-slate-100";
+  const color = tone === "amber" ? "text-warn" : tone === "emerald" ? "text-ok" : "text-ink";
+  const accent = tone === "amber" ? "!border-amber-200" : tone === "emerald" ? "!border-emerald-200" : "!border-blue-100";
   return (
-    <div className="rounded-2xl border border-line bg-panel p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-300">{label}</div>
-      <div className={`mt-1 text-2xl font-semibold tabular-nums ${color}`}>{value}</div>
-      {hint && <div className="mt-0.5 text-xs text-slate-400">{hint}</div>}
+    <div className={`glass rounded-2xl p-4 ${accent}`}>
+      <div className="text-xs font-medium uppercase tracking-wide text-body">{label}</div>
+      <div className={`mt-1 text-3xl font-bold tabular-nums ${color}`}>{value}</div>
+      {hint && <div className="mt-0.5 text-xs text-muted">{hint}</div>}
     </div>
   );
 }
 
 function IconBtn(props: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button {...props} className="rounded-lg border border-line p-2 text-slate-300 hover:border-brand hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" />;
+  return <button {...props} className="neu rounded-lg p-2 text-body hover:border-brand hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" />;
 }
 
 function wordCls(w: Word) {
-  if (w.flagged) return "border border-warn bg-warn-bg text-warn underline decoration-warn decoration-wavy decoration-1 underline-offset-[5px]";
-  if (w.resolved_by === "human") return "border border-ok bg-ok-bg text-ok-fg";
-  if (w.resolved_by === "context") return "border border-info bg-info-bg text-info-fg";
+  if (w.flagged) return "border border-warn-line bg-warn-bg text-warn-fg underline decoration-warn decoration-wavy decoration-1 underline-offset-[5px]";
+  if (w.resolved_by === "human") return "border border-ok-line bg-ok-bg text-ok-fg";
+  if (w.resolved_by === "context") return "border border-info-line bg-info-bg text-info-fg";
   return "";
 }
 
 function WordText({ words }: { words: Word[] }) {
   return (
-    <div className="rounded-xl border border-line bg-page p-5 font-mono text-[15px] leading-relaxed [&>span]:mr-1.5 [&>span]:inline-block [&>span]:my-1">
+    <div className="rounded-xl border border-line recessed p-5 font-mono text-[15px] leading-relaxed text-ink [&>span]:mr-1.5 [&>span]:inline-block [&>span]:my-1">
       {words.map((w, i) =>
         isNewline(w) ? <br key={i} /> : (
           <span key={i} className="group relative">
             <span className={`rounded-md px-1 ${wordCls(w)}`}>{w.text}</span>{" "}
-            <span className="pointer-events-none absolute bottom-full left-0 z-10 mb-1 hidden w-max max-w-64 rounded-lg border border-line bg-panel px-2 py-1 font-sans text-xs leading-5 text-slate-300 shadow-xl group-hover:block">
+            <span className="pointer-events-none absolute bottom-full left-0 z-10 mb-1 hidden w-max max-w-64 rounded-lg border border-line bg-white px-2 py-1 shadow-lg font-sans text-xs leading-5 text-body shadow-xl group-hover:block">
               {Math.round((w.confidence ?? 0) * 100)}% of models agree
               {w.resolved_by && <> · fixed by {w.resolved_by}</>}
               {!!w.alternatives?.length && <><br />others read: {w.alternatives.join(", ")}</>}
@@ -256,11 +257,11 @@ function Legend() {
     <span className="flex items-center gap-1.5"><span className={`inline-block size-3 rounded ${cls}`} />{label}</span>
   );
   return (
-    <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-300">
+    <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-body">
       {item("border border-warn bg-warn-bg", "Needs check")}
       {item("border border-info bg-info-bg", "Fixed by context")}
       {item("border border-ok bg-ok-bg", "Confirmed by you")}
-      <span className="text-slate-400">Hover a word for details.</span>
+      <span className="text-muted">Hover a word for details.</span>
     </div>
   );
 }
@@ -273,7 +274,7 @@ function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
   const i = queue[0];
   if (i === undefined) {
     return (
-      <Card className="flex items-center gap-3 border-ok bg-ok-bg text-sm text-ok-fg">
+      <Card className="flex items-center gap-3 !border-ok-line !bg-ok-bg text-sm text-ok-fg">
         <Check className="size-5" /> Nothing left to ask. Every flagged word has been checked.
       </Card>
     );
@@ -285,22 +286,22 @@ function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
   const submit = (t: string) => { if (t.trim()) { onAnswer(i, t.trim()); setTyped(""); } };
 
   return (
-    <Card className="space-y-5 border-warn/60 p-6">
+    <Card className="space-y-5 !border-warn-line p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 font-medium">
           <HelpCircle className="size-5 text-warn" /> Which word is this?
           {hasDigit(w.text) && <span className="rounded-full bg-del-bg px-2 py-0.5 text-xs font-medium text-del-fg">number: never guessed</span>}
         </div>
-        <span className="text-xs text-slate-400">{queue.length} question{queue.length > 1 ? "s" : ""} left on this page</span>
+        <span className="text-xs text-muted">{queue.length} question{queue.length > 1 ? "s" : ""} left on this page</span>
       </div>
 
-      <p className="rounded-xl border border-line bg-page p-4 font-mono text-sm leading-relaxed text-slate-300">
-        …{before} <span className="rounded-md border border-warn bg-warn-bg px-1.5 text-warn">{w.text}</span> {after}…
+      <p className="rounded-xl border border-line recessed p-4 font-mono text-sm leading-relaxed text-body">
+        …{before} <span className="rounded-md border border-warn-line bg-warn-bg px-1.5 text-warn-fg">{w.text}</span> {after}…
       </p>
 
       <div className="flex flex-wrap gap-3">
         {options.map((o) => (
-          <button key={o} onClick={() => submit(o)} className="min-w-20 rounded-xl border border-line bg-page px-4 py-2.5 font-mono text-sm text-slate-100 transition hover:border-brand hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+          <button key={o} onClick={() => submit(o)} className="neu min-w-20 rounded-xl px-4 py-2.5 font-mono text-sm text-ink transition hover:border-brand hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
             {o}
           </button>
         ))}
@@ -310,12 +311,12 @@ function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
         <input className={inputCls} placeholder="Or type the correct word" value={typed}
           onChange={(e) => setTyped(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit(typed)} />
         <Button onClick={() => submit(typed)} disabled={!typed.trim()}>Confirm</Button>
-        <button onClick={() => onSkip(i)} title="Skip this word" aria-label="Skip this word" className="rounded-xl border border-line px-3 text-slate-300 hover:border-brand hover:text-slate-100">
+        <button onClick={() => onSkip(i)} title="Skip this word" aria-label="Skip this word" className="neu rounded-xl px-3 text-body hover:border-brand hover:text-ink">
           <SkipForward className="size-4" />
         </button>
       </div>
 
-      <label className="flex flex-wrap items-center gap-2 border-t border-line pt-4 text-xs text-slate-400">
+      <label className="flex flex-wrap items-center gap-2 border-t border-line pt-4 text-xs text-muted">
         Writer
         <input className={`${inputCls} max-w-48 py-1 text-xs`} value={writer} onChange={(e) => setWriter(e.target.value)} />
         <span>your answers are final and teach this writer's word list</span>
@@ -346,16 +347,16 @@ function Compare({ baseline, ours }: { baseline: string; ours: string }) {
     <Card className="space-y-3">
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium">Baseline vs ClearScript</span>
-        <span className="text-xs text-slate-400">{changed} word{changed === 1 ? "" : "s"} differ</span>
+        <span className="text-xs text-muted">{changed} word{changed === 1 ? "" : "s"} differ</span>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <div className="mb-1 text-xs text-slate-400">One model, one pass</div>
-          <p className="rounded-xl border border-line bg-page p-4 font-mono text-sm leading-relaxed">{show(a, keepA, "bg-del-bg text-del-fg line-through decoration-del-fg")}</p>
+          <div className="mb-1 text-xs text-muted">One model, one pass</div>
+          <p className="rounded-xl border border-line recessed p-4 font-mono text-sm leading-relaxed">{show(a, keepA, "bg-red-100 text-red-700 line-through decoration-red-700")}</p>
         </div>
         <div>
-          <div className="mb-1 text-xs text-slate-400">ClearScript</div>
-          <p className="rounded-xl border border-line bg-page p-4 font-mono text-sm leading-relaxed">{show(b, keepB, "bg-ok-bg text-ok-fg")}</p>
+          <div className="mb-1 text-xs text-muted">ClearScript</div>
+          <p className="rounded-xl border border-line recessed p-4 font-mono text-sm leading-relaxed">{show(b, keepB, "bg-emerald-100 text-emerald-800")}</p>
         </div>
       </div>
     </Card>
@@ -364,7 +365,7 @@ function Compare({ baseline, ours }: { baseline: string; ours: string }) {
 
 function Readings({ readings, errors }: { readings: Record<string, string>; errors: Record<string, string> }) {
   return (
-    <details className="rounded-2xl border border-line bg-panel p-5">
+    <details className="glass rounded-2xl p-5">
       <summary className="cursor-pointer text-sm font-medium">
         What each model read ({Object.keys(readings).length} answered{Object.keys(errors).length ? `, ${Object.keys(errors).length} failed` : ""})
       </summary>
@@ -372,7 +373,7 @@ function Readings({ readings, errors }: { readings: Record<string, string>; erro
         {Object.entries(readings).map(([name, t]) => (
           <div key={name}>
             <div className="mb-1 truncate text-xs text-brand-soft">{name}</div>
-            <pre className="whitespace-pre-wrap rounded-xl bg-page p-3 text-xs text-slate-300">{t}</pre>
+            <pre className="whitespace-pre-wrap rounded-xl recessed p-3 text-xs text-body">{t}</pre>
           </div>
         ))}
         {Object.entries(errors).map(([name, e]) => (

@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-2xl border border-line bg-panel p-5 ${className}`}>{children}</div>;
+  return <div className={`glass rounded-2xl p-5 ${className}`}>{children}</div>;
 }
 
 export function Button({
@@ -25,8 +25,8 @@ export function Button({
 
 export function ErrorNote({ error }: { error: string | null }) {
   if (!error) return null;
-  return <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>;
+  return <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>;
 }
 
 export const inputCls =
-  "w-full rounded-xl border border-line bg-page px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/40";
+  "w-full rounded-xl border border-line recessed px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/40";
