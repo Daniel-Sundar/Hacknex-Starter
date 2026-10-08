@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { ScanText } from "lucide-react";
 import { Kbd } from "./ui";
 
-/** The 3D fountain pen (public/pen/thinking-pen.html: Three.js + GSAP, libs served locally so it works offline). */
-export function PenAnimation({ loop = false, className = "" }: { loop?: boolean; className?: string }) {
+/** The 3D fountain pen (public/pen/*-pen.html: Three.js + GSAP, libs served locally so it works offline). */
+export function PenAnimation({ word = "thinking", loop = false, className = "" }: { word?: "thinking" | "welcome"; loop?: boolean; className?: string }) {
   return (
     <iframe
-      src={`/pen/thinking-pen.html?embed${loop ? "&loop" : ""}`}
-      title="A fountain pen writing the word thinking"
+      src={`/pen/${word}-pen.html?embed${loop ? "&loop" : ""}`}
+      title={`A fountain pen writing the word ${word}`}
       className={`block w-full border-0 ${className}`}
     />
   );
@@ -15,7 +15,7 @@ export function PenAnimation({ loop = false, className = "" }: { loop?: boolean;
 
 const SEEN_KEY = "clearscript-intro-seen";
 
-/** Full-screen intro: the pen uncaps and writes "thinking", then the app appears. Once per browser session. */
+/** Full-screen intro: the pen uncaps and writes "welcome", then the app appears. Once per browser session. */
 export function PenIntro() {
   const [open, setOpen] = useState(() => {
     try {
@@ -33,7 +33,7 @@ export function PenIntro() {
 
   useEffect(() => {
     if (!open) return;
-    const onMsg = (e: MessageEvent) => { if (e.data?.type === "pen:done") setTimeout(close, 900); };
+    const onMsg = (e: MessageEvent) => { if (e.data?.type === "pen:done") setTimeout(close, 500); };
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" || e.key === "Enter") close(); };
     window.addEventListener("message", onMsg);
     window.addEventListener("keydown", onKey);
@@ -43,7 +43,7 @@ export function PenIntro() {
   if (!open) return null;
   return (
     <div className={`fixed inset-0 z-50 bg-[#f6f2ea] transition-opacity duration-400 ease-in-out ${leaving ? "opacity-0" : "opacity-100"}`}>
-      <PenAnimation className="h-full" />
+      <PenAnimation word="welcome" className="h-full" />
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-5 py-4">
         <div className="flex items-center gap-2 text-[#1c1917]">
           <span className="grid size-6 place-items-center rounded-md bg-brand text-white"><ScanText className="size-3.5" /></span>
