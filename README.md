@@ -16,6 +16,7 @@ Built at HackNEX 2026 (Karunya, Coimbatore) for problem statement **HNX26EPS04: 
 - [Features](#features)
 - [Results](#results)
 - [Quick start](#quick-start)
+- [Hosting](#hosting)
 - [Configuration](#configuration)
 - [API](#api)
 - [Evaluation](#evaluation)
@@ -163,6 +164,32 @@ cd frontend && npm install && npm run dev               # http://localhost:5173
 ```
 
 **No keys?** Use **Try a sample** in the app, or set `LLM_PROVIDER=mock` for the text-only features.
+
+## Hosting
+
+**Live app:** not deployed yet. After the first deploy: frontend `https://clearscript-hacknex.onrender.com`,
+backend health `https://clearscript-hacknex-api.onrender.com/api/health` (Render may add a suffix if a name is taken).
+
+`render.yaml` defines two Render services from branch `feat/handwriting-mvp`:
+
+| Service | Type | Root | Build | Serves |
+|---|---|---|---|---|
+| `clearscript-hacknex-api` | Python web service (free) | `backend` | `pip install -r requirements.txt` | `uvicorn app.main:app`, health check `/api/health` |
+| `clearscript-hacknex` | Static site | `frontend` | `npm ci && npm run build` | `dist/` |
+
+**Deploy:** Render dashboard → New → Blueprint → this repo. Render asks for `GEMINI_API_KEY`, `GROQ_API_KEY` and
+`OPENROUTER_API_KEY`: paste them there only, never into a file in the repo. Then open the health URL and check
+`"ok": true` and the reader list.
+
+- **URLs:** `CORS_ORIGINS` (backend) and `VITE_API_URL` (frontend, baked in at build time, no trailing slash) are set
+  to the URLs above. If Render assigns different ones, change both in the dashboard and redeploy both services.
+- **Rate limits** stay on for the public link (`TRUST_PROXY=1` makes them use the real client IP). For a live
+  judging slot you may set `RATE_LIMIT_OFF=1` temporarily.
+- **Free plan:** the backend sleeps after 15 minutes idle (open the health URL a minute before a demo; the first
+  request takes about a minute). Its disk resets on every deploy or restart, which clears the reading cache, writer
+  profiles and Docs Q&A uploads. Before a demo, run each demo image through the hosted app once and don't redeploy.
+- **Quota:** the hosted app shares the same free API quotas as the keys you enter. Keep a local setup with
+  `HW_CACHE_ONLY=1` as a backup.
 
 ## Configuration
 
@@ -318,7 +345,8 @@ The repository started from a HackNEX starter template. The template's Chat, Age
 - **Quotas:** free-tier quotas limit throughput. Pages often get 3–4 of the 5 readers.
 - **Handwriting languages:** reading is tuned for English handwriting. Indian-script handwriting has not been evaluated.
 - **Translations:** interface translations are machine drafts.
-- **Deployment:** the app is not deployed publicly; it runs locally.
+- **Deployment:** Render hosting is configured (see [Hosting](#hosting)); on the free plan the server sleeps when
+  idle and loses its cache and writer profiles on every restart.
 
 ## Team
 

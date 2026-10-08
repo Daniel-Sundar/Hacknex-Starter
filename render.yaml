@@ -1,10 +1,16 @@
-# Render Blueprint: New > Blueprint > pick this repo. Free plan sleeps after
-# 15 min idle, so open the URL a minute before you demo.
+# Render Blueprint: Dashboard > New > Blueprint > pick this repo (branch feat/handwriting-mvp).
+# Two services: the FastAPI backend and the static React frontend.
+# Free plan: the backend sleeps after 15 min idle (open /api/health a minute before you demo),
+# and its disk resets on every deploy or restart (reading cache, writer profiles, Docs uploads are lost).
+#
+# The URLs below assume Render gives the service names as subdomains. If Render adds a suffix
+# (name already taken), change CORS_ORIGINS and VITE_API_URL to the real URLs and redeploy both.
 services:
   - type: web
-    name: hacknex-api
+    name: clearscript-hacknex-api
     runtime: python
     plan: free
+    branch: feat/handwriting-mvp
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -12,13 +18,42 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.7"
-      - key: LLM_PROVIDER
-        value: gemini
-      - key: LLM_FALLBACKS
-        value: groq,openrouter
+      # API keys: entered in the Render dashboard only, never in this file.
       - key: GEMINI_API_KEY
         sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: OPENROUTER_API_KEY
         sync: false
+      # Text steps (context fix, medicines table): Groq first, as on the team laptops, so they do not use
+      # the Gemini quota the readers need.
+      - key: LLM_PROVIDER
+        value: groq
+      - key: LLM_FALLBACKS
+        value: gemini,openrouter
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash
+      - key: HW_READERS
+        value: "groq:qwen/qwen3.8-27b,gemini:gemini-3.5-flash|gemini:gemini-3.7-flash|gemini:gemini-3.1-flash-lite,openrouter:dots-studio/dots-3-note-preview:free,gemini:gemini-3.6-flash|gemini:gemini-3.8-flash|gemini:gemini-3.7-flash|gemini:gemini-3.1-flash-lite,openrouter:google/gemma-4-31b-it:free|openrouter:google/gemma-4-26b-a4b-it:free"
+      - key: HW_BASELINE
+        value: groq:qwen/qwen3.8-27b
+      # Render is a reverse proxy: rate limits must use the real client IP.
+      - key: TRUST_PROXY
+        value: "1"
+      - key: CORS_ORIGINS
+        value: https://clearscript-hacknex.onrender.com
+      # Rate limits stay on for a public link. For the live judging slot only, you may add RATE_LIMIT_OFF=1.
+
+  - type: web
+    name: clearscript-hacknex
+    runtime: static
+    branch: feat/handwriting-mvp
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: "22.12.0"
+      # Baked in at build time: redeploy the site if the backend URL changes. No trailing slash.
+      - key: VITE_API_URL
+        value: https://clearscript-hacknex-api.onrender.com
