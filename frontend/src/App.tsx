@@ -3,7 +3,7 @@ import { Feather, FileText, Moon, ScrollText, Sun } from "lucide-react";
 import Docs from "./pages/Docs";
 import Handwriting from "./pages/Handwriting";
 import { API } from "./lib/api";
-import { VideoIntro } from "./components/VideoIntro";
+import { JournalIntro } from "./components/JournalIntro";
 import "./styles/study.css";
 
 // Each tab is a real link (#/clearscript, #/docs), so refresh, back/forward and shared links all land on the right view.
@@ -48,7 +48,7 @@ export default function App() {
   // The intro renders outside the app shell, so the shell's styles never reach it.
   return (
     <>
-      <VideoIntro />
+      <JournalIntro />
       <div className={light ? "study" : "min-h-screen"}>
         <header className={`sticky top-0 z-20 ${light ? "study-header mat-walnut" : "border-b border-line bg-page/85 backdrop-blur"}`}>
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 sm:px-6">
