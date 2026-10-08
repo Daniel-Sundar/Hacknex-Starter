@@ -371,11 +371,18 @@ function wordCls(w: Word) {
   return "border border-transparent";
 }
 
+const isMarginTag = (w: Word) => w.text.toLowerCase() === "[margin]";
+
 function WordText({ words }: { words: Word[] }) {
   return (
     <div className="well rounded-lg border border-line p-4 font-mono text-xs leading-relaxed text-ink [&>span]:my-[3px] [&>span]:mr-1 [&>span]:inline-block">
       {words.map((w, i) =>
-        isNewline(w) ? <br key={i} /> : (
+        isNewline(w) ? <br key={i} /> : isMarginTag(w) ? (
+          // The readers mark margin notes with a [margin] token at the start of the line: show a chip instead.
+          <span key={i} title="Margin note" className="rounded-full border border-line px-1.5 py-px font-sans text-[9px] font-semibold uppercase tracking-wider text-muted">
+            margin
+          </span>
+        ) : (
           <span key={i} className="group relative">
             <span className={`rounded-full px-1.5 py-px transition-all duration-150 ease-in-out ${wordCls(w)}`}>{w.text}</span>
             <span role="tooltip" className="surface pointer-events-none absolute bottom-full left-0 z-10 mb-1.5 hidden w-max max-w-64 rounded-md px-2 py-1 font-sans text-[11px] leading-5 text-body shadow-xl group-hover:block">

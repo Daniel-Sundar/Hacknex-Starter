@@ -69,20 +69,22 @@ export const SAMPLE: HwResult = (() => {
     w("Tab."), w("Amoxyclav", 0.33, true, ["Amoxicillin", "Amoxil"]), w("625", 1), w("mg"), w("x"), w("5", 0.67, true, ["3"]), w("days"),
     { text: "\n" },
     w("Review"), w("after"), w("one", 0.67, false, ["ane"]), w("week"),
+    { text: "\n" },
+    w("[margin]"), w("check"), w("BP"),
   ];
   return {
     text: joinWords(words),
     marked: "",
     words,
     readings: {
-      gemini: "Rx Tab. Paracetamol 500 mg\n1 tab twice daily after food\nTab. Amoxyclav 625 mg x 5 days\nReview after one week",
-      "openrouter:gemma": "Rx Tab. Paracetemol 650 mg\n1 tab twice daily after food\nTab. Amoxicillin 625 mg x 5 days\nReview after ane week",
-      "openrouter:nemotron": "Rx Tab. Paracetamol 500 mg\n1 tab twice daily after food\nTab. Amoxil 625 mg x 3 days\nReview after one week",
+      gemini: "Rx Tab. Paracetamol 500 mg\n1 tab twice daily after food\nTab. Amoxyclav 625 mg x 5 days\nReview after one week\n[margin] check BP",
+      "openrouter:gemma": "Rx Tab. Paracetemol 650 mg\n1 tab twice daily after food\nTab. Amoxicillin 625 mg x 5 days\nReview after ane week\n[margin] check BP",
+      "openrouter:nemotron": "Rx Tab. Paracetamol 500 mg\n1 tab twice daily after food\nTab. Amoxil 625 mg x 3 days\nReview after one week\n[margin] check BP",
     },
     errors: {},
     flagged: words.filter((x) => x.flagged).length,
     stages: { clean: true, vote: true, context: true },
-    baseline: "Rx Tab. Paracetemol 650 mg\n1 tab twice daily after food\nTab. Amoxil 625 mg x 3 days\nReview after ane week",
+    baseline: "Rx Tab. Paracetemol 650 mg\n1 tab twice daily after food\nTab. Amoxil 625 mg x 3 days\nReview after ane week\n[margin] check BP",
     doc_type: "prescription",
   };
 })();
