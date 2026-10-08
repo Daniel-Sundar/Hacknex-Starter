@@ -1,48 +1,94 @@
 @import "tailwindcss";
 
-/* ClearScript minimal theme (Plunk-style): white surfaces, hairline borders, one indigo accent for primary actions.
-   Every text/background pair is >= 4.5:1 (WCAG AA). */
+/* ClearScript, Linear-style. Dark by default; <html data-theme="light"> swaps every token.
+   All text/background pairs are >= 4.5:1 (WCAG AA) in both themes. */
 @theme {
-  --color-page: #fafafa;   /* canvas */
-  --color-well: #f4f4f5;   /* output / code boxes */
-  --color-line: #e4e4e7;   /* hairlines */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
 
-  --color-ink: #09090b;    /* headings, primary text, metrics */
-  --color-body: #3f3f46;   /* body text */
-  --color-muted: #71717a;  /* labels, descriptions (4.8:1 on white) */
+  --color-page: #0b0f17;      /* canvas */
+  --color-panel: #161b26;     /* cards */
+  --color-elev: #232936;      /* raised controls */
+  --color-elev-hover: #2b3242;
+  --color-well: #0b0f17;      /* code / output boxes, recessed into cards */
+  --color-line: #2e3545;      /* 1px borders */
 
-  --color-brand: #4f46e5;        /* primary actions only */
-  --color-brand-strong: #4f46e5; /* white text 6.3:1 */
-  --color-brand-soft: #09090b;   /* accent-coloured text falls back to ink: indigo stays reserved for CTAs */
+  --color-ink: #f3f4f6;       /* primary text */
+  --color-body: #d1d5db;      /* body text */
+  --color-muted: #9ca3af;     /* labels, hints */
 
-  --color-warn: #b45309; --color-warn-bg: #fffbeb; --color-warn-fg: #b45309; --color-warn-line: #fde68a;
-  --color-info: #0369a1; --color-info-bg: #f0f9ff; --color-info-fg: #0369a1; --color-info-line: #bae6fd;
-  --color-ok: #047857;   --color-ok-bg: #ecfdf5;   --color-ok-fg: #047857;   --color-ok-line: #a7f3d0;
-  --color-del-bg: #fef2f2; --color-del-fg: #b91c1c;
+  --color-brand: #5e6ad2;        /* CTAs + active states only */
+  --color-brand-strong: #5e6ad2; /* white text 4.7:1 */
+  --color-brand-soft: #c7cbf5;
+
+  --color-warn: #f59e0b; --color-warn-bg: rgb(69 26 3 / 0.45); --color-warn-fg: #fcd34d; --color-warn-line: rgb(146 64 14 / 0.55);
+  --color-info: #0ea5e9; --color-info-bg: rgb(8 47 73 / 0.5);  --color-info-fg: #7dd3fc; --color-info-line: rgb(7 89 133 / 0.55);
+  --color-ok: #10b981;   --color-ok-bg: rgb(2 44 34 / 0.5);    --color-ok-fg: #6ee7b7;   --color-ok-line: rgb(6 95 70 / 0.55);
+  --color-del-bg: rgb(69 10 10 / 0.4);  --color-del-fg: #f87171; --color-del-line: rgb(153 27 27 / 0.5);  /* red-950/40, red-400, red-800/50 */
+  --color-add-bg: rgb(2 44 34 / 0.4);   --color-add-fg: #34d399; --color-add-line: rgb(6 95 70 / 0.5);    /* emerald-950/40, -400, -800/50 */
 }
+
+:root[data-theme="light"] {
+  --color-page: #fafafa;
+  --color-panel: #ffffff;
+  --color-elev: #ffffff;
+  --color-elev-hover: #f4f4f5;
+  --color-well: #f4f4f5;
+  --color-line: #e4e4e7;
+  --color-ink: #09090b;
+  --color-body: #3f3f46;
+  --color-muted: #63636b;
+  --color-brand-soft: #3730a3;
+  --color-warn-bg: #fffbeb; --color-warn-fg: #b45309; --color-warn-line: #fde68a;
+  --color-info-bg: #f0f9ff; --color-info-fg: #0369a1; --color-info-line: #bae6fd;
+  --color-ok-bg: #ecfdf5;   --color-ok-fg: #047857;   --color-ok-line: #a7f3d0;
+  --color-del-bg: #fef2f2;  --color-del-fg: #b91c1c;  --color-del-line: #fecaca;
+  --color-add-bg: #ecfdf5;  --color-add-fg: #047857;  --color-add-line: #a7f3d0;
+}
+
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
 
 body {
   background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
 }
 
-/* White card with a 1px hairline and a gentle hover lift */
+/* Card: flat surface with a crisp 1px border */
 @utility surface {
-  background: #ffffff;
+  background: var(--color-panel);
   border: 1px solid var(--color-line);
-  transition: box-shadow 150ms ease;
-  &:hover { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
 }
 
-/* Outline secondary button */
-@utility btn-outline {
-  background: #ffffff;
+/* Raised control: secondary buttons, toggle cards, chips */
+@utility elev {
+  background: var(--color-elev);
   border: 1px solid var(--color-line);
-  transition: background-color 150ms ease, border-color 150ms ease;
-  &:hover { background: #f4f4f5; border-color: #d4d4d8; }
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  transition: all 150ms ease-in-out;
+  &:hover { background: var(--color-elev-hover); }
 }
 
-/* Light neutral box for monospaced output */
+/* Recessed output box */
 @utility well {
   background: var(--color-well);
+}
+
+/* Keyboard shortcut badge */
+@utility kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: 0.3rem;
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.8;
 }

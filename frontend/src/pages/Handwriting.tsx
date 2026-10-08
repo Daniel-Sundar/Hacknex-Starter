@@ -1,12 +1,21 @@
-import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes } from "react";
+import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import {
-  Camera, Check, ClipboardCopy, Download, FlaskConical, HelpCircle, ImageUp, ShieldCheck, SkipForward, Sparkles, UserCheck, Wand2,
+  Camera, Check, ClipboardCopy, Download, FlaskConical, HelpCircle, ImageUp, ShieldCheck, Sparkles, UserCheck, Wand2,
 } from "lucide-react";
 import { postForm, postJSON } from "../lib/api";
-import { Button, Card, ErrorNote, inputCls } from "../components/ui";
+import { Button, Card, ErrorNote, Kbd, inputCls } from "../components/ui";
 import { SAMPLE, hasDigit, isNewline, joinWords, reviewQueue, type HwResult, type Word } from "../lib/handwriting";
 
 type Mode = "auto" | "review";
+
+const MOD = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
+
+const OPTIONS = [
+  ["clean", "Clean image", "Denoise, deskew, contrast"],
+  ["vote", "Multi-model vote", "Disagreement raises a flag"],
+  ["context", "Context fix", "Picks only from candidates"],
+  ["baseline", "Compare baseline", "One model, one pass"],
+] as const;
 
 export default function Handwriting() {
   const [file, setFile] = useState<Blob | null>(null);
@@ -60,7 +69,7 @@ export default function Handwriting() {
   }
 
   async function digitize() {
-    if (!file) return;
+    if (!file || loading) return;
     const form = new FormData();
     form.append("file", file, "page.jpg");
     Object.entries(opts).forEach(([k, v]) => form.append(k, String(v)));
@@ -74,6 +83,17 @@ export default function Handwriting() {
       setLoading(false);
     }
   }
+
+  // Ctrl/⌘ + Enter runs Digitize from anywhere on the page.
+  const digitizeRef = useRef(digitize);
+  digitizeRef.current = digitize;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); digitizeRef.current(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   function answer(i: number, text: string) {
     const original = words[i].text;
@@ -95,104 +115,101 @@ export default function Handwriting() {
   const queue = reviewQueue(words.map((w) => (w.skipped ? { ...w, flagged: false } : w)));
 
   return (
-    <div className="grid grid-cols-12 gap-6">
-      {/* ---------- input ---------- */}
-      <Card className="col-span-12 space-y-5 self-start lg:col-span-5">
-        <div className="flex flex-wrap gap-2">
-          <label className="inline-flex cursor-pointer items-center gap-2 btn-outline rounded-lg px-3 py-2 text-sm font-medium text-ink">
-            <ImageUp className="size-4" /> Upload page
+    <div className="grid grid-cols-12 gap-5">
+      {/* ---------- left: input & preprocessing ---------- */}
+      <Card className="col-span-12 space-y-4 self-start lg:sticky lg:top-16 lg:col-span-5 xl:col-span-4">
+        <SectionLabel>Input</SectionLabel>
+        <div className="grid grid-cols-3 gap-2">
+          <label className={`${ghostBtn} cursor-pointer`}>
+            <ImageUp className="size-3.5" /> Upload
             <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
           </label>
-          <button
-            onClick={() => setCamOn((v) => !v)}
-            className="inline-flex items-center gap-2 btn-outline rounded-lg px-3 py-2 text-sm font-medium text-ink"
-          >
-            <Camera className="size-4" /> {camOn ? "Close camera" : "Camera"}
+          <button onClick={() => setCamOn((v) => !v)} className={ghostBtn}>
+            <Camera className="size-3.5" /> {camOn ? "Close" : "Camera"}
           </button>
-          <button
-            onClick={() => { setPreview(null); setFile(null); load(SAMPLE, true); }}
-            className="btn-outline inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-body"
-          >
-            <FlaskConical className="size-4" /> Load sample
+          <button onClick={() => { setPreview(null); setFile(null); load(SAMPLE, true); }} className={ghostBtn}>
+            <FlaskConical className="size-3.5" /> Sample
           </button>
         </div>
 
         {camOn && (
           <div className="space-y-2">
-            <video ref={video} autoPlay playsInline className="w-full rounded-xl bg-black" />
-            <Button onClick={snapshot}><Camera className="size-4" /> Capture</Button>
+            <video ref={video} autoPlay playsInline className="w-full rounded-lg border border-line bg-black" />
+            <Button onClick={snapshot} className="w-full"><Camera className="size-3.5" /> Capture</Button>
           </div>
         )}
 
         {preview ? (
-          <img src={preview} alt="handwriting" className="max-h-[420px] w-full rounded-xl border border-line object-contain well" />
+          <img src={preview} alt="Uploaded handwriting" className="well max-h-[360px] w-full rounded-lg border border-line object-contain" />
         ) : !camOn && (
-          <div className="grid h-48 place-items-center rounded-xl border border-dashed border-line text-sm text-muted">
-            A photo of a prescription, form or note
-          </div>
+          <label className="well group grid h-40 cursor-pointer place-items-center rounded-lg border border-dashed border-line text-center text-[12px] text-muted transition-all duration-150 ease-in-out hover:border-brand hover:text-body">
+            <span className="space-y-1.5">
+              <ImageUp className="mx-auto size-5" />
+              <span className="block">Drop in a photo of a prescription, form or note</span>
+            </span>
+            <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
+          </label>
         )}
 
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          {([
-            ["clean", "Clean image", "denoise, deskew, contrast"],
-            ["vote", "Multi-model vote", "disagreement = flag"],
-            ["context", "Context fix", "only from candidates"],
-            ["baseline", "Compare baseline", "one model, one pass"],
-          ] as const).map(([k, label, hint]) => (
-            <label key={k} className="flex cursor-pointer items-start gap-2 btn-outline rounded-lg p-3 text-ink">
-              <input type="checkbox" className="mt-1 accent-[var(--color-brand)]" checked={opts[k]} onChange={(e) => setOpts({ ...opts, [k]: e.target.checked })} />
-              <span><span className="block">{label}</span><span className="text-xs text-muted">{hint}</span></span>
-            </label>
+        <SectionLabel>Pipeline</SectionLabel>
+        <div className="space-y-1.5">
+          {OPTIONS.map(([k, label, hint]) => (
+            <Toggle key={k} on={opts[k]} onChange={(v) => setOpts({ ...opts, [k]: v })} label={label} hint={hint} />
           ))}
         </div>
 
-        <Button onClick={digitize} loading={loading} disabled={!file} className="w-full">
-          <Wand2 className="size-4" /> {loading ? "Reading with every model…" : "Digitize"}
+        <Button onClick={digitize} loading={loading} disabled={!file} className="w-full justify-between">
+          <span className="flex items-center gap-2"><Wand2 className="size-3.5" /> {loading ? "Reading with every model…" : "Digitize"}</span>
+          {!loading && <span className="flex gap-1"><Kbd>{MOD}</Kbd><Kbd>↵</Kbd></span>}
         </Button>
         <ErrorNote error={error} />
       </Card>
 
-      {/* ---------- output ---------- */}
-      <div className="col-span-12 space-y-6 lg:col-span-7">
+      {/* ---------- right: analytics & verification ---------- */}
+      <div className="col-span-12 space-y-4 lg:col-span-7 xl:col-span-8">
         {!result ? (
-          <Card className="grid h-full min-h-64 place-items-center text-center text-sm text-muted">
-            <div className="space-y-2">
-              <ShieldCheck className="mx-auto size-8 text-muted" />
-              <p>Every word is read by several AI models.<br />Where they disagree, ClearScript flags it instead of guessing.</p>
+          <Card className="grid min-h-80 place-items-center text-center">
+            <div className="max-w-sm space-y-3">
+              <span className="elev mx-auto grid size-10 place-items-center rounded-lg text-body"><ShieldCheck className="size-5" /></span>
+              <p className="text-[14px] font-medium tracking-tight">Nothing digitized yet</p>
+              <p className="text-[13px] leading-relaxed text-muted">
+                Every word is read by several AI models. Where they disagree, ClearScript flags it instead of guessing.
+              </p>
             </div>
           </Card>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Stat label="Words" value={real.length} />
-              <Stat label="Still flagged" value={flaggedLeft} tone={flaggedLeft ? "amber" : "emerald"} />
-              <Stat label="Avg agreement" value={`${Math.round(avgConf * 100)}%`} />
-              <Stat label="Questions asked" value={asked} hint={`${byContext} fixed by context`} />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Stat label="Words" value={real.length} dot="bg-muted" />
+              <Stat label="Still flagged" value={flaggedLeft} dot={flaggedLeft ? "bg-warn" : "bg-ok"} />
+              <Stat label="Avg agreement" value={`${Math.round(avgConf * 100)}%`} dot="bg-info" />
+              <Stat label="Questions asked" value={asked} dot="bg-brand" hint={`${byContext} fixed by context`} />
             </div>
 
-            <Card className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex rounded-xl well p-1 text-sm">
+            <Card flush className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
+                <div className="flex items-center gap-1 rounded-lg bg-well p-0.5 text-[12px]">
                   {(["auto", "review"] as Mode[]).map((m) => (
                     <button
                       key={m}
                       onClick={() => setMode(m)}
-                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 ${mode === m ? "bg-brand-strong text-white" : "text-muted hover:text-ink"}`}
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium tracking-tight transition-all duration-150 ease-in-out ${mode === m ? "bg-brand-strong text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1)]" : "text-muted hover:text-ink"}`}
                     >
-                      {m === "auto" ? <Sparkles className="size-4" /> : <UserCheck className="size-4" />}
+                      {m === "auto" ? <Sparkles className="size-3.5" /> : <UserCheck className="size-3.5" />}
                       {m === "auto" ? "Auto" : "Ask the human"}
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-2">
-                  {isSample && <span className="rounded-full bg-line px-2 py-0.5 text-xs text-body">sample data</span>}
-                  <IconBtn title="Copy text" onClick={() => navigator.clipboard.writeText(text)}><ClipboardCopy className="size-4" /></IconBtn>
-                  <IconBtn title="Download .txt" onClick={() => download(text)}><Download className="size-4" /></IconBtn>
+                <div className="flex items-center gap-1.5">
+                  {isSample && <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted">sample</span>}
+                  <IconBtn title="Copy text" aria-label="Copy text" onClick={() => navigator.clipboard.writeText(text)}><ClipboardCopy className="size-3.5" /></IconBtn>
+                  <IconBtn title="Download .txt" aria-label="Download text" onClick={() => download(text)}><Download className="size-3.5" /></IconBtn>
                 </div>
               </div>
-
-              <WordText words={words} />
-              <Legend />
+              <div className="space-y-3 px-4 pb-4">
+                <WordText words={words} />
+                <Legend />
+              </div>
             </Card>
 
             {mode === "review" && (
@@ -210,40 +227,67 @@ export default function Handwriting() {
 
 // ---------- pieces ----------
 
-function Stat({ label, value, hint, tone }: { label: string; value: string | number; hint?: string; tone?: "amber" | "emerald" }) {
-  const color = "text-neutral-900";
-  const dot = tone === "amber" ? "bg-amber-500" : tone === "emerald" ? "bg-emerald-500" : "bg-neutral-300";
+const ghostBtn =
+  "elev inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-[12px] font-medium tracking-tight text-body hover:text-ink active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">{children}</div>;
+}
+
+function Toggle({ on, onChange, label, hint }: { on: boolean; onChange: (v: boolean) => void; label: string; hint: string }) {
   return (
-    <div className="surface rounded-xl p-5">
-      <div className="flex items-center gap-2 text-xs font-medium text-muted"><span className={`size-1.5 rounded-full ${dot}`} />{label}</div>
-      <div className={`mt-2 text-3xl font-semibold tracking-tight tabular-nums ${color}`}>{value}</div>
-      {hint && <div className="mt-0.5 text-xs text-muted">{hint}</div>}
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={() => onChange(!on)}
+      className={`elev flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${on ? "!border-brand/60" : ""}`}
+    >
+      <span>
+        <span className="block text-[13px] font-medium tracking-tight text-ink">{label}</span>
+        <span className="block text-[11px] text-muted">{hint}</span>
+      </span>
+      <span className={`relative h-[18px] w-8 shrink-0 rounded-full transition-all duration-150 ease-in-out ${on ? "bg-brand" : "bg-line"}`}>
+        <span className={`absolute top-[3px] size-3 rounded-full bg-white shadow transition-all duration-150 ease-in-out ${on ? "left-[17px]" : "left-[3px]"}`} />
+      </span>
+    </button>
+  );
+}
+
+function Stat({ label, value, hint, dot }: { label: string; value: string | number; hint?: string; dot: string }) {
+  return (
+    <div className="surface rounded-xl px-4 py-3">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
+        <span className={`size-1.5 rounded-full ${dot}`} />{label}
+      </div>
+      <div className="mt-1.5 text-2xl font-semibold tracking-tight tabular-nums text-ink">{value}</div>
+      {hint && <div className="text-[11px] text-muted">{hint}</div>}
     </div>
   );
 }
 
 function IconBtn(props: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button {...props} className="btn-outline rounded-lg p-2 text-body hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" />;
+  return <button {...props} className="elev grid size-7 place-items-center rounded-md text-body hover:text-ink active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" />;
 }
 
 function wordCls(w: Word) {
-  if (w.flagged) return "border border-warn-line bg-warn-bg text-warn-fg underline decoration-warn decoration-wavy decoration-1 underline-offset-[5px]";
+  if (w.flagged) return "border border-warn-line bg-warn-bg text-warn-fg underline decoration-warn decoration-wavy decoration-1 underline-offset-[4px]";
   if (w.resolved_by === "human") return "border border-ok-line bg-ok-bg text-ok-fg";
   if (w.resolved_by === "context") return "border border-info-line bg-info-bg text-info-fg";
-  return "";
+  return "border border-transparent";
 }
 
 function WordText({ words }: { words: Word[] }) {
   return (
-    <div className="rounded-xl border border-line well p-5 font-mono text-sm leading-relaxed text-ink [&>span]:mr-1.5 [&>span]:inline-block [&>span]:my-1">
+    <div className="well rounded-lg border border-line p-4 font-mono text-xs leading-relaxed text-ink [&>span]:my-[3px] [&>span]:mr-1 [&>span]:inline-block">
       {words.map((w, i) =>
         isNewline(w) ? <br key={i} /> : (
           <span key={i} className="group relative">
-            <span className={`rounded-md px-1 ${wordCls(w)}`}>{w.text}</span>{" "}
-            <span className="pointer-events-none absolute bottom-full left-0 z-10 mb-1 hidden w-max max-w-64 rounded-lg border border-line bg-white px-2 py-1 shadow-lg font-sans text-xs leading-5 text-body shadow-xl group-hover:block">
-              {Math.round((w.confidence ?? 0) * 100)}% of models agree
+            <span className={`rounded-full px-1.5 py-px transition-all duration-150 ease-in-out ${wordCls(w)}`}>{w.text}</span>
+            <span role="tooltip" className="surface pointer-events-none absolute bottom-full left-0 z-10 mb-1.5 hidden w-max max-w-64 rounded-md px-2 py-1 font-sans text-[11px] leading-5 text-body shadow-xl group-hover:block">
+              <span className="font-mono text-ink">{Math.round((w.confidence ?? 0) * 100)}%</span> of models agree
               {w.resolved_by && <> · fixed by {w.resolved_by}</>}
-              {!!w.alternatives?.length && <><br />others read: {w.alternatives.join(", ")}</>}
+              {!!w.alternatives?.length && <><br />others read: <span className="font-mono">{w.alternatives.join(", ")}</span></>}
             </span>
           </span>
         ),
@@ -254,14 +298,14 @@ function WordText({ words }: { words: Word[] }) {
 
 function Legend() {
   const item = (cls: string, label: string) => (
-    <span className="flex items-center gap-1.5"><span className={`inline-block size-3 rounded ${cls}`} />{label}</span>
+    <span className="flex items-center gap-1.5"><span className={`inline-block h-2.5 w-4 rounded-full ${cls}`} />{label}</span>
   );
   return (
-    <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-body">
-      {item("border border-warn bg-warn-bg", "Needs check")}
-      {item("border border-info bg-info-bg", "Fixed by context")}
-      {item("border border-ok bg-ok-bg", "Confirmed by you")}
-      <span className="text-muted">Hover a word for details.</span>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-body">
+      {item("border border-warn-line bg-warn-bg", "Needs check")}
+      {item("border border-info-line bg-info-bg", "Fixed by context")}
+      {item("border border-ok-line bg-ok-bg", "Confirmed")}
+      <span className="ml-auto text-muted">Hover a word for details</span>
     </div>
   );
 }
@@ -272,55 +316,80 @@ function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
 }) {
   const [typed, setTyped] = useState("");
   const i = queue[0];
-  if (i === undefined) {
+  const w = i === undefined ? undefined : words[i];
+  const options = w ? [...new Set([w.text, ...(w.alternatives ?? [])])].filter((x) => x && x !== "[?]") : [];
+  const submit = (t: string) => { if (i !== undefined && t.trim()) { onAnswer(i, t.trim()); setTyped(""); } };
+
+  // 1-9 picks a candidate, Esc skips. Digits are ignored while typing in a field.
+  const keys = useRef({ submit, options, i, onSkip });
+  keys.current = { submit, options, i, onSkip };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const { submit, options, i, onSkip } = keys.current;
+      if (i === undefined || e.metaKey || e.ctrlKey || e.altKey) return;
+      const typing = e.target instanceof HTMLElement && /INPUT|TEXTAREA/.test(e.target.tagName);
+      if (e.key === "Escape") { e.preventDefault(); onSkip(i); return; }
+      if (!typing && /^[1-9]$/.test(e.key) && options[+e.key - 1]) { e.preventDefault(); submit(options[+e.key - 1]); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  if (i === undefined || !w) {
     return (
-      <Card className="flex items-center gap-3 !border-ok-line !bg-ok-bg text-sm font-medium text-ok-fg">
-        <Check className="size-5" /> Nothing left to ask. Every flagged word has been checked.
-      </Card>
+      <div className="flex items-center gap-2.5 rounded-xl border border-ok-line bg-ok-bg px-4 py-3 text-[13px] font-medium text-ok-fg">
+        <Check className="size-4" /> Nothing left to ask. Every flagged word has been checked.
+      </div>
     );
   }
-  const w = words[i];
   const before = words.slice(Math.max(0, i - 5), i).filter((x) => !isNewline(x)).map((x) => x.text).join(" ");
   const after = words.slice(i + 1, i + 6).filter((x) => !isNewline(x)).map((x) => x.text).join(" ");
-  const options = [...new Set([w.text, ...(w.alternatives ?? [])])].filter((x) => x && x !== "[?]");
-  const submit = (t: string) => { if (t.trim()) { onAnswer(i, t.trim()); setTyped(""); } };
 
   return (
-    <Card className="space-y-5 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 font-medium">
-          <HelpCircle className="size-5 text-warn" /> Which word is this?
-          {hasDigit(w.text) && <span className="rounded-full bg-del-bg px-2 py-0.5 text-xs font-medium text-del-fg">number: never guessed</span>}
+    <Card flush className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
+        <div className="flex items-center gap-2 text-[13px] font-medium tracking-tight">
+          <HelpCircle className="size-4 text-warn" /> Which word is this?
+          {hasDigit(w.text) && (
+            <span className="rounded-full border border-del-line bg-del-bg px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-del-fg">number · never guessed</span>
+          )}
         </div>
-        <span className="text-xs text-muted">{queue.length} question{queue.length > 1 ? "s" : ""} left on this page</span>
+        <span className="font-mono text-[11px] text-muted">{queue.length} left</span>
       </div>
 
-      <p className="rounded-xl border border-line well p-4 font-mono text-sm leading-relaxed text-body">
-        …{before} <span className="rounded-md border border-warn-line bg-warn-bg px-1.5 text-warn-fg">{w.text}</span> {after}…
-      </p>
+      <div className="space-y-4 px-4 pb-4">
+        <p className="well rounded-lg border border-line px-3 py-2.5 font-mono text-xs leading-relaxed text-body">
+          …{before} <span className="rounded-full border border-warn-line bg-warn-bg px-1.5 py-px text-warn-fg">{w.text}</span> {after}…
+        </p>
 
-      <div className="flex flex-wrap gap-3">
-        {options.map((o) => (
-          <button key={o} onClick={() => submit(o)} className="btn-outline min-w-20 rounded-xl px-4 py-2.5 font-mono text-sm text-ink transition hover:border-brand hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
-            {o}
+        <div className="flex flex-wrap gap-2">
+          {options.map((o, k) => (
+            <button
+              key={o}
+              onClick={() => submit(o)}
+              className="elev flex min-w-24 items-center justify-between gap-3 rounded-lg px-3 py-2 font-mono text-xs text-ink hover:!border-brand active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              {o}
+              {k < 9 && <span className="text-muted"><Kbd>{k + 1}</Kbd></span>}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <input className={inputCls} placeholder="Or type the correct word" value={typed}
+            onChange={(e) => setTyped(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit(typed)} />
+          <Button onClick={() => submit(typed)} disabled={!typed.trim()}>Confirm <Kbd>↵</Kbd></Button>
+          <button onClick={() => onSkip(i)} title="Skip this word" aria-label="Skip this word" className={`${ghostBtn} !py-0`}>
+            Skip <Kbd>Esc</Kbd>
           </button>
-        ))}
-      </div>
+        </div>
 
-      <div className="flex gap-3">
-        <input className={inputCls} placeholder="Or type the correct word" value={typed}
-          onChange={(e) => setTyped(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit(typed)} />
-        <Button onClick={() => submit(typed)} disabled={!typed.trim()}>Confirm</Button>
-        <button onClick={() => onSkip(i)} title="Skip this word" aria-label="Skip this word" className="btn-outline rounded-lg px-3 text-body hover:text-ink">
-          <SkipForward className="size-4" />
-        </button>
+        <label className="flex flex-wrap items-center gap-2 border-t border-line pt-3 text-[11px] text-muted">
+          <span className="font-semibold uppercase tracking-wider">Writer</span>
+          <input className={`${inputCls} max-w-40 !py-1 font-mono !text-[11px]`} value={writer} onChange={(e) => setWriter(e.target.value)} />
+          <span>Answers are final and teach this writer's word list</span>
+        </label>
       </div>
-
-      <label className="flex flex-wrap items-center gap-2 border-t border-line pt-4 text-xs text-muted">
-        Writer
-        <input className={`${inputCls} max-w-48 py-1 text-xs`} value={writer} onChange={(e) => setWriter(e.target.value)} />
-        <span>your answers are final and teach this writer's word list</span>
-      </label>
     </Card>
   );
 }
@@ -344,19 +413,21 @@ function Compare({ baseline, ours }: { baseline: string; ours: string }) {
     ws.map((x, k) => <span key={k}><span className={keep.has(k) ? "" : `rounded px-1 ${cls}`}>{x}</span> </span>);
 
   return (
-    <Card className="space-y-3">
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-medium">Baseline vs ClearScript</span>
-        <span className="text-xs text-muted">{changed} word{changed === 1 ? "" : "s"} differ</span>
+    <Card flush>
+      <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+        <span className="text-[13px] font-medium tracking-tight">Baseline vs ClearScript</span>
+        <span className="font-mono text-[11px]">
+          <span className="text-del-fg">−{changed}</span> <span className="text-add-fg">+{b.length - keepB.size}</span>
+        </span>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <div className="mb-1 text-xs text-muted">One model, one pass</div>
-          <p className="rounded-xl border border-line well p-4 font-mono text-sm leading-relaxed">{show(a, keepA, "border border-red-200 bg-red-50 text-red-700 line-through decoration-red-700")}</p>
+      <div className="grid sm:grid-cols-2">
+        <div className="border-line sm:border-r">
+          <div className="border-b border-line px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted">One model, one pass</div>
+          <p className="px-4 py-3 font-mono text-xs leading-relaxed text-body">{show(a, keepA, "border border-del-line bg-del-bg text-del-fg line-through")}</p>
         </div>
-        <div>
-          <div className="mb-1 text-xs text-muted">ClearScript</div>
-          <p className="rounded-xl border border-line well p-4 font-mono text-sm leading-relaxed">{show(b, keepB, "border border-emerald-200 bg-emerald-50 text-emerald-700")}</p>
+        <div className="border-t border-line sm:border-t-0">
+          <div className="border-b border-line px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted">ClearScript</div>
+          <p className="px-4 py-3 font-mono text-xs leading-relaxed text-body">{show(b, keepB, "border border-add-line bg-add-bg text-add-fg")}</p>
         </div>
       </div>
     </Card>
@@ -365,21 +436,25 @@ function Compare({ baseline, ours }: { baseline: string; ours: string }) {
 
 function Readings({ readings, errors }: { readings: Record<string, string>; errors: Record<string, string> }) {
   return (
-    <details className="surface rounded-xl p-5">
-      <summary className="cursor-pointer text-sm font-medium">
-        What each model read ({Object.keys(readings).length} answered{Object.keys(errors).length ? `, ${Object.keys(errors).length} failed` : ""})
+    <details className="surface group rounded-xl">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-[13px] font-medium tracking-tight">
+        What each model read
+        <span className="font-mono text-[11px] text-muted">
+          {Object.keys(readings).length} ok{Object.keys(errors).length ? ` · ${Object.keys(errors).length} failed` : ""}
+          <span className="ml-2 inline-block transition-transform duration-150 group-open:rotate-90">›</span>
+        </span>
       </summary>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 border-t border-line p-4 sm:grid-cols-2">
         {Object.entries(readings).map(([name, t]) => (
           <div key={name}>
-            <div className="mb-1 truncate font-mono text-xs font-medium text-ink">{name}</div>
-            <pre className="whitespace-pre-wrap rounded-xl well p-3 text-xs text-body">{t}</pre>
+            <div className="mb-1 truncate font-mono text-[11px] text-muted">{name}</div>
+            <pre className="well whitespace-pre-wrap rounded-lg border border-line p-3 text-xs text-body">{t}</pre>
           </div>
         ))}
         {Object.entries(errors).map(([name, e]) => (
           <div key={name}>
-            <div className="mb-1 truncate text-xs text-del-fg">{name}</div>
-            <pre className="whitespace-pre-wrap rounded-xl bg-del-bg p-3 text-xs text-del-fg">{e}</pre>
+            <div className="mb-1 truncate font-mono text-[11px] text-del-fg">{name}</div>
+            <pre className="whitespace-pre-wrap rounded-lg border border-del-line bg-del-bg p-3 text-xs text-del-fg">{e}</pre>
           </div>
         ))}
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bot, Eye, FileText, MessageSquare, PenLine, ScanText } from "lucide-react";
+import { Bot, Eye, FileText, MessageSquare, Moon, PenLine, ScanText, Sun } from "lucide-react";
 import Chat from "./pages/Chat";
 import Docs from "./pages/Docs";
 import Agent from "./pages/Agent";
@@ -19,34 +19,59 @@ const TABS = [
 export default function App() {
   const [tab, setTab] = useState(TABS[0].id);
   const [provider, setProvider] = useState<string>("…");
+  const [light, setLight] = useState(() => document.documentElement.dataset.theme === "light");
 
   useEffect(() => {
     fetch(API + "/api/health").then((r) => r.json()).then((h) => setProvider(h.provider)).catch(() => setProvider("offline"));
   }, []);
 
+  useEffect(() => {
+    if (light) document.documentElement.dataset.theme = "light";
+    else delete document.documentElement.dataset.theme;
+    try { localStorage.setItem("theme", light ? "light" : "dark"); } catch { /* storage blocked: theme just won't persist */ }
+  }, [light]);
+
+  const online = provider !== "offline" && provider !== "…";
+
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-lg bg-ink text-white"><ScanText className="size-4" /></span>
-          <h1 className="text-lg font-semibold tracking-tight text-ink">ClearScript</h1>
-          <span className="text-sm text-muted">messy handwriting in, trusted text out</span>
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-20 border-b border-line bg-page/85 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-2.5">
+          <div className="flex items-center gap-2">
+            <span className="grid size-6 place-items-center rounded-md bg-brand text-white"><ScanText className="size-3.5" /></span>
+            <h1 className="text-[14px] font-semibold tracking-tight">ClearScript</h1>
+          </div>
+          <nav className="flex gap-0.5 overflow-x-auto">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium tracking-tight whitespace-nowrap transition-all duration-150 ease-in-out ${tab === t.id ? "bg-brand-strong text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1)]" : "text-muted hover:bg-elev hover:text-ink"}`}
+              >
+                <t.icon className="size-3.5" /> {t.label}
+              </button>
+            ))}
+          </nav>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="elev flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-[11px] text-body">
+              <span className={`size-1.5 rounded-full ${online ? "bg-ok" : "bg-del-fg"}`} />
+              {provider}
+            </span>
+            <button
+              onClick={() => setLight((v) => !v)}
+              aria-label={light ? "Switch to dark theme" : "Switch to light theme"}
+              title={light ? "Dark theme" : "Light theme"}
+              className="elev grid size-7 place-items-center rounded-md text-body hover:text-ink"
+            >
+              {light ? <Moon className="size-3.5" /> : <Sun className="size-3.5" />}
+            </button>
+          </div>
         </div>
-        <span className="btn-outline rounded-full px-3 py-1 text-xs text-body">LLM: {provider}</span>
       </header>
-      <nav className="mb-8 flex gap-1 overflow-x-auto rounded-xl surface p-1">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition ${tab === t.id ? "bg-brand-strong text-white hover:opacity-90" : "text-muted hover:text-ink"}`}
-          >
-            <t.icon className="size-4" /> {t.label}
-          </button>
-        ))}
-      </nav>
-      {/* All tabs stay mounted so switching tabs keeps their state. */}
-      {TABS.map((t) => <div key={t.id} hidden={t.id !== tab}>{t.el}</div>)}
+      <main className="mx-auto max-w-7xl px-5 py-6">
+        {/* All tabs stay mounted so switching tabs keeps their state. */}
+        {TABS.map((t) => <div key={t.id} hidden={t.id !== tab}>{t.el}</div>)}
+      </main>
     </div>
   );
 }
