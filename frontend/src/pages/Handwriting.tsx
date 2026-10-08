@@ -75,6 +75,7 @@ export default function Handwriting() {
     const form = new FormData();
     form.append("file", file, "page.jpg");
     Object.entries(opts).forEach(([k, v]) => form.append(k, String(v)));
+    if (writer.trim()) form.append("writer", writer.trim()); // lets the backend use this writer's confirmed words
     setLoading(true);
     setError(null);
     try {
@@ -166,6 +167,15 @@ export default function Handwriting() {
           ))}
         </div>
 
+        <label className="block space-y-1.5">
+          <span className="flex items-baseline justify-between gap-2">
+            <span className="inst-label text-[13px] font-medium tracking-tight text-ink">Writer</span>
+            <span className="text-[11px] text-muted">Answers you confirm teach this writer's word list</span>
+          </span>
+          <input className={`${inputCls} font-mono`} value={writer} onChange={(e) => setWriter(e.target.value)}
+            placeholder="e.g. dr-kumar" aria-label="Writer" />
+        </label>
+
         <Button onClick={digitize} loading={loading} disabled={!file} className="btn-seal-lg w-full justify-between">
           <span className="flex items-center gap-2"><Wand2 className="size-3.5" /> {loading ? "Reading with every model…" : "Digitize"}</span>
           {!loading && <span className="flex gap-1"><Kbd>{MOD}</Kbd><Kbd>↵</Kbd></span>}
@@ -230,7 +240,7 @@ export default function Handwriting() {
             </Card>
 
             {mode === "review" && (
-              <ReviewPanel words={words} queue={queue} writer={writer} setWriter={setWriter} onAnswer={answer} onSkip={skip} />
+              <ReviewPanel words={words} queue={queue} writer={writer} onAnswer={answer} onSkip={skip} />
             )}
 
             {result.baseline !== undefined && <Compare baseline={result.baseline} ours={text} />}
@@ -327,8 +337,8 @@ function Legend() {
   );
 }
 
-function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
-  words: Word[]; queue: number[]; writer: string; setWriter: (s: string) => void;
+function ReviewPanel({ words, queue, writer, onAnswer, onSkip }: {
+  words: Word[]; queue: number[]; writer: string;
   onAnswer: (i: number, text: string) => void; onSkip: (i: number) => void;
 }) {
   const [typed, setTyped] = useState("");
@@ -401,11 +411,10 @@ function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
           </button>
         </div>
 
-        <label className="flex flex-wrap items-center gap-2 border-t border-line pt-3 text-[11px] text-muted">
-          <span className="font-semibold uppercase tracking-wider">Writer</span>
-          <input className={`${inputCls} max-w-40 !py-1 font-mono !text-[11px]`} value={writer} onChange={(e) => setWriter(e.target.value)} />
-          <span>Answers are final and teach this writer's word list</span>
-        </label>
+        <p className="border-t border-line pt-3 text-[11px] text-muted">
+          Answers are final and teach the word list of writer <span className="font-mono text-body">{writer || "(none)"}</span>
+          {" "}(set above the Digitize button).
+        </p>
       </div>
     </Card>
   );
