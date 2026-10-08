@@ -61,7 +61,7 @@ export default function Docs() {
             <div className="text-sm leading-relaxed"><Markdown>{answer.answer}</Markdown></div>
             <div className="space-y-2">
               {answer.sources.map((s, i) => (
-                <details key={i} className="rounded-lg recessed p-2 text-xs text-muted">
+                <details key={i} className="rounded-lg well p-2 text-xs text-muted">
                   <summary className="cursor-pointer">[{i + 1}] {s.source}</summary>
                   <p className="mt-1">{s.text}</p>
                 </details>

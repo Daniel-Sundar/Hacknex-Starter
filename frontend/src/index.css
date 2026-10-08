@@ -1,52 +1,48 @@
 @import "tailwindcss";
 
-/* ClearScript light theme: glass panels, neumorphic controls. All text pairs are >= 4.5:1 (WCAG AA). */
+/* ClearScript minimal theme (Plunk-style): white surfaces, hairline borders, one indigo accent for primary actions.
+   Every text/background pair is >= 4.5:1 (WCAG AA). */
 @theme {
-  --color-page: #f1f5f9;   /* canvas */
-  --color-well: #f8fafc;   /* recessed text areas */
-  --color-line: #e2e8f0;   /* hairlines */
+  --color-page: #fafafa;   /* canvas */
+  --color-well: #f4f4f5;   /* output / code boxes */
+  --color-line: #e4e4e7;   /* hairlines */
 
-  --color-ink: #0f172a;    /* headings, metrics */
-  --color-body: #475569;   /* body text */
-  --color-muted: #556274;  /* captions (#64748b is only 4.3:1 on the canvas) */
+  --color-ink: #09090b;    /* headings, primary text, metrics */
+  --color-body: #3f3f46;   /* body text */
+  --color-muted: #71717a;  /* labels, descriptions (4.8:1 on white) */
 
-  --color-brand: #2563eb;        /* primary blue: rings, icons */
-  --color-brand-strong: #2563eb; /* filled buttons, white text 5.2:1 */
-  --color-brand-soft: #1d4ed8;   /* blue text on light */
+  --color-brand: #4f46e5;        /* primary actions only */
+  --color-brand-strong: #4f46e5; /* white text 6.3:1 */
+  --color-brand-soft: #09090b;   /* accent-coloured text falls back to ink: indigo stays reserved for CTAs */
 
-  --color-warn: #b45309; --color-warn-bg: #fef3c7; --color-warn-fg: #92400e; --color-warn-line: #fde68a;
-  --color-info: #0369a1; --color-info-bg: #e0f2fe; --color-info-fg: #075985; --color-info-line: #bae6fd;
-  --color-ok: #047857;   --color-ok-bg: #d1fae5;   --color-ok-fg: #065f46;   --color-ok-line: #a7f3d0;
-  --color-del-bg: #fee2e2; --color-del-fg: #b91c1c;
+  --color-warn: #b45309; --color-warn-bg: #fffbeb; --color-warn-fg: #b45309; --color-warn-line: #fde68a;
+  --color-info: #0369a1; --color-info-bg: #f0f9ff; --color-info-fg: #0369a1; --color-info-line: #bae6fd;
+  --color-ok: #047857;   --color-ok-bg: #ecfdf5;   --color-ok-fg: #047857;   --color-ok-line: #a7f3d0;
+  --color-del-bg: #fef2f2; --color-del-fg: #b91c1c;
 }
 
 body {
-  background:
-    radial-gradient(60rem 40rem at 10% -10%, #dbeafe 0%, transparent 60%),
-    radial-gradient(50rem 35rem at 110% 10%, #e0f2fe 0%, transparent 55%),
-    radial-gradient(40rem 30rem at 50% 120%, #ecfdf5 0%, transparent 60%),
-    var(--color-page);
-  background-attachment: fixed;
+  background: var(--color-page);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Frosted glass container */
-@utility glass {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+/* White card with a 1px hairline and a gentle hover lift */
+@utility surface {
+  background: #ffffff;
+  border: 1px solid var(--color-line);
+  transition: box-shadow 150ms ease;
+  &:hover { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
 }
 
-/* Soft raised control (secondary buttons, chips) */
-@utility neu {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.8), 2px 2px 5px rgba(0, 0, 0, 0.04);
+/* Outline secondary button */
+@utility btn-outline {
+  background: #ffffff;
+  border: 1px solid var(--color-line);
+  transition: background-color 150ms ease, border-color 150ms ease;
+  &:hover { background: #f4f4f5; border-color: #d4d4d8; }
 }
 
-/* Recessed field (inputs, text wells) */
-@utility recessed {
-  background: #f8fafc;
-  box-shadow: inset 2px 2px 5px rgba(15, 23, 42, 0.06), inset -2px -2px 5px rgba(255, 255, 255, 0.9);
+/* Light neutral box for monospaced output */
+@utility well {
+  background: var(--color-well);
 }

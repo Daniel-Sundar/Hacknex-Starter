@@ -25,21 +25,21 @@ export default function App() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-6 py-8">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <ScanText className="size-6 text-brand-soft" />
-          <h1 className="text-xl font-bold text-ink">ClearScript</h1>
+          <span className="grid size-8 place-items-center rounded-lg bg-ink text-white"><ScanText className="size-4" /></span>
+          <h1 className="text-lg font-semibold tracking-tight text-ink">ClearScript</h1>
           <span className="text-sm text-muted">messy handwriting in, trusted text out</span>
         </div>
-        <span className="neu rounded-full px-3 py-1 text-xs text-body">LLM: {provider}</span>
+        <span className="btn-outline rounded-full px-3 py-1 text-xs text-body">LLM: {provider}</span>
       </header>
-      <nav className="mb-4 flex gap-1 overflow-x-auto rounded-2xl glass p-1">
+      <nav className="mb-8 flex gap-1 overflow-x-auto rounded-xl surface p-1">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm whitespace-nowrap transition ${tab === t.id ? "bg-brand-strong text-white shadow-md shadow-blue-600/20" : "text-muted hover:text-ink"}`}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition ${tab === t.id ? "bg-brand-strong text-white hover:opacity-90" : "text-muted hover:text-ink"}`}
           >
             <t.icon className="size-4" /> {t.label}
           </button>

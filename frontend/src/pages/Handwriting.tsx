@@ -95,23 +95,23 @@ export default function Handwriting() {
   const queue = reviewQueue(words.map((w) => (w.skipped ? { ...w, flagged: false } : w)));
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+    <div className="grid grid-cols-12 gap-6">
       {/* ---------- input ---------- */}
-      <Card className="space-y-4 self-start">
+      <Card className="col-span-12 space-y-5 self-start lg:col-span-5">
         <div className="flex flex-wrap gap-2">
-          <label className="inline-flex cursor-pointer items-center gap-2 neu rounded-xl px-3 py-2 text-sm font-medium text-ink transition hover:border-brand hover:text-brand-soft">
+          <label className="inline-flex cursor-pointer items-center gap-2 btn-outline rounded-lg px-3 py-2 text-sm font-medium text-ink">
             <ImageUp className="size-4" /> Upload page
             <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
           </label>
           <button
             onClick={() => setCamOn((v) => !v)}
-            className="inline-flex items-center gap-2 neu rounded-xl px-3 py-2 text-sm font-medium text-ink transition hover:border-brand hover:text-brand-soft"
+            className="inline-flex items-center gap-2 btn-outline rounded-lg px-3 py-2 text-sm font-medium text-ink"
           >
             <Camera className="size-4" /> {camOn ? "Close camera" : "Camera"}
           </button>
           <button
             onClick={() => { setPreview(null); setFile(null); load(SAMPLE, true); }}
-            className="neu inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-body transition hover:border-brand hover:text-brand-soft"
+            className="btn-outline inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-body"
           >
             <FlaskConical className="size-4" /> Load sample
           </button>
@@ -125,7 +125,7 @@ export default function Handwriting() {
         )}
 
         {preview ? (
-          <img src={preview} alt="handwriting" className="max-h-[420px] w-full rounded-xl border border-line object-contain recessed" />
+          <img src={preview} alt="handwriting" className="max-h-[420px] w-full rounded-xl border border-line object-contain well" />
         ) : !camOn && (
           <div className="grid h-48 place-items-center rounded-xl border border-dashed border-line text-sm text-muted">
             A photo of a prescription, form or note
@@ -139,7 +139,7 @@ export default function Handwriting() {
             ["context", "Context fix", "only from candidates"],
             ["baseline", "Compare baseline", "one model, one pass"],
           ] as const).map(([k, label, hint]) => (
-            <label key={k} className="flex cursor-pointer items-start gap-2 neu rounded-xl p-2 text-ink hover:border-slate-300">
+            <label key={k} className="flex cursor-pointer items-start gap-2 btn-outline rounded-lg p-3 text-ink">
               <input type="checkbox" className="mt-1 accent-[var(--color-brand)]" checked={opts[k]} onChange={(e) => setOpts({ ...opts, [k]: e.target.checked })} />
               <span><span className="block">{label}</span><span className="text-xs text-muted">{hint}</span></span>
             </label>
@@ -153,11 +153,11 @@ export default function Handwriting() {
       </Card>
 
       {/* ---------- output ---------- */}
-      <div className="space-y-4">
+      <div className="col-span-12 space-y-6 lg:col-span-7">
         {!result ? (
           <Card className="grid h-full min-h-64 place-items-center text-center text-sm text-muted">
             <div className="space-y-2">
-              <ShieldCheck className="mx-auto size-8 text-brand-soft" />
+              <ShieldCheck className="mx-auto size-8 text-muted" />
               <p>Every word is read by several AI models.<br />Where they disagree, ClearScript flags it instead of guessing.</p>
             </div>
           </Card>
@@ -172,7 +172,7 @@ export default function Handwriting() {
 
             <Card className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex rounded-xl recessed p-1 text-sm">
+                <div className="flex rounded-xl well p-1 text-sm">
                   {(["auto", "review"] as Mode[]).map((m) => (
                     <button
                       key={m}
@@ -211,19 +211,19 @@ export default function Handwriting() {
 // ---------- pieces ----------
 
 function Stat({ label, value, hint, tone }: { label: string; value: string | number; hint?: string; tone?: "amber" | "emerald" }) {
-  const color = tone === "amber" ? "text-warn" : tone === "emerald" ? "text-ok" : "text-ink";
-  const accent = tone === "amber" ? "!border-amber-200" : tone === "emerald" ? "!border-emerald-200" : "!border-blue-100";
+  const color = "text-neutral-900";
+  const dot = tone === "amber" ? "bg-amber-500" : tone === "emerald" ? "bg-emerald-500" : "bg-neutral-300";
   return (
-    <div className={`glass rounded-2xl p-4 ${accent}`}>
-      <div className="text-xs font-medium uppercase tracking-wide text-body">{label}</div>
-      <div className={`mt-1 text-3xl font-bold tabular-nums ${color}`}>{value}</div>
+    <div className="surface rounded-xl p-5">
+      <div className="flex items-center gap-2 text-xs font-medium text-muted"><span className={`size-1.5 rounded-full ${dot}`} />{label}</div>
+      <div className={`mt-2 text-3xl font-semibold tracking-tight tabular-nums ${color}`}>{value}</div>
       {hint && <div className="mt-0.5 text-xs text-muted">{hint}</div>}
     </div>
   );
 }
 
 function IconBtn(props: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button {...props} className="neu rounded-lg p-2 text-body hover:border-brand hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" />;
+  return <button {...props} className="btn-outline rounded-lg p-2 text-body hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" />;
 }
 
 function wordCls(w: Word) {
@@ -235,7 +235,7 @@ function wordCls(w: Word) {
 
 function WordText({ words }: { words: Word[] }) {
   return (
-    <div className="rounded-xl border border-line recessed p-5 font-mono text-[15px] leading-relaxed text-ink [&>span]:mr-1.5 [&>span]:inline-block [&>span]:my-1">
+    <div className="rounded-xl border border-line well p-5 font-mono text-sm leading-relaxed text-ink [&>span]:mr-1.5 [&>span]:inline-block [&>span]:my-1">
       {words.map((w, i) =>
         isNewline(w) ? <br key={i} /> : (
           <span key={i} className="group relative">
@@ -274,7 +274,7 @@ function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
   const i = queue[0];
   if (i === undefined) {
     return (
-      <Card className="flex items-center gap-3 !border-ok-line !bg-ok-bg text-sm text-ok-fg">
+      <Card className="flex items-center gap-3 !border-ok-line !bg-ok-bg text-sm font-medium text-ok-fg">
         <Check className="size-5" /> Nothing left to ask. Every flagged word has been checked.
       </Card>
     );
@@ -286,7 +286,7 @@ function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
   const submit = (t: string) => { if (t.trim()) { onAnswer(i, t.trim()); setTyped(""); } };
 
   return (
-    <Card className="space-y-5 !border-warn-line p-6">
+    <Card className="space-y-5 p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 font-medium">
           <HelpCircle className="size-5 text-warn" /> Which word is this?
@@ -295,13 +295,13 @@ function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
         <span className="text-xs text-muted">{queue.length} question{queue.length > 1 ? "s" : ""} left on this page</span>
       </div>
 
-      <p className="rounded-xl border border-line recessed p-4 font-mono text-sm leading-relaxed text-body">
+      <p className="rounded-xl border border-line well p-4 font-mono text-sm leading-relaxed text-body">
         …{before} <span className="rounded-md border border-warn-line bg-warn-bg px-1.5 text-warn-fg">{w.text}</span> {after}…
       </p>
 
       <div className="flex flex-wrap gap-3">
         {options.map((o) => (
-          <button key={o} onClick={() => submit(o)} className="neu min-w-20 rounded-xl px-4 py-2.5 font-mono text-sm text-ink transition hover:border-brand hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+          <button key={o} onClick={() => submit(o)} className="btn-outline min-w-20 rounded-xl px-4 py-2.5 font-mono text-sm text-ink transition hover:border-brand hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
             {o}
           </button>
         ))}
@@ -311,7 +311,7 @@ function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
         <input className={inputCls} placeholder="Or type the correct word" value={typed}
           onChange={(e) => setTyped(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit(typed)} />
         <Button onClick={() => submit(typed)} disabled={!typed.trim()}>Confirm</Button>
-        <button onClick={() => onSkip(i)} title="Skip this word" aria-label="Skip this word" className="neu rounded-xl px-3 text-body hover:border-brand hover:text-ink">
+        <button onClick={() => onSkip(i)} title="Skip this word" aria-label="Skip this word" className="btn-outline rounded-lg px-3 text-body hover:text-ink">
           <SkipForward className="size-4" />
         </button>
       </div>
@@ -352,11 +352,11 @@ function Compare({ baseline, ours }: { baseline: string; ours: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <div className="mb-1 text-xs text-muted">One model, one pass</div>
-          <p className="rounded-xl border border-line recessed p-4 font-mono text-sm leading-relaxed">{show(a, keepA, "bg-red-100 text-red-700 line-through decoration-red-700")}</p>
+          <p className="rounded-xl border border-line well p-4 font-mono text-sm leading-relaxed">{show(a, keepA, "border border-red-200 bg-red-50 text-red-700 line-through decoration-red-700")}</p>
         </div>
         <div>
           <div className="mb-1 text-xs text-muted">ClearScript</div>
-          <p className="rounded-xl border border-line recessed p-4 font-mono text-sm leading-relaxed">{show(b, keepB, "bg-emerald-100 text-emerald-800")}</p>
+          <p className="rounded-xl border border-line well p-4 font-mono text-sm leading-relaxed">{show(b, keepB, "border border-emerald-200 bg-emerald-50 text-emerald-700")}</p>
         </div>
       </div>
     </Card>
@@ -365,15 +365,15 @@ function Compare({ baseline, ours }: { baseline: string; ours: string }) {
 
 function Readings({ readings, errors }: { readings: Record<string, string>; errors: Record<string, string> }) {
   return (
-    <details className="glass rounded-2xl p-5">
+    <details className="surface rounded-xl p-5">
       <summary className="cursor-pointer text-sm font-medium">
         What each model read ({Object.keys(readings).length} answered{Object.keys(errors).length ? `, ${Object.keys(errors).length} failed` : ""})
       </summary>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {Object.entries(readings).map(([name, t]) => (
           <div key={name}>
-            <div className="mb-1 truncate text-xs text-brand-soft">{name}</div>
-            <pre className="whitespace-pre-wrap rounded-xl recessed p-3 text-xs text-body">{t}</pre>
+            <div className="mb-1 truncate font-mono text-xs font-medium text-ink">{name}</div>
+            <pre className="whitespace-pre-wrap rounded-xl well p-3 text-xs text-body">{t}</pre>
           </div>
         ))}
         {Object.entries(errors).map(([name, e]) => (

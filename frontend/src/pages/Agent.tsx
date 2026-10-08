@@ -35,7 +35,7 @@ export default function Agent() {
         <>
           <ol className="space-y-2">
             {res.trace.map((s, i) => (
-              <li key={i} className="flex gap-3 rounded-xl recessed p-3 text-xs">
+              <li key={i} className="flex gap-3 rounded-xl well p-3 text-xs">
                 <Wrench className="mt-0.5 size-4 shrink-0 text-brand-soft" />
                 <div>
                   <p className="font-mono text-body">{s.tool}({JSON.stringify(s.args)})</p>
