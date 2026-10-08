@@ -4,7 +4,7 @@
 
 ## Start here
 The app is **ClearScript** (handwriting digitizer, branch `feat/handwriting-mvp`). Before doing anything, read
-`README.md` → **"Status and to-do (handoff)"**: it lists what is done, what is left (in order) and known issues.
+`docs/HANDOFF.md`: it lists what is done, what is left (in order) and known issues.
 Pipeline: `backend/app/handwriting.py`; prescription safety checks: `backend/app/rx_safety.py`; UI:
 `frontend/src/pages/Handwriting.tsx`. Evaluate with `backend/eval.py` (dev split for tuning, test split only for
 the final numbers). Several people push to this branch: `git pull --rebase` before you start and before you push.
