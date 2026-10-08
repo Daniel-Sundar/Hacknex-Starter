@@ -47,11 +47,11 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <JournalIntro />
-      <header className="sticky top-0 z-20 border-b border-line bg-page/85 backdrop-blur">
+      <header className="leather sticky top-0 z-20">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-2.5">
           <div className="flex items-center gap-2">
-            <span className="grid size-6 place-items-center rounded-md bg-brand text-white"><ScanText className="size-3.5" /></span>
-            <a href="#/clearscript" className="font-display text-[16px] font-semibold tracking-[0.06em] text-ink">ClearScript</a>
+            <span className="grid size-6 place-items-center rounded-md border border-[#c9a24a]/70 bg-brand text-[#f1e3bf]"><ScanText className="size-3.5" /></span>
+            <a href="#/clearscript" className="font-display text-[16px] font-semibold tracking-[0.08em] text-[#e2c36b] [text-shadow:0_1px_0_rgb(0_0_0/0.6)]">ClearScript</a>
           </div>
           <nav aria-label="Sections" className="flex gap-0.5 overflow-x-auto">
             {TABS.map((t) => (
@@ -59,7 +59,7 @@ export default function App() {
                 key={t.id}
                 href={`#/${t.id}`}
                 aria-current={tab === t.id ? "page" : undefined}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium tracking-tight whitespace-nowrap transition-all duration-150 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${tab === t.id ? "bg-brand-strong text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1)]" : "text-muted hover:bg-elev hover:text-ink"}`}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium tracking-tight whitespace-nowrap transition-all duration-150 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${tab === t.id ? "bg-brand-strong text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1),0_0_0_1px_rgb(201_162_74/0.6)]" : "text-muted hover:bg-elev hover:text-ink"}`}
               >
                 <t.icon className="size-3.5" /> {t.label}
               </a>
@@ -81,7 +81,8 @@ export default function App() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-5 py-6">
+      <main className="mx-auto max-w-7xl px-3 py-6 sm:px-5 sm:py-8">
+        <div className="journal-sheet px-4 py-6 sm:px-8 sm:py-8">
         {/* All tabs stay mounted so switching tabs keeps their state. */}
         {TABS.map((t) => (
           <section key={t.id} hidden={t.id !== tab} aria-labelledby={`h-${t.id}`}>
@@ -92,6 +93,7 @@ export default function App() {
             {t.el}
           </section>
         ))}
+        </div>
       </main>
     </div>
   );

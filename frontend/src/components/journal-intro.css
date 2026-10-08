@@ -99,17 +99,26 @@
   top: 0;
   overflow: visible;
 }
-.ji-ink path {
+.ji-ink-fill path {
+  fill: #0d0b12;
+  stroke: #0d0b12;
+  stroke-width: 0.7;          /* keeps hairlines visible where the stroke runs along the nib */
+  stroke-linejoin: round;
+}
+.ji-reveal {
   fill: none;
-  stroke: #121016;
-  stroke-width: 1.1;
-  stroke-linecap: round;
+  stroke: #fff;
+  stroke-width: 9;
+  stroke-linecap: butt;
   stroke-linejoin: round;
 }
 .ji-glisten { opacity: 0; }
 .ji-glisten path {
-  stroke: rgba(255, 255, 255, 0.45);
-  stroke-width: 0.5;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 0.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* quill: transform-origin is the nib tip, so rotations pivot on the writing point */
