@@ -390,6 +390,10 @@ def vote(readings: dict[str, str]) -> list[dict]:
         if col[0] == "\n":
             words.append({"text": "\n"})
             continue
+        # Fewer than half the models saw any word here: the majority says nothing is there
+        # (same rule as for words the pivot skipped, see inserted()).
+        if sum(1 for t in col if t and t != "\n") < n_models / 2:
+            continue
         real = [t for t in col if t and t != "\n" and norm(t) != norm(UNREADABLE)]
         counts = Counter(norm(t) for t in real)
         if not counts:
@@ -483,7 +487,12 @@ def context_fix(words: list[dict], extra_lexicon: list[str] | None = None) -> li
         except (TypeError, ValueError):
             continue
         if i in choices and isinstance(v, str) and v in choices[i]:
-            out[i].update(text=v, flagged=False, resolved_by="context")
+            # Only a dictionary / writer-confirmed word is strong enough to clear the flag. A pick made
+            # on grammar alone becomes the best guess but stays flagged: a wrong guess must never
+            # turn into a confident error.
+            backed = norm(v) in lex_norm
+            out[i].update(text=v, flagged=not backed, resolved_by="context",
+                          evidence="lexicon" if backed else "guess")
     return out
 
 

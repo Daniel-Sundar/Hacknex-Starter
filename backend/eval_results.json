@@ -1,4 +1,5 @@
 {
+ "split": "all",
  "totals": {
   "baseline": {
    "char_edits": 13,
@@ -15,8 +16,8 @@
    "word_edits": 4,
    "ref_words": 104,
    "wrong": 3,
-   "flagged": 1,
-   "flagged_wrong": 1
+   "flagged": 5,
+   "flagged_wrong": 2
   },
   "clean (single reader)": {
    "char_edits": 68,
@@ -28,27 +29,28 @@
    "flagged_wrong": 0
   },
   "clean + vote": {
-   "char_edits": 6,
+   "char_edits": 5,
    "ref_chars": 605,
-   "word_edits": 2,
+   "word_edits": 1,
    "ref_words": 104,
-   "wrong": 2,
-   "flagged": 1,
-   "flagged_wrong": 0
+   "wrong": 1,
+   "flagged": 3,
+   "flagged_wrong": 1
   },
   "clean + vote + context": {
-   "char_edits": 6,
+   "char_edits": 5,
    "ref_chars": 605,
-   "word_edits": 2,
+   "word_edits": 1,
    "ref_words": 104,
-   "wrong": 2,
-   "flagged": 0,
-   "flagged_wrong": 0
+   "wrong": 1,
+   "flagged": 3,
+   "flagged_wrong": 1
   }
  },
  "per_sample": [
   {
-   "sample": "001.webp",
+   "sample": "samples\\001.webp",
+   "split": "test",
    "baseline": {
     "wer": 0.029,
     "char_edits": 10,
@@ -67,9 +69,9 @@
     "word_edits": 3,
     "ref_words": 69,
     "wrong": 2,
-    "flagged": 1,
-    "flagged_wrong": 1,
-    "readers": 3
+    "flagged": 3,
+    "flagged_wrong": 2,
+    "readers": 4
    },
    "clean (single reader)": {
     "wer": 0.188,
@@ -83,30 +85,31 @@
     "readers": 1
    },
    "clean + vote": {
-    "wer": 0.029,
-    "char_edits": 6,
+    "wer": 0.014,
+    "char_edits": 5,
     "ref_chars": 429,
-    "word_edits": 2,
+    "word_edits": 1,
     "ref_words": 69,
-    "wrong": 2,
-    "flagged": 1,
-    "flagged_wrong": 0,
-    "readers": 3
+    "wrong": 1,
+    "flagged": 3,
+    "flagged_wrong": 1,
+    "readers": 4
    },
    "clean + vote + context": {
-    "wer": 0.029,
-    "char_edits": 6,
+    "wer": 0.014,
+    "char_edits": 5,
     "ref_chars": 429,
-    "word_edits": 2,
+    "word_edits": 1,
     "ref_words": 69,
-    "wrong": 2,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 3
+    "wrong": 1,
+    "flagged": 3,
+    "flagged_wrong": 1,
+    "readers": 4
    }
   },
   {
-   "sample": "002.png",
+   "sample": "samples\\002.png",
+   "split": "dev",
    "baseline": {
     "wer": 0.057,
     "char_edits": 3,
@@ -125,9 +128,9 @@
     "word_edits": 1,
     "ref_words": 35,
     "wrong": 1,
-    "flagged": 0,
+    "flagged": 2,
     "flagged_wrong": 0,
-    "readers": 3
+    "readers": 4
    },
    "clean (single reader)": {
     "wer": 0.2,
