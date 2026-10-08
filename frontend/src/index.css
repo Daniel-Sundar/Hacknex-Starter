@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ClearScript, Linear-style. Dark by default; <html data-theme="light"> swaps every token.
+/* ClearScript. Paper (vintage notebook) by default via <html data-theme="light">; no attribute = Linear dark.
    All text/background pairs are >= 4.5:1 (WCAG AA) in both themes. */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -29,15 +29,16 @@
 }
 
 :root[data-theme="light"] {
-  --color-page: #fafafa;
-  --color-panel: #ffffff;
+  /* "Paper": vintage notebook. Cream page, ivory cards, dark-ink text, warm hairlines. */
+  --color-page: #f7f4ef;
+  --color-panel: #fffdfb;
   --color-elev: #ffffff;
-  --color-elev-hover: #f4f4f5;
-  --color-well: #f4f4f5;
-  --color-line: #e4e4e7;
-  --color-ink: #09090b;
-  --color-body: #3f3f46;
-  --color-muted: #63636b;
+  --color-elev-hover: #faf6ef;
+  --color-well: #f4f1ea;
+  --color-line: rgb(120 53 15 / 0.12);   /* amber-900/10, a touch firmer for AA borders */
+  --color-ink: #1c1917;
+  --color-body: #292524;
+  --color-muted: #6b6259;                /* 5.4:1 on the page */
   --color-brand-soft: #3730a3;
   --color-warn-bg: #fffbeb; --color-warn-fg: #b45309; --color-warn-line: #fde68a;
   --color-info-bg: #f0f9ff; --color-info-fg: #0369a1; --color-info-line: #bae6fd;
@@ -56,6 +57,22 @@ body {
   font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
 }
+
+/* Paper theme background: a faint red margin rule, 28px ruled lines and a fine paper grain.
+   Background-only, so it never touches layout or behaviour. */
+html[data-theme="light"] body {
+  background-color: var(--color-page);
+  background-image:
+    linear-gradient(to right, transparent 47px, rgb(220 38 38 / 0.14) 47px, rgb(220 38 38 / 0.14) 48px, transparent 48px),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 27px, rgb(120 53 15 / 0.05) 27px, rgb(120 53 15 / 0.05) 28px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.47 0 0 0 0 0.33 0 0 0 0 0.18 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: no-repeat, repeat, repeat;
+  background-size: 100% 100%, 100% 28px, 220px 220px;
+  background-attachment: fixed, scroll, scroll;
+}
+/* Cards sit on the page like index cards: crisp border plus a soft ambient shadow */
+html[data-theme="light"] .surface { box-shadow: 0 1px 2px rgb(120 53 15 / 0.06), 0 1px 3px rgb(28 25 23 / 0.04); }
+html[data-theme="light"] .elev { box-shadow: 0 1px 2px rgb(120 53 15 / 0.06); }
 
 /* Card: flat surface with a crisp 1px border */
 @utility surface {

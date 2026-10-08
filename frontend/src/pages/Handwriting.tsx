@@ -457,7 +457,7 @@ function Readings({ readings, errors }: { readings: Record<string, string>; erro
         {Object.entries(readings).map(([name, t]) => (
           <div key={name}>
             <div className="mb-1 truncate font-mono text-[11px] text-muted">{name}</div>
-            <pre className="well whitespace-pre-wrap rounded-lg border border-line p-3 text-xs text-body">{t}</pre>
+            <pre className="well whitespace-pre-wrap rounded-lg border border-line p-3 font-mono text-xs text-body">{t}</pre>
           </div>
         ))}
         {Object.entries(errors).map(([name, e]) => (

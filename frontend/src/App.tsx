@@ -29,7 +29,7 @@ export default function App() {
   useEffect(() => {
     if (light) document.documentElement.dataset.theme = "light";
     else delete document.documentElement.dataset.theme;
-    try { localStorage.setItem("theme", light ? "light" : "dark"); } catch { /* storage blocked: theme just won't persist */ }
+    try { localStorage.setItem("cs-theme", light ? "light" : "dark"); } catch { /* storage blocked: theme just won't persist */ }
   }, [light]);
 
   const online = provider !== "offline" && provider !== "…";
