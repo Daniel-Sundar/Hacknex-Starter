@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { Bot, Eye, FileText, MessageSquare, Sparkles } from "lucide-react";
+import { Bot, Eye, FileText, MessageSquare, PenLine, ScanText } from "lucide-react";
 import Chat from "./pages/Chat";
 import Docs from "./pages/Docs";
 import Agent from "./pages/Agent";
 import Vision from "./pages/Vision";
+import Handwriting from "./pages/Handwriting";
 import { API } from "./lib/api";
 
 // Rename / reorder / delete tabs to fit tomorrow's problem statement.
 const TABS = [
+  { id: "clearscript", label: "ClearScript", icon: PenLine, el: <Handwriting /> },
   { id: "chat", label: "Chat", icon: MessageSquare, el: <Chat /> },
   { id: "docs", label: "Docs Q&A", icon: FileText, el: <Docs /> },
   { id: "agent", label: "Agent", icon: Bot, el: <Agent /> },
@@ -26,9 +28,9 @@ export default function App() {
     <div className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="size-6 text-brand" />
-          <h1 className="text-xl font-semibold">Project Name</h1>
-          <span className="text-sm text-zinc-500">one-line tagline goes here</span>
+          <ScanText className="size-6 text-brand" />
+          <h1 className="text-xl font-semibold">ClearScript</h1>
+          <span className="text-sm text-zinc-500">messy handwriting in, trusted text out</span>
         </div>
         <span className="rounded-full border border-zinc-800 px-3 py-1 text-xs text-zinc-400">LLM: {provider}</span>
       </header>
