@@ -1,0 +1,8 @@
+Based on NE/SE/NW/SW
+    Problems based on the direction of NE/SE/NW/SW
+moving towards, then this method should be followed.
+
+Prem goes 7 km towards south-east from his house, then
+he goes 14 km turning to west. After this, he goes 7 km towards
+North-west and in the end, he goes 9 km towards East. How
+far is he from his house?

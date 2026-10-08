@@ -10,32 +10,23 @@
    "flagged": 0,
    "flagged_wrong": 0
   },
-  "clean (single reader)": {
-   "char_edits": 721,
-   "ref_chars": 6127,
-   "word_edits": 196,
-   "ref_words": 1152,
-   "wrong": 165,
-   "flagged": 1,
-   "flagged_wrong": 1
-  },
   "clean + vote": {
    "char_edits": 196,
    "ref_chars": 6127,
    "word_edits": 44,
    "ref_words": 1152,
    "wrong": 30,
-   "flagged": 99,
-   "flagged_wrong": 24
+   "flagged": 90,
+   "flagged_wrong": 23
   },
   "clean + vote + context": {
-   "char_edits": 194,
+   "char_edits": 217,
    "ref_chars": 6127,
-   "word_edits": 43,
+   "word_edits": 51,
    "ref_words": 1152,
-   "wrong": 29,
-   "flagged": 98,
-   "flagged_wrong": 23
+   "wrong": 37,
+   "flagged": 38,
+   "flagged_wrong": 24
   }
  },
  "per_sample": [
@@ -53,17 +44,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.188,
-    "char_edits": 45,
-    "ref_chars": 429,
-    "word_edits": 13,
-    "ref_words": 69,
-    "wrong": 8,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.029,
     "char_edits": 6,
@@ -71,8 +51,8 @@
     "word_edits": 2,
     "ref_words": 69,
     "wrong": 2,
-    "flagged": 9,
-    "flagged_wrong": 2,
+    "flagged": 1,
+    "flagged_wrong": 1,
     "readers": 5
    },
    "clean + vote + context": {
@@ -82,8 +62,8 @@
     "word_edits": 2,
     "ref_words": 69,
     "wrong": 2,
-    "flagged": 9,
-    "flagged_wrong": 2,
+    "flagged": 1,
+    "flagged_wrong": 1,
     "readers": 5
    }
   },
@@ -101,17 +81,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.2,
-    "char_edits": 23,
-    "ref_chars": 176,
-    "word_edits": 7,
-    "ref_words": 35,
-    "wrong": 6,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.0,
     "char_edits": 0,
@@ -119,19 +88,19 @@
     "word_edits": 0,
     "ref_words": 35,
     "wrong": 0,
-    "flagged": 1,
+    "flagged": 0,
     "flagged_wrong": 0,
     "readers": 5
    },
    "clean + vote + context": {
-    "wer": 0.029,
-    "char_edits": 1,
+    "wer": 0.0,
+    "char_edits": 0,
     "ref_chars": 176,
-    "word_edits": 1,
+    "word_edits": 0,
     "ref_words": 35,
-    "wrong": 1,
-    "flagged": 1,
-    "flagged_wrong": 1,
+    "wrong": 0,
+    "flagged": 0,
+    "flagged_wrong": 0,
     "readers": 5
    }
   },
@@ -149,17 +118,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.031,
-    "char_edits": 6,
-    "ref_chars": 504,
-    "word_edits": 3,
-    "ref_words": 98,
-    "wrong": 3,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.082,
     "char_edits": 36,
@@ -172,13 +130,13 @@
     "readers": 2
    },
    "clean + vote + context": {
-    "wer": 0.082,
-    "char_edits": 39,
+    "wer": 0.092,
+    "char_edits": 44,
     "ref_chars": 504,
-    "word_edits": 8,
+    "word_edits": 9,
     "ref_words": 98,
-    "wrong": 8,
-    "flagged": 16,
+    "wrong": 9,
+    "flagged": 8,
     "flagged_wrong": 8,
     "readers": 2
    }
@@ -197,17 +155,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.154,
-    "char_edits": 27,
-    "ref_chars": 260,
-    "word_edits": 8,
-    "ref_words": 52,
-    "wrong": 7,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.115,
     "char_edits": 26,
@@ -220,14 +167,14 @@
     "readers": 4
    },
    "clean + vote + context": {
-    "wer": 0.115,
-    "char_edits": 26,
+    "wer": 0.096,
+    "char_edits": 24,
     "ref_chars": 260,
-    "word_edits": 6,
+    "word_edits": 5,
     "ref_words": 52,
-    "wrong": 6,
-    "flagged": 4,
-    "flagged_wrong": 4,
+    "wrong": 5,
+    "flagged": 3,
+    "flagged_wrong": 2,
     "readers": 4
    }
   },
@@ -245,17 +192,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.254,
-    "char_edits": 59,
-    "ref_chars": 345,
-    "word_edits": 16,
-    "ref_words": 63,
-    "wrong": 12,
-    "flagged": 1,
-    "flagged_wrong": 1,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.111,
     "char_edits": 41,
@@ -269,7 +205,7 @@
    },
    "clean + vote + context": {
     "wer": 0.111,
-    "char_edits": 41,
+    "char_edits": 40,
     "ref_chars": 345,
     "word_edits": 7,
     "ref_words": 63,
@@ -289,17 +225,6 @@
     "word_edits": 12,
     "ref_words": 164,
     "wrong": 7,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
-   "clean (single reader)": {
-    "wer": 0.201,
-    "char_edits": 61,
-    "ref_chars": 1086,
-    "word_edits": 33,
-    "ref_words": 164,
-    "wrong": 32,
     "flagged": 0,
     "flagged_wrong": 0,
     "readers": 1
@@ -341,17 +266,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.636,
-    "char_edits": 444,
-    "ref_chars": 914,
-    "word_edits": 96,
-    "ref_words": 151,
-    "wrong": 78,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.06,
     "char_edits": 58,
@@ -364,14 +278,14 @@
     "readers": 4
    },
    "clean + vote + context": {
-    "wer": 0.06,
-    "char_edits": 58,
+    "wer": 0.073,
+    "char_edits": 66,
     "ref_chars": 914,
-    "word_edits": 9,
+    "word_edits": 11,
     "ref_words": 151,
-    "wrong": 3,
-    "flagged": 43,
-    "flagged_wrong": 3,
+    "wrong": 5,
+    "flagged": 6,
+    "flagged_wrong": 2,
     "readers": 4
    }
   },
@@ -389,17 +303,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.25,
-    "char_edits": 23,
-    "ref_chars": 191,
-    "word_edits": 11,
-    "ref_words": 44,
-    "wrong": 10,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.045,
     "char_edits": 7,
@@ -412,14 +315,14 @@
     "readers": 4
    },
    "clean + vote + context": {
-    "wer": 0.023,
-    "char_edits": 3,
+    "wer": 0.091,
+    "char_edits": 11,
     "ref_chars": 191,
-    "word_edits": 1,
+    "word_edits": 4,
     "ref_words": 44,
-    "wrong": 0,
-    "flagged": 5,
-    "flagged_wrong": 0,
+    "wrong": 3,
+    "flagged": 3,
+    "flagged_wrong": 3,
     "readers": 4
    }
   },
@@ -437,17 +340,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.0,
-    "char_edits": 0,
-    "ref_chars": 315,
-    "word_edits": 0,
-    "ref_words": 68,
-    "wrong": 0,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.0,
     "char_edits": 0,
@@ -460,14 +352,14 @@
     "readers": 3
    },
    "clean + vote + context": {
-    "wer": 0.0,
-    "char_edits": 0,
+    "wer": 0.059,
+    "char_edits": 8,
     "ref_chars": 315,
-    "word_edits": 0,
+    "word_edits": 4,
     "ref_words": 68,
-    "wrong": 0,
+    "wrong": 4,
     "flagged": 4,
-    "flagged_wrong": 0,
+    "flagged_wrong": 4,
     "readers": 3
    }
   },
@@ -485,17 +377,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.015,
-    "char_edits": 1,
-    "ref_chars": 323,
-    "word_edits": 1,
-    "ref_words": 65,
-    "wrong": 1,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.0,
     "char_edits": 0,
@@ -508,14 +389,14 @@
     "readers": 4
    },
    "clean + vote + context": {
-    "wer": 0.015,
-    "char_edits": 1,
+    "wer": 0.0,
+    "char_edits": 0,
     "ref_chars": 323,
-    "word_edits": 1,
+    "word_edits": 0,
     "ref_words": 65,
-    "wrong": 1,
-    "flagged": 2,
-    "flagged_wrong": 1,
+    "wrong": 0,
+    "flagged": 1,
+    "flagged_wrong": 0,
     "readers": 4
    }
   },
@@ -529,17 +410,6 @@
     "word_edits": 7,
     "ref_words": 102,
     "wrong": 6,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
-   "clean (single reader)": {
-    "wer": 0.039,
-    "char_edits": 10,
-    "ref_chars": 476,
-    "word_edits": 4,
-    "ref_words": 102,
-    "wrong": 4,
     "flagged": 0,
     "flagged_wrong": 0,
     "readers": 1
@@ -581,17 +451,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.012,
-    "char_edits": 2,
-    "ref_chars": 363,
-    "word_edits": 1,
-    "ref_words": 84,
-    "wrong": 1,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.0,
     "char_edits": 0,
@@ -625,17 +484,6 @@
     "word_edits": 1,
     "ref_words": 77,
     "wrong": 1,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
-   "clean (single reader)": {
-    "wer": 0.039,
-    "char_edits": 20,
-    "ref_chars": 382,
-    "word_edits": 3,
-    "ref_words": 77,
-    "wrong": 3,
     "flagged": 0,
     "flagged_wrong": 0,
     "readers": 1
@@ -677,17 +525,6 @@
     "flagged_wrong": 0,
     "readers": 1
    },
-   "clean (single reader)": {
-    "wer": 0.0,
-    "char_edits": 0,
-    "ref_chars": 363,
-    "word_edits": 0,
-    "ref_words": 80,
-    "wrong": 0,
-    "flagged": 0,
-    "flagged_wrong": 0,
-    "readers": 1
-   },
    "clean + vote": {
     "wer": 0.037,
     "char_edits": 3,
@@ -700,13 +537,13 @@
     "readers": 4
    },
    "clean + vote + context": {
-    "wer": 0.013,
-    "char_edits": 5,
+    "wer": 0.025,
+    "char_edits": 4,
     "ref_chars": 363,
-    "word_edits": 1,
+    "word_edits": 2,
     "ref_words": 80,
-    "wrong": 1,
-    "flagged": 3,
+    "wrong": 2,
+    "flagged": 1,
     "flagged_wrong": 1,
     "readers": 4
    }

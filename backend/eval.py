@@ -21,6 +21,7 @@ Usage (from backend/):  .venv/Scripts/python eval.py [--split dev|test] [--sampl
 import argparse
 import hashlib
 import json
+import re
 import sys
 import time
 import unicodedata
@@ -34,6 +35,7 @@ load_dotenv(HERE / ".env")
 from app import handwriting as hw  # noqa: E402
 
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp"}
+SLEEP = 3.0
 VARIANTS = {
     "baseline": None,
     "vote (no clean)": dict(use_clean=False, use_vote=True, use_context=False),
@@ -45,10 +47,17 @@ VARIANTS = {
 
 # ---------- text normalisation + Levenshtein ----------
 
-def words_of(text: str) -> list[str]:
+WILD = "<any>"  # ground-truth spot even the labeller could not read: any output (or none) is fine
+WILD_MARKS = {"[unclear]", "[illegible]", "[?]"}
+
+
+def words_of(text: str, ref: bool = False) -> list[str]:
     text = unicodedata.normalize("NFC", text).replace("[margin]", " ")
-    out = [hw.norm(t) for t in text.split()]
-    return [w for w in out if w == hw.UNREADABLE or any(c.isalnum() for c in w)]  # drop lone "?" "-" etc.
+    toks = [t for t in text.split()]
+    # "water-wheel" vs "water wheel", "AC/DC" vs "AC DC": same words, so split on - and / everywhere
+    toks = [p for t in toks for p in ([t] if t.lower() in WILD_MARKS else re.split(r"[-/–]+", t)) if p]
+    out = [WILD if ref and t.lower() in WILD_MARKS else hw.norm(t) for t in toks]
+    return [w for w in out if w in (hw.UNREADABLE, WILD) or any(c.isalnum() for c in w)]  # drop lone "?" "-"
 
 
 def char_distance(a: str, b: str) -> int:
@@ -61,29 +70,34 @@ def char_distance(a: str, b: str) -> int:
     return prev[-1]
 
 
-def align(hyp: list[str], ref: list[str]) -> tuple[int, list[bool]]:
-    """Word-level Levenshtein. Returns (edits, wrong) where wrong[i] says whether hyp word i
-    was a substitution or an insertion (i.e. not matched to an identical ref word)."""
+def align(hyp: list[str], ref: list[str]) -> tuple[int, list[bool], set[int]]:
+    """Word-level Levenshtein. Returns (edits, wrong, wild) where wrong[i] says whether hyp word i
+    was a substitution or an insertion, and wild holds hyp words matched to a WILD ref spot.
+    A WILD ref word matches anything (or nothing) for free."""
     n, m = len(hyp), len(ref)
+    sub = lambda i, j: 0 if ref[j] == WILD else int(hyp[i] != ref[j])
+    dele = lambda j: 0 if ref[j] == WILD else 1
     d = [[0] * (m + 1) for _ in range(n + 1)]
     for i in range(n + 1):
         d[i][0] = i
-    for j in range(m + 1):
-        d[0][j] = j
+    for j in range(1, m + 1):
+        d[0][j] = d[0][j - 1] + dele(j - 1)
     for i in range(1, n + 1):
         for j in range(1, m + 1):
-            d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (hyp[i - 1] != ref[j - 1]))
-    wrong = [True] * n
+            d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + dele(j - 1), d[i - 1][j - 1] + sub(i - 1, j - 1))
+    wrong, wild = [True] * n, set()
     i, j = n, m
     while i > 0 and j > 0:
-        if d[i][j] == d[i - 1][j - 1] + (hyp[i - 1] != ref[j - 1]):
-            wrong[i - 1] = hyp[i - 1] != ref[j - 1]
+        if d[i][j] == d[i - 1][j - 1] + sub(i - 1, j - 1):
+            wrong[i - 1] = bool(sub(i - 1, j - 1))
+            if ref[j - 1] == WILD:
+                wild.add(i - 1)
             i, j = i - 1, j - 1
         elif d[i][j] == d[i - 1][j] + 1:
             i -= 1  # insertion: hyp word stays wrong
         else:
             j -= 1  # deletion: ref word missing
-    return d[n][m], wrong
+    return d[n][m], wrong, wild
 
 
 # ---------- running the variants ----------
@@ -105,15 +119,17 @@ def run_variant(name: str, data: bytes) -> dict:
 
 
 def score(hyp: list[tuple[str, bool]], ref_text: str) -> dict:
-    ref = words_of(ref_text)
+    ref = words_of(ref_text, ref=True)
     hyp_words = [w for w, _ in hyp]
-    edits, wrong = align(hyp_words, ref)
+    edits, wrong, wild = align(hyp_words, ref)
     flags = [f for _, f in hyp]
+    ref_real = [w for w in ref if w != WILD]
+    hyp_real = [w for i, w in enumerate(hyp_words) if i not in wild]
     return {
-        "char_edits": char_distance(" ".join(hyp_words), " ".join(ref)),
-        "ref_chars": len(" ".join(ref)),
+        "char_edits": char_distance(" ".join(hyp_real), " ".join(ref_real)),
+        "ref_chars": len(" ".join(ref_real)),
         "word_edits": edits,
-        "ref_words": len(ref),
+        "ref_words": len(ref_real),
         "wrong": sum(wrong),
         "flagged": sum(flags),
         "flagged_wrong": sum(1 for w, f in zip(wrong, flags) if w and f),
@@ -139,7 +155,7 @@ def table(totals: dict, readers: dict, n_samples: int) -> str:
 def is_test(img: Path) -> bool:
     """Fixed dev/test split by file name (~40% test). A sample never changes side as more are added,
     and augmented copies (same name, other folder) land on the same side as their original."""
-    return hashlib.md5(img.stem.encode()).digest()[0] % 10 < 4
+    return int(hashlib.sha256(img.stem.encode()).hexdigest(), 16) % 10 < 4
 
 
 def find_samples(folder: Path, split: str) -> list[Path]:
@@ -167,6 +183,8 @@ def evaluate(samples: list[Path], variants: list[str]) -> tuple[dict, dict, list
                 notes.append(f"- {row['sample']} / {v}: {res['error']}")
         per_sample.append(row)
         print(f"  [{k}/{len(samples)}] {row['sample']} done in {time.time() - t0:.0f}s", flush=True)
+        if time.time() - t0 > 1:  # only pause when real API calls were made (not cache hits)
+            time.sleep(SLEEP)
     return totals, readers, per_sample, notes
 
 
@@ -192,7 +210,14 @@ def main():
     ap.add_argument("--robustness", action="store_true",
                     help="baseline vs full pipeline on each degraded copy made by augment.py")
     ap.add_argument("--name", default="", help="suffix for the results files, e.g. gnhk")
+    ap.add_argument("--deadline", type=float, default=120,
+                    help="vote deadline in s; high in eval so slow readers still count (app uses 25)")
+    ap.add_argument("--sleep", type=float, default=3, help="pause between samples (free-tier rate limits)")
+    ap.add_argument("--variants", default="", help="comma-separated subset, e.g. 'baseline,clean + vote'")
     args = ap.parse_args()
+    hw.VOTE_DEADLINE = args.deadline
+    global SLEEP
+    SLEEP = args.sleep
     sys.stdout.reconfigure(encoding="utf-8")  # Windows console chokes on arrows/Tamil otherwise
     suffix = "_".join(x for x in [args.name, args.split if args.split != "all" else ""] if x)
     out = HERE / f"eval_results{'_' + suffix if suffix else ''}"
@@ -217,9 +242,10 @@ def main():
         samples = find_samples(Path(args.samples), args.split)[:args.limit or None]
         if not samples:
             sys.exit(f"No image + .txt pairs in {args.samples} for split={args.split}")
-        totals, readers, per_sample, notes = evaluate(samples, list(VARIANTS))
+        variants = [v.strip() for v in args.variants.split(",") if v.strip()] or list(VARIANTS)
+        totals, readers, per_sample, notes = evaluate(samples, variants)
         md = (f"## Handwriting ablation ({len(samples)} samples, split={args.split}, "
-              f"{totals['baseline']['ref_words']} ground-truth words)\n\n"
+              f"{next(iter(totals.values()))['ref_words']} ground-truth words)\n\n"
               + table(totals, readers, len(samples))
               + "\n\nCER/WER ignore case and punctuation; a `[?]` always counts as an error. "
                 "Confident errors = wrong words that were not flagged.\n")

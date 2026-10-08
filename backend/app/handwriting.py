@@ -60,6 +60,18 @@ Rules:
 - If you cannot read a word with confidence, write [?] in its place. NEVER guess.
 - Output only the transcription, no commentary."""
 
+READ_PROMPT_V2 = """Transcribe the HANDWRITING in this image exactly as written.
+Rules:
+- Copy the handwritten words exactly; keep the original line breaks and spelling. Do not fix grammar or spelling.
+- Ignore printed text: notebook logos and brand names, printed page headers and dates, form labels, page numbers.
+- Leave out every word that is crossed out, struck through or scribbled over. If a word was crossed out and a new
+  word written above or next to it, write only the new word.
+- Put real margin notes on their own line, starting with "[margin] ". Never repeat lines of the main text as margin notes.
+- If you cannot read a word with confidence, write [?] in its place. NEVER guess.
+- Output only the transcription, no commentary."""
+if os.getenv("HW_PROMPT", "v1") == "v2":
+    READ_PROMPT = READ_PROMPT_V2
+
 BASELINE_PROMPT = "Transcribe the handwritten text in this image. Output only the text."
 
 
@@ -106,6 +118,8 @@ def _cached(key_parts: list, fn):
         value = json.loads(f.read_text(encoding="utf-8"))
         if not (isinstance(value, str) and not value.strip()):  # never trust a cached empty reply
             return value
+    if os.getenv("HW_CACHE_ONLY") == "1" and key_parts[0] in ("read", "reread"):
+        raise RuntimeError("not in cache (HW_CACHE_ONLY=1)")  # experiments replay, never call vision models
     value = fn()
     if not (isinstance(value, str) and not value.strip()):
         f.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
@@ -332,12 +346,43 @@ def _pivot(readings: list[list[str]]) -> int:
     return max(range(len(readings)), key=lambda i: scores[i])
 
 
-def vote(readings: dict[str, str]) -> list[dict]:
+# Vote rules (tuned on the dev set with tune.py; override in .env):
+#   HW_FLAG_RULE      majority | two_thirds | unanimous  - how many readers must agree to trust a word
+#   HW_DIGITS_STRICT  1 = any disagreement on a number is flagged
+#   HW_DROP_MINORITY  1 = a word fewer than half the readers saw is dropped
+# Tuned on 14 dev samples (2026-10-08): two_thirds = 6 confident errors / 9% of words flagged;
+# unanimous = 0 confident errors but 19% flagged, so it is used only for prescriptions (safety first).
+FLAG_RULE = os.getenv("HW_FLAG_RULE", "two_thirds")
+FLAG_RULE_RX = os.getenv("HW_FLAG_RULE_RX", "unanimous")
+DIGITS_STRICT = os.getenv("HW_DIGITS_STRICT", "1") == "1"
+DROP_MINORITY = os.getenv("HW_DROP_MINORITY", "1") == "1"
+#   HW_REREAD_MODE    vote = re-read answer is an extra vote and can clear a flag
+#                     suggest = re-read only improves the text, the flag stays   |   off = no re-read
+# Dev set: re-read as a vote raised confident errors 7 -> 13; as a suggestion it raised WER 3.6% -> 7.9%.
+REREAD_MODE = os.getenv("HW_REREAD_MODE", "off")
+
+
+def trusted(votes: int, n: int, rule: str | None = None) -> bool:
+    """Do enough readers agree to show this word without a flag?"""
+    rule = rule or FLAG_RULE
+    if n <= 1:
+        return True  # a lone reader can only flag what it marks [?] itself
+    if rule == "unanimous":
+        return votes == n
+    if rule == "two_thirds":
+        return votes * 3 >= n * 2
+    return votes * 2 > n  # majority
+
+
+def vote(readings: dict[str, str], rule: str | None = None, digits_strict: bool | None = None,
+         drop_minority: bool | None = None) -> list[dict]:
     """Align every reading to a pivot reading and majority-vote each word.
 
     Returns [{text, confidence, flagged, alternatives}] where confidence = share of
     models that agree on the chosen word. Newlines come through as {"text": "\\n"}.
     """
+    digits_strict = DIGITS_STRICT if digits_strict is None else digits_strict
+    drop_minority = DROP_MINORITY if drop_minority is None else drop_minority
     names = list(readings)
     toks = [tokens(readings[n]) for n in names]
     n_models = len(toks)
@@ -380,7 +425,8 @@ def vote(readings: dict[str, str]) -> list[dict]:
         if votes < n_models / 2:  # a minority saw extra words: the majority says nothing is there
             return []
         seq = next(s for s in gaps[g] if tuple(norm(t) for t in s) == key)
-        flagged = votes <= n_models / 2 or (votes < n_models and any(c.isdigit() for t in seq for c in t))
+        flagged = not trusted(votes, n_models, rule) or (
+            digits_strict and votes < n_models and any(c.isdigit() for t in seq for c in t))
         return [{"text": surface_of([t], norm(t)), "confidence": round(votes / n_models, 2),
                  "flagged": flagged, "alternatives": [], "votes": {surface_of([t], norm(t)): votes},
                  "readers": n_models} for t in seq]
@@ -406,9 +452,9 @@ def vote(readings: dict[str, str]) -> list[dict]:
         alternatives = sorted({t for t in real if norm(t) != best})
         confidence = votes / n_models
         # Flag unless a strict majority of ALL models agree (a lone reader can only flag [?]).
-        flagged = n_models > 1 and votes <= n_models / 2
+        flagged = not trusted(votes, n_models, rule)
         # Numbers (doses!) must be unanimous: any disagreement on a digit is flagged, never guessed.
-        if any(ch.isdigit() for t in real for ch in t) and votes < n_models:
+        if digits_strict and any(ch.isdigit() for t in real for ch in t) and votes < n_models:
             flagged = True
         words.append({"text": surface, "confidence": round(confidence, 2), "flagged": flagged,
                       "alternatives": alternatives,
@@ -485,7 +531,7 @@ def reread(img: bytes, words: list[dict], kind: str = "note") -> list[dict]:
     strict majority the flag clears, otherwise the word keeps its flag (showing the best guess).
     Numbers still need every reader to agree."""
     spots = {i: w for i, w in enumerate(words) if w.get("flagged")}
-    if not spots:
+    if not spots or REREAD_MODE == "off":
         return words
     marked = " ".join(f"<<{i}>>" if i in spots else w["text"] for i, w in enumerate(words))
     prompt = (
@@ -537,7 +583,8 @@ def reread(img: bytes, words: list[dict], kind: str = "note") -> list[dict]:
         votes[key] = votes.get(key, 0) + 1
         n = w.get("readers", 1) + 1
         is_number = any(c.isdigit() for s in votes for c in s)
-        clear = votes[key] > n / 2 and not (is_number and votes[key] < n)
+        clear = (REREAD_MODE == "vote" and trusted(votes[key], n)
+                 and not (DIGITS_STRICT and is_number and votes[key] < n))
         alts = sorted({s for s in [w["text"], *w.get("alternatives", [])] if norm(s) != norm(key)})
         w.update(text=key, flagged=not clear, alternatives=alts, votes=votes, readers=n,
                  confidence=round(votes[key] / n, 2), resolved_by="context",
@@ -620,6 +667,8 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
         readings, errors = {name: text}, {}
     words = vote(readings)
     kind = doc_type(words)
+    if kind == "prescription" and FLAG_RULE_RX != FLAG_RULE:
+        words = vote(readings, rule=FLAG_RULE_RX)  # drugs and doses: every reader must agree
     if use_context:
         words = reread(img, words, kind)  # look again at the photo, with the sentence as a hint
         words = context_fix(words, writer_words(writer), kind)  # then lexicon / candidates only

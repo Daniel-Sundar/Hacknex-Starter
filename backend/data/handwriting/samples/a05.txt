@@ -1,0 +1,27 @@
+Origin of the Electric Distribution Industry:
+1880s
+- Thomas Edison operated the Pearl Street Steam-electric plant
+  and the pioneer distribution (DC) system
+- 1882: water-wheel driven generator was installed in Appleton,
+  Wisconsin that operated at 2400V, DC (59km travelled)
+  ▷ DC had short comings because it was hard to deliver over
+    long distances
+
+- 1885: AC current by Nikola Tesla and George Westinghouse
+  ▷ 4000 V AC transmission line between Oregon and Portland
+- improvements and advancements led to transmission and
+  generation capacity of lower + decreasing unit costs!
+  ▷ but simultaneously, concentration and capacities of individual
+    plants also increased investment for large projects
+- we still need to improve these technologies of the our growing
+  demand of electricity
+  ▷ minimizing land use, water use, and environmental impact
+  ▷ research is not funded
+
+Developing the National Electric Power Grid:
+- transmission lines allowing generators to work synchronously
+  has issues with it:
+  ▷ generator/transmission line in one area does not [unclear]
+    affect those in the same area
+    (nearer: more affected)
+Improvements in the EPS Golden Age:

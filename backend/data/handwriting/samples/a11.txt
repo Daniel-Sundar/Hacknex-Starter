@@ -1,0 +1,7 @@
+3. K is a place which is located 2 km away in the North-west
+direction from capital P. R is another place that is located
+2 km away in south west direction from K. M is another
+place that is located 2 km away in North-west direction
+from R. T is yet another place that is located 2 km away in
+South-west direction of M, in which direction is T located
+with respect to P?

@@ -1,0 +1,23 @@
+{
+ "readers": [
+  "dots-3-note-preview",
+  "gemini-A",
+  "qwen3.8-27b"
+ ],
+ "flag_rule": "majority",
+ "digits_strict": true,
+ "drop_minority": true,
+ "dev_metrics": {
+  "char_edits": 293,
+  "ref_chars": 6114,
+  "word_edits": 71,
+  "ref_words": 1139,
+  "wrong": 46,
+  "flagged": 41,
+  "flagged_wrong": 21,
+  "wer": 0.06233538191395961,
+  "ce_rate": 0.021949078138718173,
+  "false_flags": 20,
+  "score": 0.08867427568042142
+ }
+}

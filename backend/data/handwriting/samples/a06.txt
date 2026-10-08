@@ -1,0 +1,50 @@
+(programming) -> giving instructions to [computer] to process them.
+   -> tools to talk the computer
+   languages -> they only understand binary, the prog. lang. translates
+   our instructions to binary.
+
+   low level
+   -> we don't understand so well but comp. can.
+
+   high level
+   -> we understand but computers slower (multiple translations)
+
+   so is a programming language kind of like a translator?
+
+   [computer] 0100 -> [programming lang.] -> [hello!]
+
+
+(how pick)
+   -> what do you want to use it for?
+
+   each lang. has a purpose.
+
+   what are key coding concepts?
+
+   python/r -> data
+
+   (automation) -> ruby, python, javasc.
+
+   (games?)
+   -> any language!
+      simple 2d - python, javas.
+      3d - C# (unity), C++ (unreal)
+
+   (mobile apps)
+   -> there are specific languages
+
+
+[ don't focus on the language
+  focus on the problem -> then pick a language. ]
+
+
+misconceptions:
+   -> focus on learning the concepts / foundational language
+
+   -> programming is about learning
+      -> learning how to solve them
+
+   -> there is no correct way to learn
+      (learn all the mistakes)
+
+   -> programming is about solving problems
