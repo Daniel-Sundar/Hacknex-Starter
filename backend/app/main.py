@@ -132,3 +132,17 @@ def handwriting_answer(req: AnswerRequest):
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"ok": True, "words": n}
+
+
+class TableRequest(BaseModel):
+    marked: str  # the `marked` text from /api/handwriting ([[word?]] = flagged)
+
+
+@app.post("/api/handwriting/table")
+def handwriting_table(req: TableRequest):
+    """Digitized prescription -> rows {drug, strength, form, frequency, duration, flagged}."""
+    from . import handwriting
+    try:
+        return {"rows": handwriting.rx_table(req.marked)}
+    except RuntimeError as e:
+        raise HTTPException(502, str(e))

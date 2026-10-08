@@ -407,3 +407,43 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
         "flagged": flagged,
         "stages": {"clean": use_clean, "vote": use_vote, "context": use_context},
     }
+
+
+# ---------- prescription table ----------
+
+TABLE_FIELDS = ["drug", "strength", "form", "frequency", "duration"]
+_FLAG = re.compile(r"\[\[(.*?)\?\]\]")
+
+
+def _numbers(s: str) -> list[str]:
+    return re.findall(r"\d+(?:\.\d+)?", s)
+
+
+def rx_table(marked: str) -> list[dict]:
+    """Prescription text -> rows {drug, strength, form, frequency, duration, flagged}.
+
+    `marked` is the /api/handwriting `marked` text ([[word?]] = flagged). Numbers are copied, never
+    corrected: a row is flagged if any of its fields touches a flagged word, or holds a number that
+    does not appear in the source text exactly as written."""
+    prompt = (
+        "Extract every medicine from this handwritten prescription transcription.\n"
+        "Uncertain words are wrapped like [[word?]]: copy them WITH the brackets.\n"
+        "Copy numbers EXACTLY as written; never correct, convert or complete them. "
+        "Use \"\" for anything not written.\n"
+        f'Reply as JSON: {{"rows": [{{{", ".join(f"{json.dumps(f)}: str" for f in TABLE_FIELDS)}}}]}}\n\n'
+        f"Text:\n{marked}"
+    )
+    out = llm.complete_json(prompt)
+    rows = out.get("rows", []) if isinstance(out, dict) else []
+    source_numbers = set(_numbers(_FLAG.sub(r"\1", marked)))
+    flagged_numbers = {n for m in _FLAG.findall(marked) for n in _numbers(m)}
+    clean_rows = []
+    for row in rows if isinstance(rows, list) else []:
+        if not isinstance(row, dict):
+            continue
+        vals = {f: str(row.get(f) or "") for f in TABLE_FIELDS}
+        nums = [n for v in vals.values() for n in _numbers(_FLAG.sub(r"\1", v))]
+        flagged = (any(_FLAG.search(v) for v in vals.values())
+                   or any(n in flagged_numbers or n not in source_numbers for n in nums))
+        clean_rows.append({**{f: _FLAG.sub(r"\1", v).strip() for f, v in vals.items()}, "flagged": flagged})
+    return clean_rows
