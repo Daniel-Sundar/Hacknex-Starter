@@ -114,6 +114,65 @@ def detok(toks: list[str]) -> str:
     return "\n".join(" ".join(line) for line in lines)
 
 
+# ---------- stage 0: prepare any upload ----------
+
+MAX_SIDE = 2400           # px; bigger photos gain nothing and blow provider size limits
+MAX_BYTES = 3_500_000     # Groq rejects base64 images above ~4 MB
+
+
+def _pdf_image(data: bytes) -> bytes:
+    """First page of a scanned PDF -> its largest embedded image (no extra dependency)."""
+    import io
+    import cv2
+    import numpy as np
+    from pypdf import PdfReader
+    page = PdfReader(io.BytesIO(data)).pages[0]
+    xobjects = page.get("/Resources", {}).get("/XObject", {})
+    images = [x.get_object() for x in xobjects.values() if x.get_object().get("/Subtype") == "/Image"]
+    if not images:
+        raise RuntimeError("This PDF has no scanned image on page 1 (typed PDFs are not handwriting).")
+    im = max(images, key=lambda x: int(x["/Width"]) * int(x["/Height"]))
+    filters = im.get("/Filter")
+    filters = filters if isinstance(filters, list) else [filters]
+    if "/DCTDecode" in filters or "/JPXDecode" in filters:  # scanners store JPEG: bytes are the file
+        return im._data
+    w, h = int(im["/Width"]), int(im["/Height"])  # raw pixels (Flate etc.): rebuild with numpy
+    raw = np.frombuffer(im.get_data(), np.uint8)
+    channels = raw.size // (w * h)
+    if channels not in (1, 3) or int(im.get("/BitsPerComponent", 8)) != 8:
+        raise RuntimeError("Unsupported image format inside this PDF. Export the page as JPG instead.")
+    pixels = raw[: w * h * channels].reshape(h, w, channels)
+    return cv2.imencode(".png", pixels[..., ::-1] if channels == 3 else pixels)[1].tobytes()
+
+
+def prepare(data: bytes) -> bytes:
+    """Make any upload safe for every reader: PDF -> image, huge photo -> smaller JPEG.
+    Normal-sized images are returned untouched (so cached readings stay valid)."""
+    if data[:5] == b"%PDF-":
+        try:
+            data = _pdf_image(data)
+        except RuntimeError:
+            raise
+        except Exception as e:
+            raise RuntimeError(f"Could not read this PDF ({type(e).__name__}). Try a JPG photo of the page.") from e
+    try:
+        import cv2
+        import numpy as np
+    except ImportError:
+        return data
+    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+    if img is None:
+        raise RuntimeError("Could not open this file as an image. Use JPG, PNG, WEBP or a scanned PDF.")
+    h, w = img.shape[:2]
+    if max(h, w) <= MAX_SIDE and len(data) <= MAX_BYTES:
+        return data
+    s = min(1.0, MAX_SIDE / max(h, w))
+    if s < 1:
+        img = cv2.resize(img, None, fx=s, fy=s, interpolation=cv2.INTER_AREA)
+    ok, jpg = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 90])
+    return jpg.tobytes() if ok else data
+
+
 # ---------- stage 1: clean ----------
 
 def clean(data: bytes) -> bytes:
@@ -142,6 +201,8 @@ def clean(data: bytes) -> bytes:
             img = cv2.warpAffine(img, m, (img.shape[1], img.shape[0]), flags=cv2.INTER_CUBIC,
                                  borderMode=cv2.BORDER_REPLICATE)
     ok, png = cv2.imencode(".png", img)
+    if ok and len(png) > MAX_BYTES * 0.7:  # base64 adds ~33%: stay under provider limits
+        ok, png = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 92])
     return png.tobytes() if ok else data
 
 
@@ -379,11 +440,12 @@ def baseline(data: bytes, provider: str | None = None, model: str | None = None)
     """Single model, single pass, plain prompt: the thing we must beat."""
     if not provider:
         provider, model = _parse(os.getenv("HW_BASELINE", DEFAULT_BASELINE))
-    return read_one(data, provider, model, prompt=BASELINE_PROMPT)
+    return read_one(prepare(data), provider, model, prompt=BASELINE_PROMPT)
 
 
 def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_context: bool = True,
              writer: str | None = None) -> dict:
+    data = prepare(data)
     img = clean(data) if use_clean else data
     if use_vote:
         r = read_all(img)

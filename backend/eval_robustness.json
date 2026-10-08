@@ -1,0 +1,125 @@
+{
+ "split": "all",
+ "results": {
+  "original": {
+   "baseline": {
+    "char_edits": 13,
+    "ref_chars": 605,
+    "word_edits": 4,
+    "ref_words": 104,
+    "wrong": 3,
+    "flagged": 0,
+    "flagged_wrong": 0
+   },
+   "clean + vote + context": {
+    "char_edits": 6,
+    "ref_chars": 605,
+    "word_edits": 2,
+    "ref_words": 104,
+    "wrong": 2,
+    "flagged": 0,
+    "flagged_wrong": 0
+   }
+  },
+  "blur": {
+   "baseline": {
+    "char_edits": 34,
+    "ref_chars": 605,
+    "word_edits": 8,
+    "ref_words": 104,
+    "wrong": 2,
+    "flagged": 0,
+    "flagged_wrong": 0
+   },
+   "clean + vote + context": {
+    "char_edits": 19,
+    "ref_chars": 605,
+    "word_edits": 4,
+    "ref_words": 104,
+    "wrong": 1,
+    "flagged": 1,
+    "flagged_wrong": 1
+   }
+  },
+  "dark": {
+   "baseline": {
+    "char_edits": 11,
+    "ref_chars": 605,
+    "word_edits": 3,
+    "ref_words": 104,
+    "wrong": 2,
+    "flagged": 0,
+    "flagged_wrong": 0
+   },
+   "clean + vote + context": {
+    "char_edits": 6,
+    "ref_chars": 605,
+    "word_edits": 2,
+    "ref_words": 104,
+    "wrong": 2,
+    "flagged": 2,
+    "flagged_wrong": 1
+   }
+  },
+  "noise": {
+   "baseline": {
+    "char_edits": 14,
+    "ref_chars": 605,
+    "word_edits": 3,
+    "ref_words": 104,
+    "wrong": 1,
+    "flagged": 0,
+    "flagged_wrong": 0
+   },
+   "clean + vote + context": {
+    "char_edits": 13,
+    "ref_chars": 605,
+    "word_edits": 4,
+    "ref_words": 104,
+    "wrong": 3,
+    "flagged": 3,
+    "flagged_wrong": 2
+   }
+  },
+  "phone": {
+   "baseline": {
+    "char_edits": 6,
+    "ref_chars": 605,
+    "word_edits": 3,
+    "ref_words": 104,
+    "wrong": 1,
+    "flagged": 0,
+    "flagged_wrong": 0
+   },
+   "clean + vote + context": {
+    "char_edits": 6,
+    "ref_chars": 605,
+    "word_edits": 2,
+    "ref_words": 104,
+    "wrong": 2,
+    "flagged": 1,
+    "flagged_wrong": 0
+   }
+  },
+  "rotated": {
+   "baseline": {
+    "char_edits": 24,
+    "ref_chars": 605,
+    "word_edits": 7,
+    "ref_words": 104,
+    "wrong": 3,
+    "flagged": 0,
+    "flagged_wrong": 0
+   },
+   "clean + vote + context": {
+    "char_edits": 18,
+    "ref_chars": 605,
+    "word_edits": 7,
+    "ref_words": 104,
+    "wrong": 5,
+    "flagged": 1,
+    "flagged_wrong": 1
+   }
+  }
+ }
+}

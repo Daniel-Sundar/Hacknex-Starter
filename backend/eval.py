@@ -15,9 +15,11 @@ Metrics (micro-averaged over all samples; case and punctuation ignored):
                       (a word the model left out entirely has nothing to flag, so it only shows in WER)
 
 Every model call goes through the pipeline cache (backend/.cache), so re-running is free.
-Usage (from backend/):  .venv/Scripts/python eval.py [--samples DIR] [--limit N]
+Usage (from backend/):  .venv/Scripts/python eval.py [--split dev|test] [--samples DIR] [--limit N]
+                        .venv/Scripts/python eval.py --robustness   (after augment.py)
 """
 import argparse
+import hashlib
 import json
 import sys
 import time
@@ -134,29 +136,27 @@ def table(totals: dict, readers: dict, n_samples: int) -> str:
     return "\n".join(rows)
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--samples", default=str(HERE / "data" / "handwriting" / "samples"))
-    ap.add_argument("--limit", type=int, default=0, help="only the first N samples")
-    args = ap.parse_args()
-    sys.stdout.reconfigure(encoding="utf-8")  # Windows console chokes on arrows/Tamil otherwise
+def is_test(img: Path) -> bool:
+    """Fixed dev/test split by file name (~40% test). A sample never changes side as more are added,
+    and augmented copies (same name, other folder) land on the same side as their original."""
+    return hashlib.md5(img.stem.encode()).digest()[0] % 10 < 4
 
-    folder = Path(args.samples)
-    samples = sorted(p for p in folder.glob("*") if p.suffix.lower() in IMAGE_EXT and p.with_suffix(".txt").exists())
-    if args.limit:
-        samples = samples[:args.limit]
-    if not samples:
-        sys.exit(f"No image + .txt pairs in {folder}")
 
+def find_samples(folder: Path, split: str) -> list[Path]:
+    found = sorted(p for p in folder.glob("*") if p.suffix.lower() in IMAGE_EXT and p.with_suffix(".txt").exists())
+    return [p for p in found if split == "all" or is_test(p) == (split == "test")]
+
+
+def evaluate(samples: list[Path], variants: list[str]) -> tuple[dict, dict, list, list]:
     keys = ["char_edits", "ref_chars", "word_edits", "ref_words", "wrong", "flagged", "flagged_wrong"]
-    totals = {v: dict.fromkeys(keys, 0) for v in VARIANTS}
-    readers = {v: [] for v in VARIANTS}
+    totals = {v: dict.fromkeys(keys, 0) for v in variants}
+    readers = {v: [] for v in variants}
     per_sample, notes = [], []
     for k, img in enumerate(samples, 1):
         data, ref = img.read_bytes(), img.with_suffix(".txt").read_text(encoding="utf-8")
         t0 = time.time()
-        row = {"sample": img.name}
-        for v in VARIANTS:
+        row = {"sample": str(img.relative_to(img.parent.parent)), "split": "test" if is_test(img) else "dev"}
+        for v in variants:
             res = run_variant(v, data)
             s = score(res["words"], ref)
             for key in keys:
@@ -164,22 +164,73 @@ def main():
             readers[v].append(res["readers"])
             row[v] = {"wer": round(s["word_edits"] / max(s["ref_words"], 1), 3), **s, "readers": res["readers"]}
             if res["error"]:
-                notes.append(f"- {img.name} / {v}: {res['error']}")
+                notes.append(f"- {row['sample']} / {v}: {res['error']}")
         per_sample.append(row)
-        print(f"[{k}/{len(samples)}] {img.name} done in {time.time() - t0:.0f}s", flush=True)
+        print(f"  [{k}/{len(samples)}] {row['sample']} done in {time.time() - t0:.0f}s", flush=True)
+    return totals, readers, per_sample, notes
 
-    md = (f"## Handwriting ablation ({len(samples)} samples, "
-          f"{sum(totals['baseline'][k] for k in ['ref_words'])} ground-truth words)\n\n"
-          + table(totals, readers, len(samples))
-          + "\n\nCER/WER ignore case and punctuation; a `[?]` always counts as an error. "
-            "Confident errors = wrong words that were not flagged.\n")
-    if notes:
-        md += "\n### Failures (scored as empty output)\n" + "\n".join(notes) + "\n"
+
+def robustness_table(results: dict) -> str:
+    """results[degradation] = totals for baseline + full pipeline."""
+    full = "clean + vote + context"
+    rows = ["| Image condition | Baseline WER ↓ | Our WER ↓ | Baseline confident errors ↓ | Our confident errors ↓ "
+            "| Our flag recall ↑ |", "|---|---|---|---|---|---|"]
+    for cond, t in results.items():
+        b, o = t["baseline"], t[full]
+        rows.append(f"| {cond} | {pct(b['word_edits'], b['ref_words'])} | {pct(o['word_edits'], o['ref_words'])} "
+                    f"| {b['wrong'] - b['flagged_wrong']} | {o['wrong'] - o['flagged_wrong']} "
+                    f"| {pct(o['flagged_wrong'], o['wrong'])} |")
+    return "\n".join(rows)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--samples", default=str(HERE / "data" / "handwriting" / "samples"))
+    ap.add_argument("--split", choices=["all", "dev", "test"], default="all",
+                    help="tune on dev; report test on the slides")
+    ap.add_argument("--limit", type=int, default=0, help="only the first N samples")
+    ap.add_argument("--robustness", action="store_true",
+                    help="baseline vs full pipeline on each degraded copy made by augment.py")
+    ap.add_argument("--name", default="", help="suffix for the results files, e.g. gnhk")
+    args = ap.parse_args()
+    sys.stdout.reconfigure(encoding="utf-8")  # Windows console chokes on arrows/Tamil otherwise
+    suffix = "_".join(x for x in [args.name, args.split if args.split != "all" else ""] if x)
+    out = HERE / f"eval_results{'_' + suffix if suffix else ''}"
+
+    if args.robustness:
+        aug = HERE / "data" / "handwriting" / "augmented"
+        conds = {"original": Path(args.samples), **{d.name: d for d in sorted(aug.iterdir()) if d.is_dir()}}
+        results, all_notes = {}, []
+        for cond, folder in conds.items():
+            samples = find_samples(folder, args.split)[:args.limit or None]
+            print(f"{cond}: {len(samples)} samples", flush=True)
+            totals, _, _, notes = evaluate(samples, ["baseline", "clean + vote + context"])
+            results[cond], all_notes = totals, all_notes + notes
+        n = len(find_samples(Path(args.samples), args.split)[:args.limit or None])
+        md = (f"## Robustness ({n} samples x {len(conds)} image conditions, split={args.split})\n\n"
+              + robustness_table(results) + "\n")
+        if all_notes:
+            md += "\n### Failures (scored as empty output)\n" + "\n".join(all_notes) + "\n"
+        out = out.with_name(out.name.replace("eval_results", "eval_robustness"))
+        payload = {"split": args.split, "results": results}
+    else:
+        samples = find_samples(Path(args.samples), args.split)[:args.limit or None]
+        if not samples:
+            sys.exit(f"No image + .txt pairs in {args.samples} for split={args.split}")
+        totals, readers, per_sample, notes = evaluate(samples, list(VARIANTS))
+        md = (f"## Handwriting ablation ({len(samples)} samples, split={args.split}, "
+              f"{totals['baseline']['ref_words']} ground-truth words)\n\n"
+              + table(totals, readers, len(samples))
+              + "\n\nCER/WER ignore case and punctuation; a `[?]` always counts as an error. "
+                "Confident errors = wrong words that were not flagged.\n")
+        if notes:
+            md += "\n### Failures (scored as empty output)\n" + "\n".join(notes) + "\n"
+        payload = {"split": args.split, "totals": totals, "per_sample": per_sample}
+
     print("\n" + md)
-    (HERE / "eval_results.md").write_text(md, encoding="utf-8")
-    (HERE / "eval_results.json").write_text(json.dumps({"totals": totals, "per_sample": per_sample},
-                                                       indent=1, ensure_ascii=False), encoding="utf-8")
-    print("Saved eval_results.md and eval_results.json")
+    out.with_suffix(".md").write_text(md, encoding="utf-8")
+    out.with_suffix(".json").write_text(json.dumps(payload, indent=1, ensure_ascii=False), encoding="utf-8")
+    print(f"Saved {out.name}.md and {out.name}.json")
 
 
 if __name__ == "__main__":

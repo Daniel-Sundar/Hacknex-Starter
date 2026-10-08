@@ -1,0 +1,111 @@
+{
+ "split": "dev",
+ "totals": {
+  "baseline": {
+   "char_edits": 3,
+   "ref_chars": 176,
+   "word_edits": 2,
+   "ref_words": 35,
+   "wrong": 2,
+   "flagged": 0,
+   "flagged_wrong": 0
+  },
+  "vote (no clean)": {
+   "char_edits": 1,
+   "ref_chars": 176,
+   "word_edits": 1,
+   "ref_words": 35,
+   "wrong": 1,
+   "flagged": 0,
+   "flagged_wrong": 0
+  },
+  "clean (single reader)": {
+   "char_edits": 23,
+   "ref_chars": 176,
+   "word_edits": 7,
+   "ref_words": 35,
+   "wrong": 6,
+   "flagged": 0,
+   "flagged_wrong": 0
+  },
+  "clean + vote": {
+   "char_edits": 0,
+   "ref_chars": 176,
+   "word_edits": 0,
+   "ref_words": 35,
+   "wrong": 0,
+   "flagged": 0,
+   "flagged_wrong": 0
+  },
+  "clean + vote + context": {
+   "char_edits": 0,
+   "ref_chars": 176,
+   "word_edits": 0,
+   "ref_words": 35,
+   "wrong": 0,
+   "flagged": 0,
+   "flagged_wrong": 0
+  }
+ },
+ "per_sample": [
+  {
+   "sample": "samples\\002.png",
+   "split": "dev",
+   "baseline": {
+    "wer": 0.057,
+    "char_edits": 3,
+    "ref_chars": 176,
+    "word_edits": 2,
+    "ref_words": 35,
+    "wrong": 2,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 1
+   },
+   "vote (no clean)": {
+    "wer": 0.029,
+    "char_edits": 1,
+    "ref_chars": 176,
+    "word_edits": 1,
+    "ref_words": 35,
+    "wrong": 1,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 3
+   },
+   "clean (single reader)": {
+    "wer": 0.2,
+    "char_edits": 23,
+    "ref_chars": 176,
+    "word_edits": 7,
+    "ref_words": 35,
+    "wrong": 6,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 1
+   },
+   "clean + vote": {
+    "wer": 0.0,
+    "char_edits": 0,
+    "ref_chars": 176,
+    "word_edits": 0,
+    "ref_words": 35,
+    "wrong": 0,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 5
+   },
+   "clean + vote + context": {
+    "wer": 0.0,
+    "char_edits": 0,
+    "ref_chars": 176,
+    "word_edits": 0,
+    "ref_words": 35,
+    "wrong": 0,
+    "flagged": 0,
+    "flagged_wrong": 0,
+    "readers": 5
+   }
+  }
+ ]
+}
