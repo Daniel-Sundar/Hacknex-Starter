@@ -1,50 +1,58 @@
 @import "tailwindcss";
 
-/* ClearScript. Paper (vintage notebook) by default via <html data-theme="light">; no attribute = Linear dark.
-   All text/background pairs are >= 4.5:1 (WCAG AA) in both themes. */
+/* ClearScript, "Scholastic" edition: an enchanted-library manuscript look.
+   Parchment is the default (<html data-theme="light">); no attribute = the "Ravenclaw night" dark theme.
+   Burgundy for actions, brass for borders, gold only as a small accent. All text pairs >= 4.5:1 (WCAG AA). */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --font-display: "Cinzel", "Trajan Pro", "Times New Roman", serif;          /* logo, section labels */
+  --font-serif: "Cormorant Garamond", "Garamond", "Times New Roman", serif;  /* card titles */
 
-  --color-page: #0b0f17;      /* canvas */
-  --color-panel: #161b26;     /* cards */
-  --color-elev: #232936;      /* raised controls */
-  --color-elev-hover: #2b3242;
-  --color-well: #0b0f17;      /* code / output boxes, recessed into cards */
-  --color-line: #2e3545;      /* 1px borders */
+  /* Ravenclaw night (dark) */
+  --color-page: #0e1320;
+  --color-panel: #161c2c;
+  --color-elev: #1e2537;
+  --color-elev-hover: #262e43;
+  --color-well: #0e1320;
+  --color-line: #4a4232;      /* dim brass */
 
-  --color-ink: #f3f4f6;       /* primary text */
-  --color-body: #d1d5db;      /* body text */
-  --color-muted: #9ca3af;     /* labels, hints */
+  --color-ink: #f4ede0;
+  --color-body: #d9cfbd;
+  --color-muted: #a39885;
 
-  --color-brand: #5e6ad2;        /* CTAs + active states only */
-  --color-brand-strong: #5e6ad2; /* white text 4.7:1 */
-  --color-brand-soft: #c7cbf5;
+  --color-brand: #9b1c20;         /* Gryffindor burgundy: CTAs + active states */
+  --color-brand-strong: #8c181c;  /* white text 8:1 */
+  --color-brand-soft: #e2c36b;    /* icon / link accent */
+  --color-gold: #d4af37;
+  --color-gold-deep: #b45309;
 
-  --color-warn: #f59e0b; --color-warn-bg: rgb(69 26 3 / 0.45); --color-warn-fg: #fcd34d; --color-warn-line: rgb(146 64 14 / 0.55);
-  --color-info: #0ea5e9; --color-info-bg: rgb(8 47 73 / 0.5);  --color-info-fg: #7dd3fc; --color-info-line: rgb(7 89 133 / 0.55);
-  --color-ok: #10b981;   --color-ok-bg: rgb(2 44 34 / 0.5);    --color-ok-fg: #6ee7b7;   --color-ok-line: rgb(6 95 70 / 0.55);
-  --color-del-bg: rgb(69 10 10 / 0.4);  --color-del-fg: #f87171; --color-del-line: rgb(153 27 27 / 0.5);  /* red-950/40, red-400, red-800/50 */
-  --color-add-bg: rgb(2 44 34 / 0.4);   --color-add-fg: #34d399; --color-add-line: rgb(6 95 70 / 0.5);    /* emerald-950/40, -400, -800/50 */
+  --color-warn: #d97706; --color-warn-bg: rgb(69 26 3 / 0.45); --color-warn-fg: #fcd34d; --color-warn-line: rgb(146 64 14 / 0.55);
+  --color-info: #3b5bdb; --color-info-bg: rgb(30 58 138 / 0.35); --color-info-fg: #a5b8f5; --color-info-line: rgb(30 58 138 / 0.7);
+  --color-ok: #2f855a;   --color-ok-bg: rgb(2 44 34 / 0.5);    --color-ok-fg: #8fd8b0;   --color-ok-line: rgb(6 95 70 / 0.55);
+  --color-del-bg: rgb(69 10 10 / 0.4);  --color-del-fg: #f6a19b; --color-del-line: rgb(153 27 27 / 0.5);
+  --color-add-bg: rgb(2 44 34 / 0.4);   --color-add-fg: #8fd8b0; --color-add-line: rgb(6 95 70 / 0.5);
 }
 
+/* Parchment (default) */
 :root[data-theme="light"] {
-  /* "Paper": vintage notebook. Cream page, ivory cards, dark-ink text, warm hairlines. */
-  --color-page: #f7f4ef;
-  --color-panel: #fffdfb;
-  --color-elev: #ffffff;
-  --color-elev-hover: #faf6ef;
-  --color-well: #f4f1ea;
-  --color-line: rgb(120 53 15 / 0.12);   /* amber-900/10, a touch firmer for AA borders */
-  --color-ink: #1c1917;
-  --color-body: #292524;
-  --color-muted: #6b6259;                /* 5.4:1 on the page */
-  --color-brand-soft: #3730a3;
-  --color-warn-bg: #fffbeb; --color-warn-fg: #b45309; --color-warn-line: #fde68a;
-  --color-info-bg: #f0f9ff; --color-info-fg: #0369a1; --color-info-line: #bae6fd;
-  --color-ok-bg: #ecfdf5;   --color-ok-fg: #047857;   --color-ok-line: #a7f3d0;
-  --color-del-bg: #fef2f2;  --color-del-fg: #b91c1c;  --color-del-line: #fecaca;
-  --color-add-bg: #ecfdf5;  --color-add-fg: #047857;  --color-add-line: #a7f3d0;
+  --color-page: #efe6d5;
+  --color-panel: #faf6ee;
+  --color-elev: #fdfaf3;
+  --color-elev-hover: #f4ecdc;
+  --color-well: #f3ecdd;
+  --color-line: #c8b293;          /* brass */
+  --color-ink: #231a12;           /* iron-gall ink */
+  --color-body: #3a2e24;
+  --color-muted: #6b5a47;         /* 5.0:1 on parchment */
+  --color-brand: #7b1113;
+  --color-brand-strong: #7b1113;  /* white text 11:1 */
+  --color-brand-soft: #7b1113;
+  --color-warn-bg: #fbf1d9; --color-warn-fg: #92400e; --color-warn-line: #e8c98a;
+  --color-info-bg: #eaeefa; --color-info-fg: #1e3a8a; --color-info-line: #b9c5ea;   /* Ravenclaw navy */
+  --color-ok-bg: #e8f2ea;   --color-ok-fg: #1f5c3a;   --color-ok-line: #b5d3bd;
+  --color-del-bg: #f8e6e2;  --color-del-fg: #8f1d1d;  --color-del-line: #e3b7ae;
+  --color-add-bg: #e8f2ea;  --color-add-fg: #1f5c3a;  --color-add-line: #b5d3bd;
 }
 
 html { color-scheme: dark; }
@@ -58,21 +66,52 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Paper theme background: a faint red margin rule, 28px ruled lines and a fine paper grain.
-   Background-only, so it never touches layout or behaviour. */
+/* Parchment: aged edges, faint fold creases (like a folded map), a fine manuscript grid
+   and a gravelly paper grain. Background only, so layout and behaviour are untouched. */
 html[data-theme="light"] body {
   background-color: var(--color-page);
   background-image:
-    linear-gradient(to right, transparent 47px, rgb(220 38 38 / 0.14) 47px, rgb(220 38 38 / 0.14) 48px, transparent 48px),
-    repeating-linear-gradient(to bottom, transparent 0, transparent 27px, rgb(120 53 15 / 0.05) 27px, rgb(120 53 15 / 0.05) 28px),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.47 0 0 0 0 0.33 0 0 0 0 0.18 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: no-repeat, repeat, repeat;
-  background-size: 100% 100%, 100% 28px, 220px 220px;
-  background-attachment: fixed, scroll, scroll;
+    radial-gradient(130% 95% at 50% 40%, transparent 55%, rgb(120 84 40 / 0.16) 100%),
+    linear-gradient(to right, transparent calc(33.3% - 1px), rgb(110 80 40 / 0.07) 33.3%, rgb(255 250 238 / 0.35) calc(33.3% + 1px), transparent calc(33.3% + 3px)),
+    linear-gradient(to right, transparent calc(66.6% - 1px), rgb(110 80 40 / 0.07) 66.6%, rgb(255 250 238 / 0.35) calc(66.6% + 1px), transparent calc(66.6% + 3px)),
+    linear-gradient(to bottom, transparent calc(50% - 1px), rgb(110 80 40 / 0.06) 50%, rgb(255 250 238 / 0.3) calc(50% + 1px), transparent calc(50% + 3px)),
+    linear-gradient(to right, rgb(120 84 40 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(120 84 40 / 0.045) 1px, transparent 1px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.3 0 0 0 0 0.16 0 0 0 0.11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px, 240px 240px;
+  background-attachment: fixed, fixed, fixed, fixed, scroll, scroll, scroll;
 }
-/* Cards sit on the page like index cards: crisp border plus a soft ambient shadow */
-html[data-theme="light"] .surface { box-shadow: 0 1px 2px rgb(120 53 15 / 0.06), 0 1px 3px rgb(28 25 23 / 0.04); }
-html[data-theme="light"] .elev { box-shadow: 0 1px 2px rgb(120 53 15 / 0.06); }
+
+/* Ravenclaw night: a faint star-chart grid instead of the parchment */
+body {
+  background-image:
+    linear-gradient(to right, rgb(212 175 55 / 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(212 175 55 / 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Panels sit on the parchment like bound vellum: brass hairline plus a soft ambient shadow */
+html[data-theme="light"] .surface { box-shadow: 0 1px 2px rgb(92 64 30 / 0.08), 0 4px 14px -6px rgb(92 64 30 / 0.16); }
+html[data-theme="light"] .elev { box-shadow: 0 1px 2px rgb(92 64 30 / 0.07); }
+
+/* Card / section titles in a bookish serif */
+@utility title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+
+/* Small engraved labels (INPUT, PIPELINE, stat names) */
+@utility engraved {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
 
 /* Card: flat surface with a crisp 1px border */
 @utility surface {

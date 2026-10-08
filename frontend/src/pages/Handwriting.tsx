@@ -170,9 +170,9 @@ export default function Handwriting() {
       <div className="col-span-12 space-y-4 lg:col-span-7 xl:col-span-8">
         {loading ? (
           <Card flush className="overflow-hidden">
-            <PenAnimation loop className="h-[420px]" />
+            <PenAnimation page="musing" className="h-[420px]" />
             <div className="flex items-center justify-between border-t border-line px-4 py-2.5 text-[12px]">
-              <span className="font-medium tracking-tight">Reading with every model…</span>
+              <span className="title !text-[15px]">Consulting every model…</span>
               <span className="text-muted">Each model reads the page on its own, then they vote word by word</span>
             </div>
           </Card>
@@ -180,7 +180,7 @@ export default function Handwriting() {
           <Card className="grid min-h-80 place-items-center text-center">
             <div className="max-w-sm space-y-3">
               <span className="elev mx-auto grid size-10 place-items-center rounded-lg text-body"><ShieldCheck className="size-5" /></span>
-              <p className="text-[14px] font-medium tracking-tight">Nothing digitized yet</p>
+              <p className="title">Nothing digitized yet</p>
               <p className="text-[13px] leading-relaxed text-muted">
                 Every word is read by several AI models. Where they disagree, ClearScript flags it instead of guessing.
               </p>
@@ -240,7 +240,7 @@ const ghostBtn =
   "elev inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-[12px] font-medium tracking-tight text-body hover:text-ink active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
 
 function SectionLabel({ children }: { children: ReactNode }) {
-  return <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">{children}</div>;
+  return <div className="engraved text-muted">{children}</div>;
 }
 
 function Toggle({ on, onChange, label, hint }: { on: boolean; onChange: (v: boolean) => void; label: string; hint: string }) {
@@ -266,10 +266,10 @@ function Toggle({ on, onChange, label, hint }: { on: boolean; onChange: (v: bool
 function Stat({ label, value, hint, dot }: { label: string; value: string | number; hint?: string; dot: string }) {
   return (
     <div className="surface rounded-xl px-4 py-3">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
+      <div className="engraved flex items-center gap-1.5 text-muted">
         <span className={`size-1.5 rounded-full ${dot}`} />{label}
       </div>
-      <div className="mt-1.5 text-2xl font-semibold tracking-tight tabular-nums text-ink">{value}</div>
+      <div className="mt-2 font-display text-[24px] font-semibold leading-none tabular-nums text-ink">{value}</div>
       {hint && <div className="text-[11px] text-muted">{hint}</div>}
     </div>
   );
@@ -357,7 +357,7 @@ function ReviewPanel({ words, queue, writer, setWriter, onAnswer, onSkip }: {
   return (
     <Card flush className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
-        <div className="flex items-center gap-2 text-[13px] font-medium tracking-tight">
+        <div className="title flex items-center gap-2">
           <HelpCircle className="size-4 text-warn" /> Which word is this?
           {hasDigit(w.text) && (
             <span className="rounded-full border border-del-line bg-del-bg px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-del-fg">number · never guessed</span>
@@ -424,7 +424,7 @@ function Compare({ baseline, ours }: { baseline: string; ours: string }) {
   return (
     <Card flush>
       <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-        <span className="text-[13px] font-medium tracking-tight">Baseline vs ClearScript</span>
+        <span className="title">Baseline vs ClearScript</span>
         <span className="font-mono text-[11px]">
           <span className="text-del-fg">−{changed}</span> <span className="text-add-fg">+{b.length - keepB.size}</span>
         </span>
@@ -446,7 +446,7 @@ function Compare({ baseline, ours }: { baseline: string; ours: string }) {
 function Readings({ readings, errors }: { readings: Record<string, string>; errors: Record<string, string> }) {
   return (
     <details className="surface group rounded-xl">
-      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-[13px] font-medium tracking-tight">
+      <summary className="title flex cursor-pointer list-none items-center justify-between px-4 py-2.5">
         What each model read
         <span className="font-mono text-[11px] text-muted">
           {Object.keys(readings).length} ok{Object.keys(errors).length ? ` · ${Object.keys(errors).length} failed` : ""}

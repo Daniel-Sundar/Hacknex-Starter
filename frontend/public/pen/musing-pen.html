@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<title>Thinking Pen</title>
+<title>Musing Pen</title>
 <script>
   // Embedded in ClearScript: ?embed hides this page's own captions/buttons, ?loop replays forever.
   window.PEN_OPTS = new URLSearchParams(location.search);
@@ -15,8 +15,8 @@
 
   :root {
     color-scheme: light;
-    --bg: #f3efe7;
-    --bg-hi: #fbfaf6;
+    --bg: #efe6d5;
+    --bg-hi: #f8f1e2;
     --text: #23262e;
     --muted: #6d675c;
     --card: rgba(255, 255, 255, 0.72);
@@ -31,7 +31,7 @@
     color: var(--text);
   }
   body {
-    background: radial-gradient(120% 90% at 50% 38%, var(--bg-hi) 0%, var(--bg) 58%, #e7e1d5 100%);
+    background: radial-gradient(120% 90% at 50% 38%, var(--bg-hi) 0%, var(--bg) 58%, #e2d6bd 100%);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -114,11 +114,11 @@
 </style>
 </head>
 <body>
-<canvas id="stage" aria-label="3D animation: a fountain pen uncaps itself and writes the word thinking in cursive"></canvas>
+<canvas id="stage" aria-label="3D animation: a fountain pen uncaps itself and writes Methinks, Conceive, Rumination and Apprehension in cursive, one after another"></canvas>
 <div class="hint">Drag to orbit</div>
 <div class="ui">
   <div class="caption" aria-live="polite">
-    <div class="title">thinking</div>
+    <div class="title">musing</div>
     <div class="stage" id="stageText">A fountain pen study</div>
   </div>
   <button id="replay" type="button" aria-label="Replay the animation">
@@ -136,19 +136,47 @@
   'use strict';
 
   // ---------------------------------------------------------------------------
-  // Handwriting data (baked). Lowercase cursive "thinking", composed from the
-  // single-stroke EMS Allure script (SIL OFL, after Allura by Rob Leuschke) with
-  // hand-edited joins and a redesigned "k". Font units, y up.
-  //   main   = the whole word as ONE continuous stroke
-  //   tcross / dot1 / dot2 = short pen-lift strokes written afterwards
+  // Handwriting data (baked). Four old-world words written one after another while
+  // ClearScript waits on the models, from Hershey Script 1 (single-stroke cursive).
+  // Per word: the pen-down strokes in writing order, then i-dots / t-crosses last.
+  // Font units, y up, each word centred on x = 0.
   // ---------------------------------------------------------------------------
-  const GLYPH = {
-    bbox: [-104,-416,3445,728],
-    main: [-104,28,-58,104,54,261,110,337,183,457,217,510,183,517,9,151,-6,66,19,22,98,28,192,110,258,183,403,315,633,482,737,605,759,702,684,718,614,662,545,586,470,457,391,309,303,32,400,148,482,252,577,315,618,334,640,312,630,261,580,183,551,76,574,19,640,19,703,63,772,129,819,183,889,236,911,328,813,85,832,22,905,6,983,69,1034,129,1068,183,1140,262,1200,318,1248,328,1141,25,1283,186,1371,280,1434,318,1481,337,1494,312,1431,195,1390,101,1393,47,1428,16,1487,25,1550,69,1613,132,1648,183,1712,252,1778,337,1860,372,1951,428,2061,542,2118,627,2130,696,2086,728,1998,696,1929,617,1863,498,1806,394,1699,139,1661,13,1705,54,1793,173,1894,284,1970,343,2020,346,2052,330,2052,292,2010,258,1942,238,1870,230,1916,186,1938,120,1956,52,1986,12,2036,14,2084,56,2120,118,2146,183,2215,236,2237,328,2140,85,2159,22,2231,6,2310,69,2361,129,2395,183,2467,262,2527,318,2575,328,2468,25,2610,186,2698,280,2761,318,2808,337,2821,312,2758,195,2717,101,2720,47,2755,16,2814,25,2877,69,2940,132,2975,183,2985,199,3065,279,3193,345,3307,351,3313,350,3202,353,3076,287,2991,205,2950,164,2928,110,2947,57,2988,19,3098,69,3183,158,3272,252,3294,274,3325,274,3171,-85,3041,-331,2985,-381,2934,-410,2890,-416,2840,-381,2859,-280,2928,-220,3029,-132,3092,-88,3265,22,3376,110,3445,183],
-    tcross: [54,346,158,356,258,356],
-    dot1: [974,476,960,457,946,438],
-    dot2: [2301,476,2287,457,2272,438]
-  };
+  const WORDS = [
+      { text: "Methinks", pen: 5, strokes: [
+        [-1716,441,-1779,472,-1811,536,-1811,567,-1779,630,-1716,662,-1685,662,-1621,630,-1590,567,-1590,504,-1621,346,-1653,220,-1716,0],
+        [-1653,220,-1559,472,-1495,598,-1464,630,-1401,662,-1369,662,-1307,630,-1275,567,-1275,504,-1307,346,-1338,220,-1401,0],
+        [-1338,220,-1243,472,-1181,598,-1149,630,-1086,662,-1055,662,-991,630,-960,567,-960,504,-991,346,-1055,126,-1055,32,-1023,0,-991,0,-929,32,-897,63,-834,158,-803,63,-740,95,-708,126,-677,189,-677,252,-708,284,-740,284,-803,252,-834,189,-834,95,-803,32,-740,0,-677,0,-614,32,-582,63,-520,158,-456,252,-393,378],
+        [-299,662,-488,95,-488,32,-456,0,-393,0,-331,32,-299,63,-236,158,-172,252,-78,410,-47,472,-15,567,-15,630,-47,662,-109,630,-141,567,-172,441,-204,252,-235,0,-204,95,-172,158,-109,252,-47,284,17,284,48,252,48,189,17,95,17,32,48,0,79,0,143,32,174,63,237,158,300,284,237,95,237,32,268,0,300,0,363,32,394,63,457,158,520,252,583,284,614,252,614,220,583,95,551,0,583,95,614,158,677,252,740,284,803,284,835,252,835,189,803,95,803,32,835,0,866,0,929,32,961,63,1023,158,1087,252,1181,410,1212,472,1244,567,1244,630,1212,662,1150,630,1118,567,1087,441,1055,252,1024,0,1055,95,1087,158,1150,252,1212,284,1276,284,1307,252,1307,189,1244,158,1150,158,1212,126,1244,32,1276,0,1307,0,1370,32,1402,63,1464,158,1528,252,1559,315,1559,252,1622,158,1653,95,1653,32,1591,0],
+        [1465,32,1528,0,1653,0,1717,32,1748,63,1811,158],
+        [-488,410,-267,410],
+        [341,459,329,441,319,425]
+      ] },
+      { text: "Conceive", pen: 3, strokes: [
+        [-1321,472,-1321,441,-1290,410,-1227,410,-1164,441,-1133,504,-1133,567,-1164,630,-1227,662,-1321,662,-1416,630,-1479,567,-1542,472,-1573,410,-1605,284,-1605,158,-1573,63,-1542,32,-1479,0,-1416,0,-1321,32,-1259,95,-1227,158],
+        [-881,284,-943,284,-1007,252,-1038,220,-1070,158,-1070,95,-1038,32,-975,0,-912,0,-849,32,-817,63,-786,126,-786,189,-817,252,-881,284,-912,252,-912,189,-881,126,-817,95,-723,95,-660,126,-629,158,-566,252,-502,284,-471,252,-471,220,-502,95,-534,0,-502,95,-471,158,-408,252,-345,284,-282,284,-250,252,-250,189,-282,95,-282,32,-250,0,-219,0,-156,32,-124,63,-62,158],
+        [159,220,159,252,127,284,65,284,1,252,-30,220,-62,158,-62,95,-30,32,33,0,127,0,222,63,285,158,316,63,379,95,411,126,442,189,442,252,411,284,379,284,316,252,284,189,284,95,316,32,379,0,442,0,505,32,537,63,599,158,662,284,599,95,599,32,631,0,662,0,726,32,757,63,820,158,882,284,851,126,851,32,882,0,914,0,1008,32,1072,95,1103,189,1103,284,1134,158,1166,126,1229,126,1292,158,1323,63,1386,95,1418,126,1449,189,1449,252,1418,284,1386,284,1323,252,1291,189,1291,95,1323,32,1386,0,1449,0,1512,32,1544,63,1606,158],
+        [704,459,692,441,682,425]
+      ] },
+      { text: "Rumination", pen: 4, strokes: [
+        [-2063,598,-2032,567,-2032,472,-2063,346,-2094,252,-2126,189,-2189,95,-2252,32,-2315,0,-2346,0,-2378,32,-2378,126,-2346,284,-2315,378,-2284,441,-2220,536,-2158,598,-2094,630,-2000,662,-1874,662,-1811,630,-1780,598,-1748,536,-1748,441,-1780,378,-1811,346,-1874,315,-1968,315,-2063,346,-2032,315,-2000,252,-2000,95,-1968,32,-1906,0,-1842,32,-1811,63,-1748,158,-1684,158,-1621,284,-1684,95,-1684,32,-1653,0,-1590,0,-1527,32,-1464,95,-1401,189,-1370,284,-1432,95,-1432,32,-1401,0,-1370,0,-1306,32,-1275,63,-1212,158,-1149,252,-1086,284,-1055,252,-1055,220,-1086,95,-1118,0,-1086,95,-1055,158,-992,252,-929,284,-866,284,-834,252,-834,220,-866,95,-898,0,-866,95,-834,158,-772,252,-708,284,-646,284,-614,252,-614,189,-646,95,-646,32,-614,0,-582,0,-520,32,-488,63,-425,158,-361,284,-424,95,-424,32,-393,0,-361,0,-298,32,-267,63,-204,158,-141,252,-78,284,-47,252,-47,220,-78,95,-110,0,-78,95,-47,158,16,252,79,284,142,284,174,252,174,189,142,95,142,32,174,0,205,0,268,32,300,63,362,158],
+        [646,189,615,252,551,284,489,284,426,252,394,220,363,158,363,95,394,32,457,0,520,0,583,32,615,95,677,284,646,126,646,32,677,0,709,0,772,32,803,63,867,158,930,252,993,378],
+        [1087,662,898,95,898,32,930,0,993,0,1055,32,1087,63,1150,158,1214,284,1151,95,1151,32,1182,0,1214,0,1277,32,1308,63,1371,158],
+        [1559,284,1497,284,1434,252,1402,220,1371,158,1371,95,1402,32,1465,0,1528,0,1591,32,1623,63,1654,126,1654,189,1623,252,1559,284,1528,252,1528,189,1559,126,1623,95,1717,95,1780,126,1811,158,1875,252,1938,284,1969,252,1969,220,1938,95,1906,0,1938,95,1969,158,2032,252,2095,284,2158,284,2190,252,2190,189,2158,95,2158,32,2190,0,2221,0,2284,32,2316,63,2378,158],
+        [-320,459,-332,441,-342,425],
+        [898,410,1119,410],
+        [1255,459,1243,441,1233,425]
+      ] },
+      { text: "Apprehension", pen: 6, strokes: [
+        [-2613,0,-2550,32,-2456,126,-2361,252,-2235,472,-2141,662,-2141,0,-2173,95,-2235,189,-2299,252,-2393,315,-2456,315,-2487,284,-2487,220,-2456,158,-2393,95,-2299,32,-2204,0,-2047,0],
+        [-1983,158,-1920,252,-1889,315,-1920,189,-2109,-378],
+        [-1920,189,-1889,252,-1826,284,-1763,284,-1700,252,-1669,189,-1669,126,-1700,63,-1731,32,-1795,0,-1920,32,-1857,0,-1763,0,-1669,32,-1605,63,-1511,158,-1448,252,-1417,315,-1448,189,-1637,-378],
+        [-1448,189,-1417,252,-1354,284,-1291,284,-1228,252,-1197,189,-1197,126,-1228,63,-1259,32,-1323,0,-1448,32,-1385,0,-1291,0,-1197,32,-1133,63,-1039,158,-976,252,-945,315,-945,252,-851,252,-819,220,-819,158,-851,63,-851,32,-819,0,-787,0,-725,32,-693,63,-630,158,-598,63,-535,95,-503,126,-472,189,-472,252,-503,284,-535,284,-598,252,-629,189,-629,95,-598,32,-535,0,-472,0,-409,32,-377,63,-315,158,-251,252,-157,410,-126,472,-94,567,-94,630,-126,662,-188,630,-220,567,-251,441,-283,252,-314,0,-283,95,-251,158,-188,252,-126,284,-62,284,-31,252,-31,189,-62,95,-62,32,-31,0,0,0,64,32,95,63,158,158,189,63,252,95,284,126,315,189,315,252,284,284,252,284,189,252,158,189,158,95,189,32,252,0,315,0,378,32,410,63,472,158,536,252,599,284,630,252,630,220,599,95,567,0,599,95,630,158,693,252,756,284,819,284,851,252,851,189,819,95,819,32,851,0,882,0,945,32,977,63,1039,158,1103,252,1134,315,1134,252,1197,158,1228,95,1228,32,1166,0],
+        [1040,32,1103,0,1228,0,1292,32,1323,63,1386,158,1449,284,1386,95,1386,32,1417,0,1449,0,1512,32,1543,63,1606,158],
+        [1794,284,1732,284,1669,252,1637,220,1606,158,1606,95,1637,32,1700,0,1763,0,1826,32,1858,63,1889,126,1889,189,1858,252,1794,284,1763,252,1763,189,1794,126,1858,95,1952,95,2015,126,2046,158,2110,252,2173,284,2204,252,2204,220,2173,95,2141,0,2173,95,2204,158,2267,252,2330,284,2393,284,2425,252,2425,189,2393,95,2393,32,2425,0,2456,0,2519,32,2551,63,2613,158],
+        [1490,459,1478,441,1468,425]
+      ] }
+  ];
+  const GLYPH = { bbox: [-2613,-378,2613,662] };
 
   const V3 = THREE.Vector3;
   const PI = Math.PI;
@@ -165,33 +193,47 @@
   // Timeline state. Every visual below is a pure function of these numbers
   // (plus the timeline clock), so the timeline can be paused and seeked anywhere.
   // ---------------------------------------------------------------------------
-  const S = { enter: 0, twist: 0, pull: 0, fade: 0, flip: 0, land: 0, main: 0, air1: 0, cross: 0, air2: 0, dot1: 0, air3: 0, dot2: 0, rest: 0 };
-  const WRITE_DUR = 7.6;
-  const DUR = { air1: 1.05, cross: 0.34, air2: 0.6, dot: 0.13, air3: 0.62 };
+  const S = { enter: 0, twist: 0, pull: 0, fade: 0, flip: 0, land: 0 };
+  const FONT_SPEED = 5200;    // writing pace, font units per second
+  const polyLen = (a) => { let L = 0; for (let i = 2; i < a.length; i += 2) L += Math.hypot(a[i] - a[i - 2], a[i + 1] - a[i - 1]); return L; };
+  const P0 = (a) => [a[0], a[1]], P1 = (a) => [a[a.length - 2], a[a.length - 1]];
+  // Segments in timeline order. 'write' = nib on the paper along stroke k of word w;
+  // 'air' = a lifted move between two stroke ends ({w, k, at}).
+  const TRACK = [];
   const tl = gsap.timeline({ paused: true });
   tl.addLabel('enter', 0)
-    .to(S, { enter: 1, duration: 1.8, ease: 'power2.out' }, 'enter')
-    .addLabel('uncap', '+=0.15')
-    .to(S, { twist: 1, duration: 1.15, ease: 'power1.inOut' }, 'uncap')
-    .to(S, { pull: 1, duration: 0.95, ease: 'power2.inOut' }, '>-0.08')
-    .to(S, { fade: 1, duration: 0.7, ease: 'power1.in' }, '<0.45')
-    .addLabel('tilt', '+=0.1')
-    .to(S, { flip: 1, duration: 1.9, ease: 'none' }, 'tilt')
-    .to(S, { land: 1, duration: 0.45, ease: 'power2.inOut' }, '>')
-    .addLabel('write', '+=0.08')
-    .to(S, { main: 1, duration: WRITE_DUR, ease: 'none' }, 'write')
-    .addLabel('finish', '+=0.12')
-    .to(S, { air1: 1, duration: DUR.air1, ease: 'power2.inOut' }, 'finish')
-    .to(S, { cross: 1, duration: DUR.cross, ease: 'sine.inOut' }, '>')
-    .to(S, { air2: 1, duration: DUR.air2, ease: 'power2.inOut' }, '>')
-    .to(S, { dot1: 1, duration: DUR.dot, ease: 'sine.inOut' }, '>')
-    .to(S, { air3: 1, duration: DUR.air3, ease: 'power2.inOut' }, '>')
-    .to(S, { dot2: 1, duration: DUR.dot, ease: 'sine.inOut' }, '>')
-    .to(S, { rest: 1, duration: 1.7, ease: 'none' }, '>+0.05')
-    .to({}, { duration: 1.0 }, '>');   // hold on the finished frame while the last ink dries
-  // timeline time at which each ink stroke starts (read back from the tweens themselves)
-  const startOf = (key) => tl.getChildren(false, true, false).find((c) => c.vars && key in c.vars).startTime();
-  const STROKE_T0 = { main: startOf('main'), cross: startOf('cross'), dot1: startOf('dot1'), dot2: startOf('dot2') };
+    .to(S, { enter: 1, duration: 0.85, ease: 'power3.out' }, 'enter')
+    .addLabel('uncap', '+=0.05')
+    .to(S, { twist: 1, duration: 0.55, ease: 'power2.inOut' }, 'uncap')
+    .to(S, { pull: 1, duration: 0.45, ease: 'power2.inOut' }, '>-0.05')
+    .to(S, { fade: 1, duration: 0.35, ease: 'power1.in' }, '<0.2')
+    .addLabel('tilt', '+=0.03')
+    .to(S, { flip: 1, duration: 0.95, ease: 'none' }, 'tilt')
+    .to(S, { land: 1, duration: 0.25, ease: 'power2.inOut' }, '>')
+    .addLabel('loop', '+=0.04');
+  WORDS.forEach((W, w) => {
+    tl.addLabel('w' + w, w === 0 ? 'loop' : '>');
+    W.strokes.forEach((a, k) => {
+      if (k > 0) {
+        const p = P1(W.strokes[k - 1]), q = P0(a), d = Math.hypot(q[0] - p[0], q[1] - p[1]);
+        const key = 'a' + w + '_' + k;
+        S[key] = 0;
+        TRACK.push({ key, kind: 'air', from: { w, k: k - 1, at: 1 }, to: { w, k, at: 0 }, lift: 0.12 + Math.min(0.3, d / 5000) });
+        tl.to(S, { [key]: 1, duration: 0.12 + d / 11000, ease: 'power1.inOut' }, '>');
+      }
+      const key = 's' + w + '_' + k;
+      S[key] = 0;
+      TRACK.push({ key, kind: 'write', w, k });
+      tl.to(S, { [key]: 1, duration: Math.max(0.1, polyLen(a) / FONT_SPEED), ease: 'none' }, '>');
+    });
+    // admire the word briefly, then its ink fades into the parchment as the pen glides to the next word
+    const nx = (w + 1) % WORDS.length, fk = 'f' + w, mk = 'n' + w;
+    S[fk] = 0; S[mk] = 0;
+    TRACK.push({ key: mk, kind: 'air', from: { w, k: W.strokes.length - 1, at: 1 }, to: { w: nx, k: 0, at: 0 }, lift: 0.75 });
+    tl.to(S, { [fk]: 1, duration: 0.8, ease: 'power1.in' }, '>+0.55')
+      .to(S, { [mk]: 1, duration: 0.9, ease: 'power2.inOut' }, '<0.05');
+  });
+  const segOf = (key) => tl.getChildren(false, true, false).find((c) => c.vars && key in c.vars);
 
   // ---------------------------------------------------------------------------
   // Renderer / scene / camera
@@ -262,7 +304,7 @@
   const key = new THREE.DirectionalLight(0xfff6ea, 1.55);
   key.position.set(-6.5, 13, 7.5);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(1024, 1024);
   key.shadow.camera.near = 1;
   key.shadow.camera.far = 60;
   key.shadow.camera.left = -15;
@@ -282,7 +324,7 @@
   const PAPER_W = 11.2, PAPER_D = 7.4;
   const paper = new THREE.Mesh(
     new THREE.PlaneGeometry(PAPER_W, PAPER_D),
-    new THREE.MeshStandardMaterial({ color: C(0xfdfaf3), roughness: 0.92, metalness: 0, envMapIntensity: 0.55 })
+    new THREE.MeshStandardMaterial({ color: C(0xe8d9b8), roughness: 0.92, metalness: 0, envMapIntensity: 0.55 })
   );
   paper.rotation.x = -PI / 2;
   paper.position.set(0, 0, 0.55);
@@ -320,6 +362,25 @@
   penModel.add(penBody, penCap);
   pen.add(penModel);
   scene.add(pen);
+
+  // A soft, warm glow at the nib tip while it touches the paper.
+  const glow = (function () {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d'), grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grd.addColorStop(0, 'rgba(236,170,52,0.85)');
+    grd.addColorStop(0.28, 'rgba(214,140,30,0.38)');
+    grd.addColorStop(1, 'rgba(214,140,30,0)');
+    g.fillStyle = grd;
+    g.fillRect(0, 0, 128, 128);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: Object.assign(new THREE.CanvasTexture(c), { encoding: THREE.sRGBEncoding }), transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
+    s.renderOrder = 10;
+    s.scale.set(0.5, 0.5, 1);
+    s.visible = false;
+    scene.add(s);
+    return s;
+  })();
+  let glowLevel = 0;
 
   const mat = {
     resin: new THREE.MeshStandardMaterial({ color: C(0x0c0e14), roughness: 0.075, metalness: 0.05, envMapIntensity: 1.7 }),
@@ -468,8 +529,7 @@
     c.updateArcLengths();
     return c;
   }
-  const mainCurve = makeCurve(GLYPH.main, 8000);
-  const extraCurves = { cross: makeCurve(GLYPH.tcross, 200), dot1: makeCurve(GLYPH.dot1, 100), dot2: makeCurve(GLYPH.dot2, 100) };
+  const WORD_CURVES = WORDS.map((W) => W.strokes.map((a) => makeCurve(a, Math.max(200, a.length * 40))));
 
   function blur(src, radius) {
     const n = src.length, out = new Float32Array(n), w = [];
@@ -526,19 +586,20 @@
       speedAt(u) { u = clamp01(u) * M; const i = Math.min(M - 1, Math.floor(u)); return lerp(speed[i], speed[i + 1], u - i); }
     };
   }
-  const pacing = buildPacing(mainCurve);
+  const PACING = WORD_CURVES.map((cs, w) => cs.map((c, k) => (k < WORDS[w].pen ? buildPacing(c) : null)));
 
   // Smoothed tangents drive a small, stroke-dependent wobble of the pen while writing.
-  const WOB_N = 1200;
-  const wobble = (function () {
+  const WOB_N = 300;
+  function makeWobble(curve) {
     const tx = new Float32Array(WOB_N + 1), tz = new Float32Array(WOB_N + 1), t = new V3();
-    for (let i = 0; i <= WOB_N; i++) { mainCurve.getTangentAt(i / WOB_N, t); tx[i] = t.x; tz[i] = t.z; }
-    return { x: blur(tx, 24), z: blur(tz, 24) };
-  })();
-  function wobbleAt(u) {
+    for (let i = 0; i <= WOB_N; i++) { curve.getTangentAt(i / WOB_N, t); tx[i] = t.x; tz[i] = t.z; }
+    return { x: blur(tx, 8), z: blur(tz, 8) };
+  }
+  const WOBBLE = WORD_CURVES.map((cs) => cs.map(makeWobble));
+  function wobbleAt(wob, u) {
     const f = clamp01(u) * WOB_N, i = Math.min(WOB_N - 1, Math.floor(f));
-    const env = sstep(0, 0.03, u) * sstep(1, 0.97, u);
-    return { x: lerp(wobble.x[i], wobble.x[i + 1], f - i) * env, z: lerp(wobble.z[i], wobble.z[i + 1], f - i) * env };
+    const env = sstep(0, 0.06, u) * sstep(1, 0.94, u);
+    return { x: lerp(wob.x[i], wob.x[i + 1], f - i) * env, z: lerp(wob.z[i], wob.z[i + 1], f - i) * env };
   }
 
   // ---------------------------------------------------------------------------
@@ -549,7 +610,7 @@
   // ---------------------------------------------------------------------------
   const INK = { half: 0.026, h: 0.0052, y: 0.0036, dry: 2.4 };
   const inkUniforms = { uTime: { value: 0 } };
-  const inkMat = new THREE.MeshStandardMaterial({ color: C(0x0e1a5c), roughness: 0.52, metalness: 0.0, envMapIntensity: 0.35 });
+  const inkMat = new THREE.MeshStandardMaterial({ color: C(0x1e1b4b), roughness: 0.52, metalness: 0.0, envMapIntensity: 0.35 });
   inkMat.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = inkUniforms.uTime;
     shader.vertexShader = shader.vertexShader
@@ -560,6 +621,20 @@
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(1.0, 0.55, vWet);')
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.06, vWet);');
   };
+  const WORD_FADE = WORDS.map(() => ({ value: 1 }));
+  const WORD_MAT = WORD_FADE.map((fade) => {
+    const m = inkMat.clone();
+    m.transparent = true;
+    m.onBeforeCompile = (shader) => {
+      inkMat.onBeforeCompile(shader);
+      shader.uniforms.uFade = fade;
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform float uFade;')
+        .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.a *= uFade;');
+    };
+    m.customProgramCacheKey = () => 'ink-fade';
+    return m;
+  });
 
   const _cp = new V3();
   function placeCap(m, curve, u, w) {
@@ -567,7 +642,7 @@
     m.position.set(_cp.x, _cp.y + INK.y, _cp.z);
     m.scale.set(w, INK.h, w);
   }
-  function makeStroke(curve, N, R, widthAt, timeAt) {
+  function makeStroke(curve, N, R, widthAt, timeAt, mat) {
     const geo = new THREE.TubeGeometry(curve, N, 1, R, false);
     const pos = geo.attributes.position, nor = geo.attributes.normal;
     const aT = new Float32Array(pos.count);
@@ -592,14 +667,14 @@
     nor.needsUpdate = true;
     geo.computeBoundingSphere();
     geo.setDrawRange(0, 0);
-    const mesh = new THREE.Mesh(geo, inkMat);
+    const mesh = new THREE.Mesh(geo, mat);
     mesh.receiveShadow = true;
     mesh.frustumCulled = false;
     scene.add(mesh);
     const cap = (t) => {
       const g = new THREE.SphereGeometry(1, 20, 10);
       g.setAttribute('aT', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(t), 1));
-      const m = new THREE.Mesh(g, inkMat);
+      const m = new THREE.Mesh(g, mat);
       m.receiveShadow = true;
       m.visible = false;
       scene.add(m);
@@ -643,23 +718,21 @@
       let w = base * lerp(sm[i], sm[i + 1], f - i);
       w *= o.in + (1 - o.in) * sstep(0, o.taperIn, u);
       w *= o.out + (1 - o.out) * sstep(1, 1 - o.taperOut, u);
-      if (o.pool) w *= 1 + 0.16 * (1 - pacing.speedAt(u));   // ink pools a little where the nib slows
+      if (o.pool) w *= 1 + 0.16 * (1 - o.pool.speedAt(u));   // ink pools a little where the nib slows
       return w;
     };
   }
 
-  const MAIN_N = 2600, RAD = 10;
-  const dotWidth = (u) => INK.half * 1.25 * (0.7 + 0.3 * Math.sin(PI * u)) * (0.55 + 0.45 * sstep(1, 0.6, u));
-  const strokes = {
-    main: makeStroke(mainCurve, MAIN_N, RAD,
-      pressureWidths(mainCurve, MAIN_N, INK.half, { blur: 14, in: 0.35, taperIn: 0.012, out: 0.45, taperOut: 0.02, pool: true }),
-      (u) => STROKE_T0.main + pacing.pAt(u) * WRITE_DUR),
-    cross: makeStroke(extraCurves.cross, 80, RAD,
-      (u) => INK.half * 0.92 * (0.45 + 0.55 * sstep(0, 0.25, u)) * (0.4 + 0.6 * sstep(1, 0.7, u)),
-      (u) => STROKE_T0.cross + u * DUR.cross),
-    dot1: makeStroke(extraCurves.dot1, 24, RAD, dotWidth, (u) => STROKE_T0.dot1 + u * DUR.dot),
-    dot2: makeStroke(extraCurves.dot2, 24, RAD, dotWidth, (u) => STROKE_T0.dot2 + u * DUR.dot)
-  };
+  const RAD = 10;
+  const STROKES = WORD_CURVES.map((cs, w) => cs.map((curve, k) => {
+    const tw = segOf('s' + w + '_' + k), t0 = tw.startTime(), dur = tw.duration();
+    const pc = PACING[w][k];
+    const N = Math.max(24, Math.round(curve.getLength() * 80));
+    const width = pc
+      ? pressureWidths(curve, N, INK.half, { blur: 10, in: 0.35, taperIn: 0.03, out: 0.45, taperOut: 0.04, pool: pc })
+      : (u) => INK.half * 0.9 * (0.45 + 0.55 * sstep(0, 0.25, u)) * (0.4 + 0.6 * sstep(1, 0.7, u));
+    return makeStroke(curve, N, RAD, width, (u) => t0 + (pc ? pc.pAt(u) : u) * dur, WORD_MAT[w]);
+  }));
 
   // ---------------------------------------------------------------------------
   // Layout: camera framing + viewport-relative pen positions (recomputed on resize)
@@ -692,7 +765,7 @@
     camera.updateProjectionMatrix();
     layoutCam.updateProjectionMatrix();
 
-    mainCurve.getPointAt(0, LAY.start);
+    WORD_CURVES[0][0].getPointAt(0, LAY.start);
     LAY.hover.copy(LAY.start).add(new V3(0.12, 0.8, -0.08));
     LAY.rest.set(WORD.minX + 2.1, PEN.lieHeight, WORD.maxZ + (portrait ? 0.95 : 0.75));
     LAY.restYaw = portrait ? -0.22 : -0.1;
@@ -702,9 +775,7 @@
     const m = 0.25;
     for (const x of [WORD.minX - m, WORD.maxX + m]) for (const z of [WORD.minZ - m, WORD.maxZ + m]) pts.push(new V3(x, 0, z));
     const ax = penAxis(LAY.tiltW, LAY.yawW);
-    for (const p of [LAY.start, mainCurve.getPointAt(1), new V3(WORD.maxX - 0.6, 0, 0.2)]) pts.push(p.clone().addScaledVector(ax, PEN.end * 0.95));
-    const restAx = penAxis(PI / 2, LAY.restYaw);
-    pts.push(LAY.rest.clone(), LAY.rest.clone().addScaledVector(restAx, PEN.end + 0.05));
+    for (const p of [LAY.start, new V3(WORD.minX + 0.4, 0, 0), new V3(WORD.maxX, 0, 0)]) pts.push(p.clone().addScaledVector(ax, PEN.end * 0.95));
     const box = portrait ? { x0: -0.93, x1: 0.93, y0: -0.62, y1: 0.5 } : { x0: -0.9, x1: 0.9, y0: -0.74, y1: 0.66 };
     const elev = portrait ? 1.05 : 0.96;
     const dir = new V3(0, Math.sin(elev), Math.cos(elev));
@@ -797,44 +868,36 @@
     _c2.copy(to).addScaledVector(UP, lift);
     bezier(pose.pos, from, _c1, _c2, to, t);
   }
-  function writingPose(u) {
-    const wb = u == null ? { x: 0, z: 0 } : wobbleAt(u);
+  function writingPose(wob, u) {
+    const wb = wob == null ? { x: 0, z: 0 } : wobbleAt(wob, u);
     pose.tilt = LAY.tiltW + 0.035 * wb.z;
     pose.yaw = LAY.yawW - 0.05 * wb.x;
     pose.roll = 0.04 * wb.x;
   }
-  const PT = {
-    mainEnd: mainCurve.getPointAt(1),
-    crossA: extraCurves.cross.getPointAt(0), crossB: extraCurves.cross.getPointAt(1),
-    dot1A: extraCurves.dot1.getPointAt(0), dot1B: extraCurves.dot1.getPointAt(1),
-    dot2A: extraCurves.dot2.getPointAt(0), dot2B: extraCurves.dot2.getPointAt(1)
-  };
+  const _pa = new V3(), _pb = new V3();
+  const endPoint = (e, out) => WORD_CURVES[e.w][e.k].getPointAt(e.at, out);
+  // the latest segment that has started (segments are in timeline order)
+  function activeSeg() {
+    for (let i = TRACK.length - 1; i >= 0; i--) if (S[TRACK[i].key] > 0) return TRACK[i];
+    return null;
+  }
 
   function computePose() {
     pose.lean = 0;
-    if (S.rest > 0) {                                  // lift off and lay the pen down beside the word
-      const r = S.rest;
-      _c1.copy(PT.dot2B).addScaledVector(UP, 1.2);
-      _c2.copy(LAY.rest).addScaledVector(UP, 1.05);
-      bezier(pose.pos, PT.dot2B, _c1, _c2, LAY.rest, smoother(r));
-      pose.tilt = lerp(LAY.tiltW, PI / 2, smoother((r - 0.2) / 0.8));
-      pose.yaw = lerp(LAY.yawW, LAY.restYaw, smoother(r));
-      pose.roll = 0;
-      return;
-    }
     writingPose(null);
-    if (S.dot2 > 0) { extraCurves.dot2.getPointAt(S.dot2, pose.pos); return; }
-    if (S.air3 > 0) { airMove(PT.dot1B, PT.dot2A, S.air3, 0.5); return; }
-    if (S.dot1 > 0) { extraCurves.dot1.getPointAt(S.dot1, pose.pos); return; }
-    if (S.air2 > 0) { airMove(PT.crossB, PT.dot1A, S.air2, 0.5); return; }
-    if (S.cross > 0) { extraCurves.cross.getPointAt(S.cross, pose.pos); return; }
-    if (S.air1 > 0) { airMove(PT.mainEnd, PT.crossA, S.air1, 0.8); return; }
-    if (S.main > 0 || S.land >= 1) {                   // the nib rides the curve at the ink head
-      const u = pacing.uAt(S.main);
-      mainCurve.getPointAt(u, pose.pos);
-      writingPose(u);
+    const g = activeSeg();
+    if (g) {
+      const v = S[g.key];
+      if (g.kind === 'write') {                       // the nib rides the curve at the ink head
+        const pc = PACING[g.w][g.k], u = pc ? pc.uAt(v) : v;
+        WORD_CURVES[g.w][g.k].getPointAt(u, pose.pos);
+        writingPose(WOBBLE[g.w][g.k], u);
+      } else {
+        airMove(endPoint(g.from, _pa), endPoint(g.to, _pb), v, g.lift);
+      }
       return;
     }
+    if (S.land >= 1) { pose.pos.copy(LAY.start); return; }
     if (S.land > 0) { pose.pos.lerpVectors(LAY.hover, LAY.start, S.land); return; }
     if (S.flip > 0) {                                  // turn nib-down, tilt to 45 deg, travel to the paper
       // The pen pivots about its nib in a plane facing the viewer, so the barrel swings
@@ -857,6 +920,7 @@
     pose.lean = 1;
   }
 
+  let lastCapShadow = null;
   function applyState() {
     computePose();
     pen.position.copy(pose.pos);
@@ -870,13 +934,23 @@
     const op = 1 - S.fade;
     for (const k in capMat) capMat[k].opacity = op;
     penCap.visible = op > 0.004;
-    penCap.traverse((o) => { if (o.isMesh) o.castShadow = op > 0.35; });
+    const capShadow = op > 0.35;
+    if (capShadow !== lastCapShadow) { lastCapShadow = capShadow; penCap.traverse((o) => { if (o.isMesh) o.castShadow = capShadow; }); }
 
     // ink: driven by the same parameters that drive the nib
-    strokes.main.reveal(S.main > 0 ? pacing.uAt(S.main) : 0);
-    strokes.cross.reveal(S.cross);
-    strokes.dot1.reveal(S.dot1);
-    strokes.dot2.reveal(S.dot2);
+    for (let w = 0; w < STROKES.length; w++) {
+      WORD_FADE[w].value = 1 - S['f' + w];
+      for (let k = 0; k < STROKES[w].length; k++) {
+        const v = S['s' + w + '_' + k], pc = PACING[w][k];
+        STROKES[w][k].reveal(v > 0 ? (pc ? pc.uAt(v) : v) : 0);
+      }
+    }
+    const g = activeSeg();
+    glowLevel += ((g && g.kind === 'write' && S[g.key] < 1 ? 1 : 0) - glowLevel) * 0.2;
+    glow.visible = glowLevel > 0.01;
+    glow.material.opacity = 0.7 * glowLevel;
+    glow.position.copy(pen.position);
+    glow.position.y += 0.015;
     inkUniforms.uTime.value = tl.time();
   }
 
@@ -914,19 +988,13 @@
   });
 
   const stageText = document.getElementById('stageText');
-  const STAGE_COPY = {
-    enter: 'Bringing in the pen',
-    uncap: 'Uncapping',
-    tilt: 'Settling to a 45° writing angle',
-    write: 'Writing',
-    finish: 'Dotting the i’s, crossing the t'
-  };
+  const STAGE_COPY = { enter: 'Bringing in the pen', uncap: 'Uncapping', tilt: 'Settling to a 45° writing angle' };
+  WORDS.forEach((W, w) => { STAGE_COPY['w' + w] = W.text + '…'; });
   let lastCopy = '';
   function updateCaption() {
     const t = tl.time();
     let copy;
-    if (t >= tl.duration() - 1.2) copy = 'Done — drag to look around';
-    else {
+    {
       let best = 'enter', bt = -1;
       for (const k in tl.labels) { const lt = tl.labels[k]; if (lt <= t + 1e-4 && lt > bt) { bt = lt; best = k; } }
       copy = STAGE_COPY[best] || '';
@@ -953,13 +1021,10 @@
   // penTimeline.eventCallback('onComplete', fn).
   tl.then = undefined;
   window.penTimeline = tl;
-  if (reduceMotion) tl.progress(1).pause();
-  else tl.play(0);
+  gsap.ticker.lagSmoothing(200, 33);   // a one-off hitch slows a frame instead of skipping ahead
+  if (reduceMotion) tl.seek(segOf('f0').startTime() - 0.01).pause();
   // Let the ClearScript app know when the pen has finished (intro screen closes on this).
-  tl.eventCallback('onComplete', function () {
-    try { window.parent.postMessage({ type: 'pen:done' }, '*'); } catch (e) { /* not embedded */ }
-    if (window.PEN_OPTS.has('loop')) setTimeout(function () { tl.restart(); }, 1200);
-  });
+  tl.eventCallback('onComplete', function () { tl.play('loop'); });   // the words loop forever
   applyState();
 
   // Boot the GPU work (environment + first frame) a couple of frames after the page is
@@ -968,7 +1033,9 @@
   requestAnimationFrame(function boot() {
     if (++bootFrames < 3) { requestAnimationFrame(boot); return; }
     buildEnvironment();
+    renderer.compile(scene, camera);
     render();
+    if (!reduceMotion) requestAnimationFrame(() => requestAnimationFrame(() => tl.play(0)));
   });
 })();
 </script>

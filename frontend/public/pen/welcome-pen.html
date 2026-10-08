@@ -15,8 +15,8 @@
 
   :root {
     color-scheme: light;
-    --bg: #f3efe7;
-    --bg-hi: #fbfaf6;
+    --bg: #efe6d5;
+    --bg-hi: #f8f1e2;
     --text: #23262e;
     --muted: #6d675c;
     --card: rgba(255, 255, 255, 0.72);
@@ -31,7 +31,7 @@
     color: var(--text);
   }
   body {
-    background: radial-gradient(120% 90% at 50% 38%, var(--bg-hi) 0%, var(--bg) 58%, #e7e1d5 100%);
+    background: radial-gradient(120% 90% at 50% 38%, var(--bg-hi) 0%, var(--bg) 58%, #e2d6bd 100%);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -270,7 +270,7 @@
   const PAPER_W = 11.2, PAPER_D = 7.4;
   const paper = new THREE.Mesh(
     new THREE.PlaneGeometry(PAPER_W, PAPER_D),
-    new THREE.MeshStandardMaterial({ color: C(0xfdfaf3), roughness: 0.92, metalness: 0, envMapIntensity: 0.55 })
+    new THREE.MeshStandardMaterial({ color: C(0xe8d9b8), roughness: 0.92, metalness: 0, envMapIntensity: 0.55 })
   );
   paper.rotation.x = -PI / 2;
   paper.position.set(0, 0, 0.55);
@@ -536,7 +536,7 @@
   // ---------------------------------------------------------------------------
   const INK = { half: 0.026, h: 0.0052, y: 0.0036, dry: 2.4 };
   const inkUniforms = { uTime: { value: 0 } };
-  const inkMat = new THREE.MeshStandardMaterial({ color: C(0x0e1a5c), roughness: 0.52, metalness: 0.0, envMapIntensity: 0.35 });
+  const inkMat = new THREE.MeshStandardMaterial({ color: C(0x1e1b4b), roughness: 0.52, metalness: 0.0, envMapIntensity: 0.35 });
   inkMat.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = inkUniforms.uTime;
     shader.vertexShader = shader.vertexShader

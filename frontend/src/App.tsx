@@ -8,19 +8,35 @@ import Handwriting from "./pages/Handwriting";
 import { API } from "./lib/api";
 import { PenIntro } from "./components/PenAnimation";
 
-// Rename / reorder / delete tabs to fit tomorrow's problem statement.
+// Each tab is a real link (#/chat, #/docs, ...), so refresh, back/forward and shared links all land on the right view.
 const TABS = [
-  { id: "clearscript", label: "ClearScript", icon: PenLine, el: <Handwriting /> },
-  { id: "chat", label: "Chat", icon: MessageSquare, el: <Chat /> },
-  { id: "docs", label: "Docs Q&A", icon: FileText, el: <Docs /> },
-  { id: "agent", label: "Agent", icon: Bot, el: <Agent /> },
-  { id: "vision", label: "Vision", icon: Eye, el: <Vision /> },
+  { id: "clearscript", label: "ClearScript", icon: PenLine, el: <Handwriting />, blurb: "Upload a page, clean it, let every model read it, and compare against a single-model baseline." },
+  { id: "chat", label: "Chat", icon: MessageSquare, el: <Chat />, blurb: "Converse with the AI. Replies stream in as they are written." },
+  { id: "docs", label: "Docs Q&A", icon: FileText, el: <Docs />, blurb: "Upload PDF or text files, then ask questions answered from those documents." },
+  { id: "agent", label: "Agent", icon: Bot, el: <Agent />, blurb: "Give a multi-step task; the agent picks tools, runs them, and shows each step." },
+  { id: "vision", label: "Vision", icon: Eye, el: <Vision />, blurb: "Detect objects in an image or ask questions about it." },
 ];
+type TabId = (typeof TABS)[number]["id"];
+const tabFromHash = (): TabId => {
+  const id = window.location.hash.replace(/^#\/?/, "");
+  return (TABS.find((t) => t.id === id)?.id ?? TABS[0].id) as TabId;
+};
 
 export default function App() {
-  const [tab, setTab] = useState(TABS[0].id);
+  const [tab, setTab] = useState<TabId>(tabFromHash);
   const [provider, setProvider] = useState<string>("…");
   const [light, setLight] = useState(() => document.documentElement.dataset.theme === "light");
+
+  useEffect(() => {
+    const onHash = () => setTab(tabFromHash());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  useEffect(() => {
+    const t = TABS.find((x) => x.id === tab)!;
+    document.title = t.id === "clearscript" ? "ClearScript" : `${t.label} · ClearScript`;
+  }, [tab]);
 
   useEffect(() => {
     fetch(API + "/api/health").then((r) => r.json()).then((h) => setProvider(h.provider)).catch(() => setProvider("offline"));
@@ -41,17 +57,18 @@ export default function App() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-2.5">
           <div className="flex items-center gap-2">
             <span className="grid size-6 place-items-center rounded-md bg-brand text-white"><ScanText className="size-3.5" /></span>
-            <h1 className="text-[14px] font-semibold tracking-tight">ClearScript</h1>
+            <a href="#/clearscript" className="font-display text-[16px] font-semibold tracking-[0.06em] text-ink">ClearScript</a>
           </div>
-          <nav className="flex gap-0.5 overflow-x-auto">
+          <nav aria-label="Sections" className="flex gap-0.5 overflow-x-auto">
             {TABS.map((t) => (
-              <button
+              <a
                 key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium tracking-tight whitespace-nowrap transition-all duration-150 ease-in-out ${tab === t.id ? "bg-brand-strong text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1)]" : "text-muted hover:bg-elev hover:text-ink"}`}
+                href={`#/${t.id}`}
+                aria-current={tab === t.id ? "page" : undefined}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium tracking-tight whitespace-nowrap transition-all duration-150 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${tab === t.id ? "bg-brand-strong text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1)]" : "text-muted hover:bg-elev hover:text-ink"}`}
               >
                 <t.icon className="size-3.5" /> {t.label}
-              </button>
+              </a>
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2">
@@ -72,7 +89,15 @@ export default function App() {
       </header>
       <main className="mx-auto max-w-7xl px-5 py-6">
         {/* All tabs stay mounted so switching tabs keeps their state. */}
-        {TABS.map((t) => <div key={t.id} hidden={t.id !== tab}>{t.el}</div>)}
+        {TABS.map((t) => (
+          <section key={t.id} hidden={t.id !== tab} aria-labelledby={`h-${t.id}`}>
+            <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h2 id={`h-${t.id}`} className="font-display text-[20px] font-semibold tracking-[0.04em] text-ink">{t.label}</h2>
+              <p className="font-serif text-[16px] italic text-muted">{t.blurb}</p>
+            </div>
+            {t.el}
+          </section>
+        ))}
       </main>
     </div>
   );

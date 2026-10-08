@@ -2,12 +2,18 @@ import { useEffect, useState } from "react";
 import { ScanText } from "lucide-react";
 import { Kbd } from "./ui";
 
-/** The 3D fountain pen (public/pen/*-pen.html: Three.js + GSAP, libs served locally so it works offline). */
-export function PenAnimation({ word = "thinking", loop = false, className = "" }: { word?: "thinking" | "welcome"; loop?: boolean; className?: string }) {
+const PAGES = {
+  welcome: { file: "welcome-pen.html", title: "A fountain pen writing the word welcome" },
+  musing: { file: "musing-pen.html", title: "A fountain pen writing Methinks, Conceive, Rumination and Apprehension, one after another" },
+};
+
+/** The 3D fountain pen (public/pen/*-pen.html: Three.js + GSAP, libs served locally so it works offline).
+ *  "welcome" plays once (intro); "musing" loops through four old words (loading view). */
+export function PenAnimation({ page = "musing", className = "" }: { page?: keyof typeof PAGES; className?: string }) {
   return (
     <iframe
-      src={`/pen/${word}-pen.html?embed${loop ? "&loop" : ""}`}
-      title={`A fountain pen writing the word ${word}`}
+      src={`/pen/${PAGES[page].file}?embed`}
+      title={PAGES[page].title}
       className={`block w-full border-0 ${className}`}
     />
   );
@@ -42,17 +48,17 @@ export function PenIntro() {
 
   if (!open) return null;
   return (
-    <div className={`fixed inset-0 z-50 bg-[#f6f2ea] transition-opacity duration-400 ease-in-out ${leaving ? "opacity-0" : "opacity-100"}`}>
-      <PenAnimation word="welcome" className="h-full" />
+    <div className={`fixed inset-0 z-50 bg-[#efe6d5] transition-opacity duration-400 ease-in-out ${leaving ? "opacity-0" : "opacity-100"}`}>
+      <PenAnimation page="welcome" className="h-full" />
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-5 py-4">
-        <div className="flex items-center gap-2 text-[#1c1917]">
+        <div className="flex items-center gap-2 text-[#231a12]">
           <span className="grid size-6 place-items-center rounded-md bg-brand text-white"><ScanText className="size-3.5" /></span>
-          <span className="text-[14px] font-semibold tracking-tight">ClearScript</span>
-          <span className="text-[13px] text-[#57534e]">messy handwriting in, trusted text out</span>
+          <span className="font-display text-[15px] font-semibold tracking-[0.06em]">ClearScript</span>
+          <span className="font-serif text-[15px] italic text-[#6b5a47]">messy handwriting in, trusted text out</span>
         </div>
         <button
           onClick={close}
-          className="pointer-events-auto flex items-center gap-2 rounded-lg border border-[#d6d3d1] bg-white/80 px-3 py-1.5 text-[12px] font-medium text-[#1c1917] backdrop-blur transition-all duration-150 ease-in-out hover:bg-white"
+          className="pointer-events-auto flex items-center gap-2 rounded-lg border border-[#c8b293] bg-[#faf6ee]/85 px-3 py-1.5 text-[12px] font-medium text-[#231a12] backdrop-blur transition-all duration-150 ease-in-out hover:bg-[#faf6ee]"
         >
           Skip intro <Kbd>Esc</Kbd>
         </button>
