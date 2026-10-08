@@ -122,13 +122,18 @@ def complete_json(prompt: str, system: str = "Reply with valid JSON only.") -> d
         return {"raw": text}
 
 
-def chat_one(provider: str, messages: list[dict], model: str | None = None, **kwargs) -> str:
+def chat_one(provider: str, messages: list[dict], model: str | None = None,
+             max_retries: int | None = None, timeout: float | None = None, **kwargs) -> str:
     """Call ONE specific provider/model (no fallback). Used when you want several
-    different models to answer the same thing, e.g. the handwriting vote."""
+    different models to answer the same thing, e.g. the handwriting vote.
+    max_retries/timeout override the SDK defaults (which silently retry with long waits)."""
     if provider == "claude":
         from . import claude_provider
         return claude_provider.chat(messages, model=model)
     client, default_model = _client(provider)
+    opts = {k: v for k, v in {"max_retries": max_retries, "timeout": timeout}.items() if v is not None}
+    if opts:
+        client = client.with_options(**opts)
     resp = client.chat.completions.create(model=model or default_model, messages=messages, **kwargs)
     return resp.choices[0].message.content or ""
 

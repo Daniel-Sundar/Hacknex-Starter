@@ -95,12 +95,21 @@ async def handwriting_digitize(
     context: bool = Form(True),
     baseline: bool = Form(False),
 ):
+    from starlette.concurrency import run_in_threadpool
     from . import handwriting
     data = await file.read()
-    try:
+
+    def work():
         result = handwriting.digitize(data, use_clean=clean, use_vote=vote, use_context=context)
-        if baseline:
-            result["baseline"] = handwriting.baseline(data)
+        if baseline:  # a failed baseline must not throw away the pipeline's result
+            try:
+                result["baseline"] = handwriting.baseline(data)
+            except Exception as e:
+                result["baseline"] = ""
+                result["errors"]["baseline"] = str(e)[:200]
         return result
+
+    try:
+        return await run_in_threadpool(work)  # model calls take a while; don't block other requests
     except RuntimeError as e:
         raise HTTPException(502, str(e))

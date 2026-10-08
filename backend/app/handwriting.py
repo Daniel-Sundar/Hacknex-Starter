@@ -20,6 +20,7 @@ import hashlib
 import json
 import os
 import re
+import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from difflib import SequenceMatcher, get_close_matches
@@ -31,7 +32,12 @@ CACHE = Path(__file__).resolve().parent.parent / ".cache"
 LEXICON = Path(__file__).resolve().parent.parent / "data" / "lexicon.txt"
 UNREADABLE = "[?]"
 
-DEFAULT_READERS = "gemini,openrouter:google/gemma-4-31b-it:free,openrouter:nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+# Tested 2026-10-08 on real handwriting. Two Gemini models + a non-Google model; gemma is a
+# 4th voice that is often rate-limited on the free tier (skipped when it fails).
+DEFAULT_READERS = ("gemini:gemini-3.6-flash,gemini:gemini-3.5-flash,"
+                   "openrouter:dots-studio/dots-3-note-preview:free,openrouter:google/gemma-4-31b-it:free")
+DEFAULT_BASELINE = "gemini:gemini-3.6-flash"  # strongest single reader, plain prompt
+READ_TIMEOUT = float(os.getenv("HW_READ_TIMEOUT", "90"))  # seconds per model call
 
 READ_PROMPT = """Transcribe the handwriting in this image exactly as written.
 Rules:
@@ -46,15 +52,16 @@ BASELINE_PROMPT = "Transcribe the handwritten text in this image. Output only th
 
 # ---------- helpers ----------
 
+def _parse(item: str) -> tuple[str, str | None]:
+    provider, _, model = item.strip().partition(":")
+    return provider, model or None
+
+
 def _readers() -> list[tuple[str, str | None]]:
     spec = os.getenv("HW_READERS", DEFAULT_READERS)
     if os.getenv("ANTHROPIC_API_KEY") and "claude" not in spec:
         spec += ",claude"
-    out = []
-    for item in [s.strip() for s in spec.split(",") if s.strip()]:
-        provider, _, model = item.partition(":")
-        out.append((provider, model or None))
-    return out
+    return [_parse(s) for s in spec.split(",") if s.strip()]
 
 
 def _cached(key_parts: list, fn):
@@ -62,9 +69,12 @@ def _cached(key_parts: list, fn):
     key = hashlib.sha256(json.dumps(key_parts, sort_keys=True).encode()).hexdigest()[:32]
     f = CACHE / f"{key}.json"
     if f.exists():
-        return json.loads(f.read_text(encoding="utf-8"))
+        value = json.loads(f.read_text(encoding="utf-8"))
+        if not (isinstance(value, str) and not value.strip()):  # never trust a cached empty reply
+            return value
     value = fn()
-    f.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+    if not (isinstance(value, str) and not value.strip()):
+        f.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
     return value
 
 
@@ -129,18 +139,38 @@ def clean(data: bytes) -> bytes:
 
 # ---------- stage 2: read ----------
 
-def _image_msg(data: bytes, prompt: str, mime: str = "image/png") -> list[dict]:
-    url = f"data:{mime};base64," + base64.b64encode(data).decode()
+def _mime(data: bytes) -> str:
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return "image/png"
+
+
+def _image_msg(data: bytes, prompt: str) -> list[dict]:
+    url = f"data:{_mime(data)};base64," + base64.b64encode(data).decode()
     return [{"role": "user", "content": [
         {"type": "text", "text": prompt},
         {"type": "image_url", "image_url": {"url": url}},
     ]}]
 
 
+def _call_once_retry(provider: str, model: str | None, messages: list[dict]) -> str:
+    """One call; on a rate limit (429) or overload (503) wait 2 s and retry once, then give up."""
+    call = lambda: llm.chat_one(provider, messages, model=model, max_retries=0, timeout=READ_TIMEOUT)
+    try:
+        return call()
+    except Exception as e:
+        if getattr(e, "status_code", None) not in (429, 503):
+            raise
+        time.sleep(2)
+        return call()
+
+
 def read_one(data: bytes, provider: str, model: str | None, prompt: str = READ_PROMPT) -> str:
     img_hash = hashlib.sha256(data).hexdigest()
     return _cached(["read", img_hash, provider, model, prompt],
-                   lambda: _strip_reasoning(llm.chat_one(provider, _image_msg(data, prompt), model=model)))
+                   lambda: _strip_reasoning(_call_once_retry(provider, model, _image_msg(data, prompt))))
 
 
 def read_all(data: bytes) -> dict:
@@ -158,7 +188,8 @@ def read_all(data: bytes) -> dict:
     with ThreadPoolExecutor(max_workers=len(readers)) as pool:
         results = list(pool.map(run, readers))
     readings = {n: t for n, t in results if isinstance(t, str) and t.strip()}
-    errors = {n: str(t)[:200] for n, t in results if not isinstance(t, str)}
+    errors = {n: (str(t)[:200] if not isinstance(t, str) else "empty reply")
+              for n, t in results if n not in readings}
     if not readings:
         raise RuntimeError("No vision model answered: " + json.dumps(errors))
     return {"readings": readings, "errors": errors}
@@ -280,7 +311,8 @@ def render(words: list[dict], mark_flags: bool = False) -> str:
 
 def baseline(data: bytes, provider: str | None = None, model: str | None = None) -> str:
     """Single model, single pass, plain prompt: the thing we must beat."""
-    provider = provider or os.getenv("HW_BASELINE", "gemini")
+    if not provider:
+        provider, model = _parse(os.getenv("HW_BASELINE", DEFAULT_BASELINE))
     return read_one(data, provider, model, prompt=BASELINE_PROMPT)
 
 
@@ -291,7 +323,10 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
         readings, errors = r["readings"], r["errors"]
     else:
         provider, model = _readers()[0]
-        readings, errors = {provider: read_one(img, provider, model)}, {}
+        try:
+            readings, errors = {provider: read_one(img, provider, model)}, {}
+        except Exception as e:
+            raise RuntimeError(f"{provider}:{model} failed: {str(e)[:200]}") from e
     words = vote(readings)
     if use_context:
         words = context_fix(words)
