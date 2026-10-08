@@ -382,7 +382,8 @@ def vote(readings: dict[str, str]) -> list[dict]:
         seq = next(s for s in gaps[g] if tuple(norm(t) for t in s) == key)
         flagged = votes <= n_models / 2 or (votes < n_models and any(c.isdigit() for t in seq for c in t))
         return [{"text": surface_of([t], norm(t)), "confidence": round(votes / n_models, 2),
-                 "flagged": flagged, "alternatives": []} for t in seq]
+                 "flagged": flagged, "alternatives": [], "votes": {surface_of([t], norm(t)): votes},
+                 "readers": n_models} for t in seq]
 
     words = []
     for pos, col in enumerate(columns):
@@ -397,7 +398,8 @@ def vote(readings: dict[str, str]) -> list[dict]:
         real = [t for t in col if t and t != "\n" and norm(t) != norm(UNREADABLE)]
         counts = Counter(norm(t) for t in real)
         if not counts:
-            words.append({"text": UNREADABLE, "confidence": 0.0, "flagged": True, "alternatives": []})
+            words.append({"text": UNREADABLE, "confidence": 0.0, "flagged": True, "alternatives": [],
+                          "votes": {}, "readers": n_models})
             continue
         best, votes = counts.most_common(1)[0]
         surface = surface_of(real, best)
@@ -409,7 +411,8 @@ def vote(readings: dict[str, str]) -> list[dict]:
         if any(ch.isdigit() for t in real for ch in t) and votes < n_models:
             flagged = True
         words.append({"text": surface, "confidence": round(confidence, 2), "flagged": flagged,
-                      "alternatives": alternatives})
+                      "alternatives": alternatives,
+                      "votes": {surface_of(real, k): c for k, c in counts.items()}, "readers": n_models})
     words.extend(inserted(len(columns)))
     return words
 
@@ -451,7 +454,98 @@ def save_answer(writer: str, original: str, answer: str) -> int:
     return len(words)
 
 
-def context_fix(words: list[dict], extra_lexicon: list[str] | None = None) -> list[dict]:
+RX_PATTERNS = [r"\b\d+(\.\d+)?\s*(mg|mcg|ml|g|iu)\b", r"\b[01]\s*-\s*[01]\s*-\s*[01]\b",
+               r"\b(rx|tab|tabs|cap|caps|syp|syr|inj|od|bd|bid|tds|tid|qid|sos|hs|stat|x\s*\d+\s*days?)\b"]
+
+
+def doc_type(words: list[dict]) -> str:
+    """'prescription' or 'note', from the voted text alone (no API call). Steers the context prompts."""
+    text = " ".join(w["text"] for w in words if w["text"] != "\n")
+    hits = sum(len(re.findall(p, text, flags=re.I)) for p in RX_PATTERNS)
+    lex = {norm(w) for w in _lexicon() if len(w) > 3}
+    hits += sum(1 for w in words if norm(w["text"]) in lex)
+    return "prescription" if hits >= 2 else "note"
+
+
+def _parse_json(text: str):
+    text = _strip_reasoning(text).removeprefix("json").strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        m = re.search(r"\{.*\}", text, flags=re.S)
+        try:
+            return json.loads(m.group(0)) if m else None
+        except json.JSONDecodeError:
+            return None
+
+
+def reread(img: bytes, words: list[dict], kind: str = "note") -> list[dict]:
+    """Context-aware second look: show a vision model the photo AND the sentence around each flagged
+    word, and ask it to read just those spots. Its answer is one extra vote: if that gives an option a
+    strict majority the flag clears, otherwise the word keeps its flag (showing the best guess).
+    Numbers still need every reader to agree."""
+    spots = {i: w for i, w in enumerate(words) if w.get("flagged")}
+    if not spots:
+        return words
+    marked = " ".join(f"<<{i}>>" if i in spots else w["text"] for i, w in enumerate(words))
+    prompt = (
+        f"This photo shows a handwritten {kind}. A first transcription is below; each <<n>> marks a word "
+        "the readers could not agree on.\n"
+        f"Transcription:\n{marked}\n\n"
+        "What the readers saw at each spot:\n"
+        + "\n".join(f"{i}: {json.dumps([w['text'], *w.get('alternatives', [])], ensure_ascii=False)}"
+                    for i, w in spots.items())
+        + "\n\nLook closely at the photo at each marked spot and write exactly what is handwritten there. "
+        "Use the surrounding words and the kind of document to help you read the strokes, but copy what is "
+        "written; do not correct spelling or numbers. If the word is crossed out, answer \"\". "
+        "If you still cannot read it, answer null.\n"
+        'Reply as JSON only: {"<n>": "<word>" | "" | null}'
+    )
+    answer = None
+    for slot in _slots():  # first available vision model
+        provider, model = slot[0]
+        name = _name(provider, model)
+        if time.time() - _exhausted.get(name, 0) < EXHAUSTED_FOR:
+            continue
+        try:
+            raw = _cached(["reread", hashlib.sha256(img).hexdigest(), provider, model, prompt],
+                          lambda: _call_once_retry(provider, model, _image_msg(img, prompt)))
+            answer = _parse_json(raw)
+            if isinstance(answer, dict):
+                break
+        except Exception as e:
+            if _out_of_quota(e):
+                _exhausted[name] = time.time()
+    if not isinstance(answer, dict):
+        return words
+
+    out = [dict(w) for w in words]
+    for k, v in answer.items():
+        try:
+            i = int(k)
+        except (TypeError, ValueError):
+            continue
+        if i not in spots or not isinstance(v, str):
+            continue
+        w = out[i]
+        if not v.strip():  # reader says crossed out: keep the flag, say so
+            w["evidence"] = "crossed-out?"
+            continue
+        votes = dict(w.get("votes") or {w["text"]: 0})
+        match = next((s for s in votes if norm(s) == norm(v)), None)
+        key = match or v.strip()
+        votes[key] = votes.get(key, 0) + 1
+        n = w.get("readers", 1) + 1
+        is_number = any(c.isdigit() for s in votes for c in s)
+        clear = votes[key] > n / 2 and not (is_number and votes[key] < n)
+        alts = sorted({s for s in [w["text"], *w.get("alternatives", [])] if norm(s) != norm(key)})
+        w.update(text=key, flagged=not clear, alternatives=alts, votes=votes, readers=n,
+                 confidence=round(votes[key] / n, 2), resolved_by="context",
+                 evidence="reread" if clear else "reread-guess")
+    return out
+
+
+def context_fix(words: list[dict], extra_lexicon: list[str] | None = None, kind: str = "note") -> list[dict]:
     """Let an LLM resolve flagged words, choosing ONLY from the models' alternatives or lexicon matches.
     extra_lexicon: e.g. a writer's human-confirmed words, used like lexicon words."""
     lex = _lexicon() + list(extra_lexicon or [])
@@ -472,7 +566,7 @@ def context_fix(words: list[dict], extra_lexicon: list[str] | None = None) -> li
 
     marked = " ".join(f"<<{i}>>" if i in choices else w["text"] for i, w in enumerate(words))
     prompt = (
-        "This is a transcription of messy handwriting. Each <<n>> is an uncertain word.\n"
+        f"This is a transcription of a messy handwritten {kind}. Each <<n>> is an uncertain word.\n"
         f"Text:\n{marked}\n\nCandidates for each uncertain word:\n"
         + "\n".join(f"{i}: {json.dumps(c, ensure_ascii=False)}" for i, c in choices.items())
         + "\n\nFor each n, pick the candidate that makes the text clearly correct in context. "
@@ -491,6 +585,8 @@ def context_fix(words: list[dict], extra_lexicon: list[str] | None = None) -> li
             # on grammar alone becomes the best guess but stays flagged: a wrong guess must never
             # turn into a confident error.
             backed = norm(v) in lex_norm
+            if out[i].get("evidence") and not backed:  # the visual re-read already gave a better guess
+                continue
             out[i].update(text=v, flagged=not backed, resolved_by="context",
                           evidence="lexicon" if backed else "guess")
     return out
@@ -523,8 +619,10 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
             raise RuntimeError(f"{name} failed: {str(text)[:200]}")
         readings, errors = {name: text}, {}
     words = vote(readings)
+    kind = doc_type(words)
     if use_context:
-        words = context_fix(words, writer_words(writer))
+        words = reread(img, words, kind)  # look again at the photo, with the sentence as a hint
+        words = context_fix(words, writer_words(writer), kind)  # then lexicon / candidates only
     flagged = sum(1 for w in words if w.get("flagged"))
     return {
         "text": render(words),
@@ -534,6 +632,7 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
         "errors": errors,
         "flagged": flagged,
         "stages": {"clean": use_clean, "vote": use_vote, "context": use_context},
+        "doc_type": kind,
     }
 
 
