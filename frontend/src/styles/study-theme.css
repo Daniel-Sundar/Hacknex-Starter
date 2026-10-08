@@ -1,0 +1,112 @@
+/* "Candlelit study" skin for the light theme (Daniel's choice): a parchment sheet on a walnut desk, candle glow,
+   Cinzel / Cormorant / Spectral type. It only redefines the colour, radius and font tokens the app already uses,
+   so every component keeps its behaviour and contrast rules. Scoped to .cs-app: the intro and the loading card
+   are untouched. The dark theme keeps the plain night palette. */
+
+:root[data-theme="light"] .cs-app {
+  --st-walnut: #21140d;
+  --st-espresso: #2a1a11;
+  --st-parchment: #e7d5af;
+  --st-paper: #f0e2c3;
+  --st-cream: #f1e4c5;
+  --st-gold: #b58a45;
+  --st-burgundy: #741f25;
+  --st-amber: 255 176 92;
+  --st-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.29 0 0 0 0 0.14 0 0 0 0.13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --st-wood: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1800' height='600'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0022 0.06' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.24 0 0 0 0 0.14 0 0 0 0 0.075 0 0 0 0.38 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+
+  /* parchment tokens (inside the sheet) */
+  --color-page: var(--st-parchment);
+  --color-surface: var(--st-paper);
+  --color-subtle: #e3cfa3;
+  --color-line: rgb(141 103 47 / 0.45);
+  --color-line-strong: #8d672f;       /* 3.6:1 on paper */
+  --color-ink: #21150e;
+  --color-body: #3b2a1b;
+  --color-muted: #5f4a2b;             /* 5.6:1 on paper */
+  --color-accent: var(--st-burgundy); /* cream text 9:1 */
+  --color-accent-hover: #5c171c;
+  --color-accent-fg: #f6ead0;
+  --color-accent-text: #741f25;
+  --color-accent-soft: rgb(116 31 37 / 0.12);
+  --color-flag-bg: #f0d9a2;   --color-flag-fg: #5f3b07;   --color-flag-line: #a8782f;
+  --color-danger-bg: #f1d2c6; --color-danger-fg: #741f25; --color-danger-line: #a8545a;
+  --color-info-bg: #dcdcd0;   --color-info-fg: #233b52;   --color-info-line: #5b7088;
+  --color-ok-bg: #d9dfc0;     --color-ok-fg: #284a37;     --color-ok-line: #5e8466;
+  --shadow-pop: 0 1px 0 rgb(255 248 230 / 0.6) inset, 0 2px 4px rgb(60 38 16 / 0.25), 0 18px 40px -12px rgb(30 18 8 / 0.55);
+  --radius-sm: 1px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+
+  background: #120d09;
+  isolation: isolate;
+  font-family: "Spectral", var(--font-script, "Nirmala UI"), "Iowan Old Style", Georgia, serif;
+  font-size: 0.9rem;
+}
+
+/* the desk: walnut grain, candle pools, vignette */
+:root[data-theme="light"] .cs-app::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(42% 38% at 10% 4%, rgb(var(--st-amber) / 0.2), transparent 70%),
+    radial-gradient(30% 30% at 94% 10%, rgb(var(--st-amber) / 0.09), transparent 70%),
+    radial-gradient(70% 55% at 50% 38%, rgb(var(--st-amber) / 0.07), transparent 75%),
+    radial-gradient(140% 110% at 50% 40%, transparent 45%, rgb(5 3 2 / 0.85) 100%),
+    var(--st-wood) 0 0 / 1800px 600px,
+    linear-gradient(180deg, #170f0a, #0e0906);
+}
+
+/* header and footer sit on the dark wood: cream ink, brass lines */
+:root[data-theme="light"] .cs-app .cs-desk-bar {
+  --color-surface: rgb(33 20 13 / 0.92);
+  --color-subtle: var(--st-espresso);
+  --color-line: rgb(181 138 69 / 0.42);
+  --color-line-strong: var(--st-gold);
+  --color-ink: var(--st-cream);
+  --color-body: #e2d3b0;
+  --color-muted: #c9b893;
+  --color-accent-soft: rgb(181 138 69 / 0.2);
+  --color-accent-text: #e3bd76;
+  --color-ok-fg: #9fd0a8;
+  --color-danger-fg: #f2a8a0;
+  color: var(--color-ink);
+}
+:root[data-theme="light"] .cs-app footer.cs-desk-bar { background: transparent; }
+:root[data-theme="light"] .cs-app .cs-desk-bar select option { background: var(--st-paper); color: #21150e; }
+
+/* the page: one parchment sheet with a brass hairline */
+:root[data-theme="light"] .cs-app .cs-sheet {
+  background: var(--st-grain), linear-gradient(180deg, #ecdcb6, var(--st-parchment) 40%, #e0cba0);
+  border: 1px solid rgb(181 138 69 / 0.6);
+  box-shadow: 0 1px 0 rgb(255 240 210 / 0.25) inset, 0 40px 80px -30px rgb(0 0 0 / 0.9), 0 12px 30px -12px rgb(0 0 0 / 0.7);
+  margin-block: 1.5rem;
+}
+@media (max-width: 639px) {
+  :root[data-theme="light"] .cs-app .cs-sheet { margin-block: 0; border-inline: 0; }
+}
+
+/* type */
+:root[data-theme="light"] .cs-app .cs-wordmark {
+  font-family: "Cinzel", "Trajan Pro", Georgia, serif;
+  letter-spacing: 0.06em;
+}
+:root[data-theme="light"] .cs-app .cs-title {
+  font-family: "Cinzel", "Trajan Pro", var(--font-script, "Nirmala UI"), Georgia, serif;
+  font-size: 1.6rem;
+  line-height: 2.1rem;
+  letter-spacing: 0.03em;
+  color: #2a170e;
+}
+:root[data-theme="light"] .cs-app :is(h2, h3) {
+  font-family: "Cormorant Garamond", "Garamond", var(--font-script, "Nirmala UI"), Georgia, serif;
+  font-size: 1.15em;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+/* the transcript stays in a plain, even typeface: it is the thing people check letter by letter */
+:root[data-theme="light"] .cs-app .transcript { font-family: "Inter", var(--font-script, "Nirmala UI"), ui-sans-serif, sans-serif; }

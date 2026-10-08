@@ -74,11 +74,11 @@ function Shell() {
           {t("shell.skip")}
         </a>
 
-        <header className="sticky top-0 z-30 border-b border-line bg-surface" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+        <header className="cs-desk-bar sticky top-0 z-30 border-b border-line bg-surface" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:gap-x-6 sm:px-6">
             <a href="#/clearscript" className="flex min-h-10 items-center gap-2 rounded-md" aria-label={t("shell.home")}>
               <span aria-hidden="true" className="grid size-8 place-items-center rounded-md bg-accent text-accent-fg"><ScanText className="size-4" /></span>
-              <span className="text-base font-semibold tracking-tight text-ink">ClearScript</span>
+              <span className="cs-wordmark text-base font-semibold tracking-tight text-ink">ClearScript</span>
             </a>
             <nav aria-label={t("shell.nav")} className="order-last w-full sm:order-none sm:w-auto">
               <ul className="flex gap-1">
@@ -107,12 +107,12 @@ function Shell() {
           </div>
         </header>
 
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8">
+        <main id="main" tabIndex={-1} className="cs-sheet mx-auto w-full max-w-7xl flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8">
           {/* Visited tabs stay mounted so switching keeps their state. */}
           {TABS.map((x) => (
             <section key={x.id} hidden={x.id !== tab} aria-labelledby={`h-${x.id}`}>
               <div className="mb-6 space-y-1">
-                <h1 id={`h-${x.id}`} tabIndex={-1} ref={(el) => { headings.current[x.id] = el; }} className="text-lg font-semibold text-ink outline-none">
+                <h1 id={`h-${x.id}`} tabIndex={-1} ref={(el) => { headings.current[x.id] = el; }} className="cs-title text-lg font-semibold text-ink outline-none">
                   {t(x.title)}
                 </h1>
                 <p className="max-w-prose text-sm text-muted">{t(x.blurb)}</p>
@@ -126,7 +126,7 @@ function Shell() {
           ))}
         </main>
 
-        <footer className="border-t border-line">
+        <footer className="cs-desk-bar border-t border-line">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-muted sm:px-6">
             <p className="max-w-prose">{t("shell.footer")}</p>
             <button type="button" onClick={() => setPrivacy(true)} className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 font-medium text-accent-text underline-offset-2 hover:underline">
