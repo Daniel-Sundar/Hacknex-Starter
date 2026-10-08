@@ -108,6 +108,11 @@ Written so a teammate or their Claude Code can pick up from here. Work top to bo
 - Prescription safety: look-alike drug alarm + dose sanity check, tested on `backend/data/handwriting/rx_test/`.
 - Prescription table keeps a row flagged even when a small model drops the `[[word?]]` marks.
 - Results tab removed from the UI (page file and `/api/handwriting/eval` kept).
+- UI redesign from the product audit (2026-10-08): calm light/dark theme, one drop zone plus camera, live stages from
+  `POST /api/handwriting/stream`, per-model readings for every flagged word, confirm/correct dialog, export (txt, md,
+  json; unresolved words are marked, never stated as fact), browser-local history, 12 Indian languages (machine
+  drafts, English fallback), clear error states. Backend: upload checks, error codes, rate limits (`RATE_LIMIT_*`,
+  `RATE_LIMIT_OFF=1` to disable), `backend/tests/` (`pytest`). Rollback point: branch `checkpoint/before-audit-redesign`.
 
 **To do, in order**
 1. **Run the held-out test split** (7 pages: a01, a07, a08, a10, a11, a15, a19). There is no `eval_results_test.json`

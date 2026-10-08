@@ -23,8 +23,14 @@ the final numbers). Several people push to this branch: `git pull --rebase` befo
   - API helpers in `src/lib/api.ts` (`postJSON`, `postForm`, `streamChat`). Dev server proxies `/api` to :8000.
 
 ## Conventions
-- Dark UI, brand colour `bg-brand` / `text-brand` (set in `src/index.css`).
-- Every async action shows a loading state and an `ErrorNote` on failure.
+- Light and dark themes from tokens in `src/index.css` (`bg-surface`, `text-ink`, `text-body`, `text-muted`, `bg-accent`,
+  `text-accent-text`, `flag-*`, `danger-*`, `ok-*`, `info-*`). `bg-brand` is an old alias of `accent`. Never use raw colours.
+- App styles are scoped to `.cs-app`. The intro (`JournalIntro`, `journal-intro.css`, `public/intro/`, `PenAnimation`,
+  `public/pen/`) and `LegacyLoadingCard` must not change; render them outside `.cs-app` or leave them alone.
+- Shared UI: `Button`, `IconButton`, `Panel`, `Dialog` (native `<dialog>`), `Toggle`, `DropZone`, `ErrorState`, `Notice`,
+  `useToast()` in `src/components/ui.tsx`. Every async action shows a loading state and an `ErrorState` with retry.
+- Every user-facing string goes through `t("key")` (`src/i18n/en/*.ts` is the source; `locales/*.ts` are machine drafts that
+  fall back to English). Backend errors are `{"detail": {"code", "message"}}`; map new codes in `src/lib/errors.ts`.
 - Never hardcode API keys; read them from env in the backend only.
 - Keep new features as a new page + a new router section in `main.py` rather than editing many files.
 
