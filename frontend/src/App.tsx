@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { FileText, Moon, PenLine, ScanText, Sun } from "lucide-react";
+import { Feather, FileText, Moon, ScrollText, Sun } from "lucide-react";
 import Docs from "./pages/Docs";
 import Handwriting from "./pages/Handwriting";
 import { API } from "./lib/api";
 import { JournalIntro } from "./components/JournalIntro";
+import "./styles/study.css";
 
 // Each tab is a real link (#/clearscript, #/docs), so refresh, back/forward and shared links all land on the right view.
 const TABS = [
-  { id: "clearscript", label: "ClearScript", icon: PenLine, el: <Handwriting />, blurb: "Upload a page, clean it, let every model read it, and compare against a single-model baseline." },
-  { id: "docs", label: "Docs Q&A", icon: FileText, el: <Docs />, blurb: "Upload PDF or text files, then ask questions answered from those documents." },
+  { id: "clearscript", label: "ClearScript", icon: Feather, el: <Handwriting />, blurb: "Upload a page, clean it, let every model read it, and compare against a single-model baseline." },
+  { id: "docs", label: "Docs Q&A", icon: ScrollText, el: <Docs />, blurb: "Upload PDF or text files, then ask questions answered from those documents." },
 ];
 type TabId = (typeof TABS)[number]["id"];
 const tabFromHash = (): TabId => {
@@ -44,57 +45,63 @@ export default function App() {
 
   const online = provider !== "offline" && provider !== "…";
 
+  // The intro renders outside the app shell, so the shell's styles never reach it.
   return (
-    <div className="min-h-screen">
+    <>
       <JournalIntro />
-      <header className="leather sticky top-0 z-20">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-2.5">
-          <div className="flex items-center gap-2">
-            <span className="grid size-6 place-items-center rounded-md border border-[#c9a24a]/70 bg-brand text-[#f1e3bf]"><ScanText className="size-3.5" /></span>
-            <a href="#/clearscript" className="font-display text-[16px] font-semibold tracking-[0.08em] text-[#e2c36b] [text-shadow:0_1px_0_rgb(0_0_0/0.6)]">ClearScript</a>
-          </div>
-          <nav aria-label="Sections" className="flex gap-0.5 overflow-x-auto">
-            {TABS.map((t) => (
-              <a
-                key={t.id}
-                href={`#/${t.id}`}
-                aria-current={tab === t.id ? "page" : undefined}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium tracking-tight whitespace-nowrap transition-all duration-150 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${tab === t.id ? "bg-brand-strong text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1),0_0_0_1px_rgb(201_162_74/0.6)]" : "text-muted hover:bg-elev hover:text-ink"}`}
+      <div className={light ? "study" : "min-h-screen"}>
+        <header className={`sticky top-0 z-20 ${light ? "study-header mat-walnut" : "border-b border-line bg-page/85 backdrop-blur"}`}>
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 sm:px-6">
+            <a href="#/clearscript" className="imprint flex items-center gap-2" aria-label="ClearScript home">
+              <span className="imprint-seal grid size-6 place-items-center rounded-md bg-brand text-white"><Feather className="size-3.5" /></span>
+              <span>
+                <span className="imprint-name font-display text-[16px] font-semibold tracking-[0.06em] text-ink">ClearScript</span>
+                <span className="imprint-sub hidden">handwriting, read by many</span>
+              </span>
+            </a>
+            <span className="study-sep hidden sm:block" aria-hidden="true" />
+            <nav aria-label="Sections" className="flex gap-1 overflow-x-auto">
+              {TABS.map((t) => (
+                <a key={t.id} href={`#/${t.id}`} aria-current={tab === t.id ? "page" : undefined} className={`navtab flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[13px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${tab === t.id ? "bg-brand-strong text-white" : "text-muted hover:bg-elev hover:text-ink"}`}>
+                  <t.icon className="size-4" /> {t.label}
+                </a>
+              ))}
+            </nav>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="chip-brass elev flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-[11px] text-body" title="Model provider">
+                <span className={`size-1.5 rounded-full ${online ? "bg-[#6fae7f]" : "bg-[#c0565c]"}`} />
+                {provider}
+              </span>
+              <button
+                onClick={() => setLight((v) => !v)}
+                aria-label={light ? "Switch to dark theme" : "Switch to light theme"}
+                title={light ? "Ravenclaw night" : "Scholar's study"}
+                className="chip-brass elev grid size-7 place-items-center rounded-md !p-0 text-body hover:text-ink"
               >
-                <t.icon className="size-3.5" /> {t.label}
-              </a>
-            ))}
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="elev flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-[11px] text-body">
-              <span className={`size-1.5 rounded-full ${online ? "bg-ok" : "bg-del-fg"}`} />
-              {provider}
-            </span>
-            <button
-              onClick={() => setLight((v) => !v)}
-              aria-label={light ? "Switch to dark theme" : "Switch to light theme"}
-              title={light ? "Dark theme" : "Light theme"}
-              className="elev grid size-7 place-items-center rounded-md text-body hover:text-ink"
-            >
-              {light ? <Moon className="size-3.5" /> : <Sun className="size-3.5" />}
-            </button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-7xl px-3 py-6 sm:px-5 sm:py-8">
-        <div className="journal-sheet px-4 py-6 sm:px-8 sm:py-8">
-        {/* All tabs stay mounted so switching tabs keeps their state. */}
-        {TABS.map((t) => (
-          <section key={t.id} hidden={t.id !== tab} aria-labelledby={`h-${t.id}`}>
-            <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h2 id={`h-${t.id}`} className="font-display text-[20px] font-semibold tracking-[0.04em] text-ink">{t.label}</h2>
-              <p className="font-serif text-[16px] italic text-muted">{t.blurb}</p>
+                {light ? <Moon className="size-3.5" /> : <Sun className="size-3.5" />}
+              </button>
             </div>
-            {t.el}
-          </section>
-        ))}
-        </div>
-      </main>
-    </div>
+          </div>
+        </header>
+        <main className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8">
+          <div className="manuscript px-4 py-6 sm:px-9 sm:py-9">
+            <span className="corners-x" aria-hidden="true" />
+            {/* All tabs stay mounted so switching tabs keeps their state. */}
+            {TABS.map((t) => (
+              <section key={t.id} hidden={t.id !== tab} aria-labelledby={`h-${t.id}`}>
+                <div className="mb-6 space-y-2">
+                  <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                    <h2 id={`h-${t.id}`} className="folio-title font-display text-[22px] font-semibold tracking-[0.04em] text-ink">{t.label}</h2>
+                    <p className="folio-blurb font-serif text-[16px] italic text-muted">{t.blurb}</p>
+                  </div>
+                  <div className="rule-ornament hidden" aria-hidden="true"><span>◆</span></div>
+                </div>
+                {t.el}
+              </section>
+            ))}
+          </div>
+        </main>
+      </div>
+    </>
   );
 }

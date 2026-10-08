@@ -42,10 +42,10 @@ export default function Docs() {
 
   return (
     <div className="grid gap-4 md:grid-cols-[280px_1fr]">
-      <Card>
-        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-muted hover:border-brand">
-          <FileUp className="size-6" />
-          Upload PDF or text files
+      <Card className="mat-walnut walnut-panel">
+        <label className="drop-parchment flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted hover:border-brand">
+          <span className="drop-icon"><FileUp className="size-5" /></span>
+          <span className="drop-lead">Upload PDF or text files</span>
           <input type="file" multiple accept=".pdf,.txt,.md,.csv" className="hidden" onChange={(e) => upload(e.target.files)} />
         </label>
         <ul className="mt-3 space-y-1 text-xs text-muted">{files.map((f) => <li key={f}>• {f}</li>)}</ul>

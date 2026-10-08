@@ -16,7 +16,7 @@ export function Button({
     <button
       {...rest}
       disabled={loading || rest.disabled}
-      className={`inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-brand-strong px-3.5 py-2 text-[13px] font-medium tracking-tight text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1)] transition-all duration-150 ease-in-out hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page disabled:opacity-50 disabled:active:scale-100 ${className}`}
+      className={`btn-seal inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-brand-strong px-3.5 py-2 text-[13px] font-medium tracking-tight text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1)] transition-all duration-150 ease-in-out hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page disabled:opacity-50 disabled:active:scale-100 ${className}`}
     >
       {loading && <Loader2 className="size-4 animate-spin" />}
       {children}

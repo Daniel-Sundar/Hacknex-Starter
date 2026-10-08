@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import {
-  Camera, Check, ClipboardCopy, Download, FlaskConical, HelpCircle, ImageUp, ShieldCheck, Sparkles, UserCheck, Wand2,
+  Camera, Check, ClipboardCopy, Download, Feather, FlaskConical, HelpCircle, ImageUp, ScrollText, Sparkles, UserCheck, Wand2,
 } from "lucide-react";
 import { postForm, postJSON } from "../lib/api";
 import { Button, Card, ErrorNote, Kbd, inputCls } from "../components/ui";
@@ -31,6 +31,7 @@ export default function Handwriting() {
   const [asked, setAsked] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [over, setOver] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -118,7 +119,7 @@ export default function Handwriting() {
   return (
     <div className="grid grid-cols-12 gap-5">
       {/* ---------- left: input & preprocessing ---------- */}
-      <Card className="col-span-12 space-y-4 self-start lg:sticky lg:top-16 lg:col-span-5 xl:col-span-4">
+      <Card className="mat-walnut walnut-panel col-span-12 space-y-4 self-start lg:sticky lg:top-20 lg:col-span-5 xl:col-span-4">
         <SectionLabel>Input</SectionLabel>
         <div className="grid grid-cols-3 gap-2">
           <label className={`${ghostBtn} cursor-pointer`}>
@@ -143,10 +144,16 @@ export default function Handwriting() {
         {preview ? (
           <img src={preview} alt="Uploaded handwriting" className="well max-h-[360px] w-full rounded-lg border border-line object-contain" />
         ) : !camOn && (
-          <label className="well group grid h-40 cursor-pointer place-items-center rounded-lg border border-dashed border-line text-center text-[12px] text-muted transition-all duration-150 ease-in-out hover:border-brand hover:text-body">
-            <span className="space-y-1.5">
-              <ImageUp className="mx-auto size-5" />
-              <span className="block">Drop in a photo of a prescription, form or note</span>
+          <label
+            className={`drop-parchment well group grid h-40 cursor-pointer place-items-center rounded-lg border border-dashed border-line px-4 text-center text-[12px] text-muted transition-all duration-150 ease-in-out hover:border-brand hover:text-body ${over ? "is-over" : ""}`}
+            onDragOver={(e) => { e.preventDefault(); setOver(true); }}
+            onDragLeave={() => setOver(false)}
+            onDrop={(e) => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files?.[0]; if (f?.type.startsWith("image/")) pick(f); }}
+          >
+            <span className="relative space-y-1.5">
+              <span className="drop-icon"><Feather className="size-5" /></span>
+              <span className="drop-lead block">Lay a page here</span>
+              <span className="drop-hint block">Drop in a photo of a prescription, form or note, or click to choose one</span>
             </span>
             <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
           </label>
@@ -159,7 +166,7 @@ export default function Handwriting() {
           ))}
         </div>
 
-        <Button onClick={digitize} loading={loading} disabled={!file} className="w-full justify-between">
+        <Button onClick={digitize} loading={loading} disabled={!file} className="btn-seal-lg w-full justify-between">
           <span className="flex items-center gap-2"><Wand2 className="size-3.5" /> {loading ? "Reading with every model…" : "Digitize"}</span>
           {!loading && <span className="flex gap-1"><Kbd>{MOD}</Kbd><Kbd>↵</Kbd></span>}
         </Button>
@@ -169,7 +176,7 @@ export default function Handwriting() {
       {/* ---------- right: analytics & verification ---------- */}
       <div className="col-span-12 space-y-4 lg:col-span-7 xl:col-span-8">
         {loading ? (
-          <Card flush className="overflow-hidden">
+          <Card flush className="legacy-frame overflow-hidden">
             <PenAnimation page="musing" className="h-[420px]" />
             <div className="flex items-center justify-between border-t border-line px-4 py-2.5 text-[12px]">
               <span className="title !text-[15px]">Consulting every model…</span>
@@ -177,11 +184,12 @@ export default function Handwriting() {
             </div>
           </Card>
         ) : !result ? (
-          <Card className="grid min-h-80 place-items-center text-center">
+          <Card className="folio-empty grid min-h-80 place-items-center text-center">
             <div className="max-w-sm space-y-3">
-              <span className="elev mx-auto grid size-10 place-items-center rounded-lg text-body"><ShieldCheck className="size-5" /></span>
-              <p className="title">Nothing digitized yet</p>
-              <p className="text-[13px] leading-relaxed text-muted">
+              <span className="wax-seal elev mx-auto grid size-10 place-items-center rounded-lg text-body"><ScrollText className="size-6" /></span>
+              <p className="folio-empty-title title">Nothing digitized yet</p>
+              <div className="rule-ornament hidden" aria-hidden="true"><span>◆</span></div>
+              <p className="folio-empty-text text-[13px] leading-relaxed text-muted">
                 Every word is read by several AI models. Where they disagree, ClearScript flags it instead of guessing.
               </p>
             </div>
@@ -197,12 +205,12 @@ export default function Handwriting() {
 
             <Card flush className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
-                <div className="flex items-center gap-1 rounded-lg bg-well p-0.5 text-[12px]">
+                <div className="seg flex items-center gap-1 rounded-lg bg-well p-0.5 text-[12px]">
                   {(["auto", "review"] as Mode[]).map((m) => (
                     <button
                       key={m}
                       onClick={() => setMode(m)}
-                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium tracking-tight transition-all duration-150 ease-in-out ${mode === m ? "bg-brand-strong text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1)]" : "text-muted hover:text-ink"}`}
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium tracking-tight transition-all duration-150 ease-in-out ${mode === m ? "seg-on bg-brand-strong text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1)]" : "text-muted hover:text-ink"}`}
                     >
                       {m === "auto" ? <Sparkles className="size-3.5" /> : <UserCheck className="size-3.5" />}
                       {m === "auto" ? "Auto" : "Ask the human"}
@@ -237,10 +245,10 @@ export default function Handwriting() {
 // ---------- pieces ----------
 
 const ghostBtn =
-  "elev inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-[12px] font-medium tracking-tight text-body hover:text-ink active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+  "btn-wood elev inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-[12px] font-medium tracking-tight text-body hover:text-ink active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
 
 function SectionLabel({ children }: { children: ReactNode }) {
-  return <div className="engraved text-muted">{children}</div>;
+  return <div className="label-rule engraved text-muted">{children}</div>;
 }
 
 function Toggle({ on, onChange, label, hint }: { on: boolean; onChange: (v: boolean) => void; label: string; hint: string }) {
@@ -250,13 +258,13 @@ function Toggle({ on, onChange, label, hint }: { on: boolean; onChange: (v: bool
       role="switch"
       aria-checked={on}
       onClick={() => onChange(!on)}
-      className={`elev flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${on ? "!border-brand/60" : ""}`}
+      className={`instrument elev flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${on ? "!border-brand/60" : ""}`}
     >
       <span>
-        <span className="block text-[13px] font-medium tracking-tight text-ink">{label}</span>
-        <span className="block text-[11px] text-muted">{hint}</span>
+        <span className="inst-label block text-[13px] font-medium tracking-tight text-ink">{label}</span>
+        <span className="inst-hint block text-[11px] text-muted">{hint}</span>
       </span>
-      <span className={`relative h-[18px] w-8 shrink-0 rounded-full transition-all duration-150 ease-in-out ${on ? "bg-brand" : "bg-line"}`}>
+      <span className={`brass-switch ${on ? "is-on" : ""} relative h-[18px] w-8 shrink-0 rounded-full transition-all duration-150 ease-in-out ${on ? "bg-brand" : "bg-line"}`}>
         <span className={`absolute top-[3px] size-3 rounded-full bg-white shadow transition-all duration-150 ease-in-out ${on ? "left-[17px]" : "left-[3px]"}`} />
       </span>
     </button>
