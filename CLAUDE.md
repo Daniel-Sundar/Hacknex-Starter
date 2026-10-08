@@ -2,6 +2,13 @@
 
 24-hour hackathon project. Speed and a working demo matter more than perfect code.
 
+## Start here
+The app is **ClearScript** (handwriting digitizer, branch `feat/handwriting-mvp`). Before doing anything, read
+`README.md` → **"Status and to-do (handoff)"**: it lists what is done, what is left (in order) and known issues.
+Pipeline: `backend/app/handwriting.py`; prescription safety checks: `backend/app/rx_safety.py`; UI:
+`frontend/src/pages/Handwriting.tsx`. Evaluate with `backend/eval.py` (dev split for tuning, test split only for
+the final numbers). Several people push to this branch: `git pull --rebase` before you start and before you push.
+
 ## Stack
 - `backend/`: FastAPI (Python 3.11+). Entry `app/main.py`. All routes under `/api`.
   - `app/llm.py`: the ONLY place that talks to LLMs. Use `llm.chat()`, `llm.stream()`, `llm.complete_json()`.
@@ -9,6 +16,7 @@
   - `app/rag.py`: in-memory RAG (ingest/search/answer).
   - `app/agent.py`: tool-calling loop. New tool = Python function + JSON schema in `TOOLS`.
   - `app/vision.py`: YOLO detection + vision-LLM Q&A (needs `requirements-ml.txt`).
+  - `app/handwriting.py` + `app/rx_safety.py`: the ClearScript pipeline (see README).
 - `frontend/`: React 19 + Vite + TypeScript + Tailwind v4 + lucide-react icons.
   - Pages in `src/pages/`, registered in the `TABS` array in `src/App.tsx`.
   - Shared UI in `src/components/ui.tsx` (`Card`, `Button`, `ErrorNote`, `inputCls`). Reuse them.

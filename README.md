@@ -19,14 +19,33 @@ photo / scan / PDF
   → vote      align the readings word by word, majority vote; disagreement = flag
               (prescriptions: every reader must agree; numbers and doses always need every reader)
   → context   a constrained fix may only pick the readers' own words or dictionary / writer-confirmed words
+  → safety    prescriptions only: look-alike drug names flagged even when every reader agrees; each medicine row
+              checked against usual strengths and the usual adult maximum per day (no model calls)
   → human     "Ask the human": the user answers flagged words; answers are final and remembered per writer
 ```
 No model is trained or fine-tuned: the system is training-free and combines pretrained vision models. The pipeline
 settings (which readers vote, how many must agree) were chosen on a dev split and measured on a held-out test split.
 
-Code: `backend/app/handwriting.py` (pipeline), `backend/app/main.py` (routes `/api/handwriting`, `/answer`,
-`/recontext`, `/table`, `/eval`), `backend/eval.py` (ablation, calibration, robustness), `backend/tune.py`
-(settings search), `backend/augment.py` (degraded copies), `frontend/src/pages/Handwriting.tsx`.
+Code: `backend/app/handwriting.py` (pipeline), `backend/app/rx_safety.py` (look-alike drugs, dose check),
+`backend/app/main.py` (routes `/api/handwriting`, `/answer`, `/recontext`, `/table`, `/eval`), `backend/eval.py`
+(ablation, calibration, robustness), `backend/tune.py` (settings search), `backend/augment.py` (degraded copies),
+`frontend/src/pages/Handwriting.tsx`.
+
+## Prescription safety (`backend/app/rx_safety.py`)
+Voting catches readers that disagree. It cannot catch every reader making the same mistake, and on a prescription
+that mistake can be a different drug or a 10x dose. Two checks run on prescriptions only, as plain Python:
+- **Look-alike drug alarm.** A drug name one or two letters from a *different* drug (hydroxyzine / hydralazine,
+  amlodipine / amiloride, prednisone / prednisolone; ISMP confused-name pairs plus a spelling-distance rule) is
+  flagged even when every reader agreed. The UI shows it in red and offers the other drugs as answers in
+  "Ask the human". The look-alikes are kept out of `alternatives`, so the context step can never swap in a drug no
+  reader saw.
+- **Dose sanity check.** Each row of the prescription table is checked against usual strengths and the usual adult
+  maximum per day for about 30 common drugs (brand names like Dolo, Augmentin, Pan map to the generic). It catches
+  650 read as 6500, thyroxine written in mg instead of mcg (1000x), `10-10-10`, `500 g`. A warning never changes
+  the text; the row turns red with the reason. The reference values are a safety net for reading errors, not
+  clinical advice.
+
+Test it with the synthetic prescriptions in `backend/data/handwriting/rx_test/` (expected results in its README).
 
 ## Results
 > **Dev split so far** (14 labelled samples, 1146 words). The held-out **test split** numbers replace this after
@@ -75,7 +94,51 @@ answer is cached in `backend/.cache/`, so re-runs are free; `HW_CACHE_ONLY=1` re
 | `HW_VOTE_DEADLINE` | `60` | Seconds per page to wait for every reader; the vote starts as soon as all have answered |
 | `HW_READ_TIMEOUT` | `90` | Seconds per model call |
 | `HW_RETRY_WAIT` | `2` | Wait before the single retry on a 429 / 503 |
-| `HW_CACHE_ONLY` | unset | `1` = never call vision models, replay the cache (experiments) |
+| `HW_CACHE_ONLY` | unset | `1` = never call cloud vision models, replay the cache (experiments); local `ollama:` readers still run |
+
+The text-only steps (context fix, prescription table) use `LLM_PROVIDER` then `LLM_FALLBACKS`. Ajay's `.env` ends the
+fallbacks with `ollama` and sets `OLLAMA_MODEL=nemotron-mini`, so those steps still work offline when every cloud
+quota is gone (lower quality: it garbles some table columns, so it is a last resort only).
+
+## Status and to-do (handoff, updated 2026-10-09)
+Written so a teammate or their Claude Code can pick up from here. Work top to bottom.
+
+**Done**
+- Full pipeline: clean → 5 cloud readers vote → context fix → "Ask the human"; dev results above.
+- Prescription safety: look-alike drug alarm + dose sanity check, tested on `backend/data/handwriting/rx_test/`.
+- Prescription table keeps a row flagged even when a small model drops the `[[word?]]` marks.
+- Results tab removed from the UI (page file and `/api/handwriting/eval` kept).
+
+**To do, in order**
+1. **Run the held-out test split** (7 pages: a01, a07, a08, a10, a11, a15, a19). There is no `eval_results_test.json`
+   yet, so the numbers above are still dev only. From `backend\`: `.venv\Scripts\python eval.py --split test`. It
+   spends free quota, so run it early in the day. Then put the test numbers in the Results section above and in the
+   pitch, and say "held-out".
+2. **Robustness on the test split.** `eval_robustness.md` covers only 2 samples, too few to quote:
+   `.venv\Scripts\python augment.py` then `.venv\Scripts\python eval.py --robustness --split test`.
+3. **Grow the lexicon.** `backend/data/lexicon.txt` has 45 words. Add every drug and brand name from `DRUGS`,
+   `ALIASES` and `LASA_GROUPS` in `rx_safety.py`, so the context step can snap misread drug names onto real ones.
+   Re-run the dev eval afterwards to check nothing got worse.
+4. **Study the 6 confident errors** (wrong words nobody flagged) in `eval_results_dev.json` → `per_sample`. Find a
+   rule that would have flagged each kind; check it on dev only, never tune on test.
+5. **Demo-proof.** Run every image you will show (including `rx_test/`) through the app once so it is cached, then
+   check the demo works with `HW_CACHE_ONLY=1` in `.env` (no internet needed for cached pages). The **Sample**
+   button always works offline and shows a look-alike drug (Amlodipine).
+6. **Remove the Docs Q&A tab** (starter template leftover, off-topic for judges): `frontend/src/App.tsx` `TABS`.
+7. **Pitch deck and demo script**, practised twice. Story: one model guesses confidently → voting flags
+   disagreement (calibration: all agree = 100% right) → but agreement is not enough on a prescription →
+   look-alike drugs and impossible doses are caught too → a human checks only the flagged words.
+
+**Nice to have, only with spare time:** export the prescription table (CSV / PDF); highlight flagged words on the
+photo.
+
+**Known issues**
+- **Local vision reader (Ollama `qwen2.5vl:3b`) does not work on Ajay's laptop.** On the RTX 5050 GPU it outputs
+  `@@@@…` on real handwriting photos (Ollama 0.34.4 aborts with "token repeat limit reached"); on CPU it reads
+  correctly but takes 45–75 s per page. It is not in `HW_READERS`. Worth retrying after an Ollama update; on a
+  machine where it works, add `,ollama:qwen2.5vl:3b` to `HW_READERS` and compare on dev before keeping it.
+- Free tiers: Gemini 20 requests/day/model, so pages often get 3–4 of the 5 readers (dev average 3.6).
+- `backend/.env` holds API keys and is git-ignored. Never commit it or a copy of it.
 
 ---
 
