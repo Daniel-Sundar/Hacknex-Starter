@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import {
-  Camera, Check, ClipboardCopy, Download, Feather, FlaskConical, HelpCircle, ImageUp, ScrollText, Sparkles, UserCheck, Wand2,
+  Camera, Check, ClipboardCopy, Download, Feather, FlaskConical, HelpCircle, ImageUp, Loader2, Pill, ScrollText, Sparkles,
+  UserCheck, Wand2,
 } from "lucide-react";
 import { postForm, postJSON } from "../lib/api";
 import { Button, Card, ErrorNote, Kbd, inputCls } from "../components/ui";
 import { PenAnimation } from "../components/PenAnimation";
-import { SAMPLE, hasDigit, isNewline, joinWords, reviewQueue, type HwResult, type Word } from "../lib/handwriting";
+import {
+  SAMPLE, SAMPLE_ROWS, hasDigit, isNewline, joinWords, markWords, reviewQueue, type HwResult, type RxRow, type Word,
+} from "../lib/handwriting";
 
 type Mode = "auto" | "review";
 
@@ -32,6 +35,9 @@ export default function Handwriting() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [over, setOver] = useState(false);
+  const [rows, setRows] = useState<RxRow[] | null>(null);
+  const [rowsLoading, setRowsLoading] = useState(false);
+  const [rowsError, setRowsError] = useState<string | null>(null);
   const video = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -86,6 +92,23 @@ export default function Handwriting() {
       setLoading(false);
     }
   }
+
+  // Prescriptions get a medicine table. Re-fetched after every human answer (`asked`), built from the
+  // current words so confirmed words count. The sample uses canned rows so it works with no keys.
+  const isRx = result?.doc_type === "prescription";
+  useEffect(() => {
+    if (!isRx) { setRows(null); setRowsError(null); return; }
+    if (isSample) { setRows(SAMPLE_ROWS); setRowsError(null); return; }
+    let live = true;
+    setRowsLoading(true);
+    setRowsError(null);
+    postJSON<{ rows: RxRow[] }>("/api/handwriting/table", { marked: markWords(words) })
+      .then((r) => live && setRows(r.rows))
+      .catch((e) => live && setRowsError(String(e)))
+      .finally(() => live && setRowsLoading(false));
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `words` is read at fetch time; refetch only on new result / answer
+  }, [result, isSample, isRx, asked]);
 
   // Ctrl/⌘ + Enter runs Digitize from anywhere on the page.
   const digitizeRef = useRef(digitize);
@@ -228,6 +251,11 @@ export default function Handwriting() {
                   ))}
                 </div>
                 <div className="flex items-center gap-1.5">
+                  {result.doc_type && (
+                    <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-body">
+                      {result.doc_type === "prescription" ? "Prescription" : "Note"}
+                    </span>
+                  )}
                   {isSample && <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted">sample</span>}
                   <IconBtn title="Copy text" aria-label="Copy text" onClick={() => navigator.clipboard.writeText(text)}><ClipboardCopy className="size-3.5" /></IconBtn>
                   <IconBtn title="Download .txt" aria-label="Download text" onClick={() => download(text)}><Download className="size-3.5" /></IconBtn>
@@ -238,6 +266,8 @@ export default function Handwriting() {
                 <Legend />
               </div>
             </Card>
+
+            {isRx && <RxTable rows={rows} loading={rowsLoading} error={rowsError} />}
 
             {mode === "review" && (
               <ReviewPanel words={words} queue={queue} writer={writer} onAnswer={answer} onSkip={skip} />
@@ -415,6 +445,47 @@ function ReviewPanel({ words, queue, writer, onAnswer, onSkip }: {
           Answers are final and teach the word list of writer <span className="font-mono text-body">{writer || "(none)"}</span>
           {" "}(set above the Digitize button).
         </p>
+      </div>
+    </Card>
+  );
+}
+
+function RxTable({ rows, loading, error }: { rows: RxRow[] | null; loading: boolean; error: string | null }) {
+  const cols = [["drug", "Drug"], ["strength", "Strength"], ["form", "Form"], ["frequency", "Frequency"], ["duration", "Duration"]] as const;
+  return (
+    <Card flush>
+      <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+        <span className="title flex items-center gap-2"><Pill className="size-4" /> Prescription</span>
+        <span className="flex items-center gap-1.5 text-[11px] text-muted">
+          {loading && <Loader2 className="size-3.5 animate-spin" />}
+          Numbers are copied exactly, never corrected
+        </span>
+      </div>
+      <div className="space-y-3 p-4">
+        <ErrorNote error={error} />
+        {rows && rows.length === 0 && !loading && <p className="text-[13px] text-muted">No medicines found on this page.</p>}
+        {rows && rows.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-[12px]">
+              <thead>
+                <tr className="border-b border-line text-[10px] uppercase tracking-wider text-muted">
+                  {cols.map(([, h]) => <th key={h} className="px-2 py-1.5 font-semibold">{h}</th>)}
+                  <th className="px-2 py-1.5" />
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i} className={`border-b border-line ${r.flagged ? "border-warn-line bg-warn-bg text-warn-fg" : "text-ink"}`}>
+                    {cols.map(([k]) => <td key={k} className="px-2 py-1.5 font-mono">{r[k] || "-"}</td>)}
+                    <td className="px-2 py-1.5 text-right">
+                      {r.flagged && <span className="rounded-full border border-warn-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">check</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </Card>
   );

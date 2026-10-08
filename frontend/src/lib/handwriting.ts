@@ -18,7 +18,11 @@ export type HwResult = {
   flagged: number;
   stages: { clean: boolean; vote: boolean; context: boolean };
   baseline?: string;
+  doc_type?: "prescription" | "note";
 };
+
+/** One medicine from POST /api/handwriting/table. Numbers are shown exactly as returned. */
+export type RxRow = { drug: string; strength: string; form: string; frequency: string; duration: string; flagged: boolean };
 
 export const isNewline = (w: Word) => w.text === "\n";
 export const hasDigit = (s: string) => /\d/.test(s);
@@ -32,6 +36,11 @@ export function joinWords(words: Word[]): string {
     out += w.text;
   }
   return out.trim();
+}
+
+/** The `marked` text for the current words ([[word?]] around flagged ones), like the backend's render(). */
+export function markWords(words: Word[]): string {
+  return joinWords(words.map((w) => (w.flagged && !isNewline(w) ? { ...w, text: `[[${w.text}?]]` } : w)));
 }
 
 /** Flagged words to ask the human about: numbers/doses first, then lowest confidence. */
@@ -74,5 +83,12 @@ export const SAMPLE: HwResult = (() => {
     flagged: words.filter((x) => x.flagged).length,
     stages: { clean: true, vote: true, context: true },
     baseline: "Rx Tab. Paracetemol 650 mg\n1 tab twice daily after food\nTab. Amoxil 625 mg x 3 days\nReview after ane week",
+    doc_type: "prescription",
   };
 })();
+
+/** Canned prescription table for SAMPLE, so the table works with no keys. */
+export const SAMPLE_ROWS: RxRow[] = [
+  { drug: "Paracetamol", strength: "500 mg", form: "Tab", frequency: "1 tab twice daily after food", duration: "", flagged: true },
+  { drug: "Amoxyclav", strength: "625 mg", form: "Tab", frequency: "", duration: "5 days", flagged: true },
+];
