@@ -94,13 +94,14 @@ async def handwriting_digitize(
     vote: bool = Form(True),
     context: bool = Form(True),
     baseline: bool = Form(False),
+    writer: str | None = Form(None),
 ):
     from starlette.concurrency import run_in_threadpool
     from . import handwriting
     data = await file.read()
 
     def work():
-        result = handwriting.digitize(data, use_clean=clean, use_vote=vote, use_context=context)
+        result = handwriting.digitize(data, use_clean=clean, use_vote=vote, use_context=context, writer=writer)
         if baseline:  # a failed baseline must not throw away the pipeline's result
             try:
                 result["baseline"] = handwriting.baseline(data)
@@ -113,3 +114,21 @@ async def handwriting_digitize(
         return await run_in_threadpool(work)  # model calls take a while; don't block other requests
     except RuntimeError as e:
         raise HTTPException(502, str(e))
+
+
+class AnswerRequest(BaseModel):
+    writer: str
+    original: str = ""
+    answer: str
+
+
+@app.post("/api/handwriting/answer")
+def handwriting_answer(req: AnswerRequest):
+    """Review mode: the human answers a flagged word. Saved per writer; context_fix then offers it
+    as a candidate on that writer's next pages (send the same `writer` form field)."""
+    from . import handwriting
+    try:
+        n = handwriting.save_answer(req.writer, req.original, req.answer)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"ok": True, "words": n}

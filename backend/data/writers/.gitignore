@@ -1,0 +1,3 @@
+# Per-writer corrections are runtime data: keep them out of git.
+*
+!.gitignore

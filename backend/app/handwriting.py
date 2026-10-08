@@ -30,6 +30,7 @@ from . import llm
 
 CACHE = Path(__file__).resolve().parent.parent / ".cache"
 LEXICON = Path(__file__).resolve().parent.parent / "data" / "lexicon.txt"
+WRITERS = Path(__file__).resolve().parent.parent / "data" / "writers"  # per-writer confirmed words
 UNREADABLE = "[?]"
 
 # Tested 2026-10-08 on real handwriting. Groq's qwen goes first: fast, accurate and the most
@@ -295,9 +296,39 @@ def _lexicon() -> list[str]:
     return [w.strip() for w in LEXICON.read_text(encoding="utf-8").splitlines() if w.strip()]
 
 
-def context_fix(words: list[dict]) -> list[dict]:
-    """Let an LLM resolve flagged words, choosing ONLY from the models' alternatives or lexicon matches."""
-    lex = _lexicon()
+def _writer_file(writer: str) -> Path:
+    safe = re.sub(r"[^a-z0-9_-]", "_", writer.strip().lower())[:64]  # no path tricks like ../
+    if not safe.strip("_"):
+        raise ValueError("writer name is empty")
+    return WRITERS / f"{safe}.json"
+
+
+def writer_words(writer: str | None) -> list[str]:
+    """Words a human confirmed for this writer (review mode)."""
+    if not writer or not writer.strip():
+        return []
+    f = _writer_file(writer)
+    return json.loads(f.read_text(encoding="utf-8")) if f.exists() else []
+
+
+def save_answer(writer: str, original: str, answer: str) -> int:
+    """Store the human's answer for a flagged word. The answer is final. Returns the word count."""
+    answer = answer.strip()
+    if not answer:
+        raise ValueError("answer is empty")
+    f = _writer_file(writer)
+    words = writer_words(writer)
+    if norm(answer) not in {norm(w) for w in words}:  # dedupe
+        words.append(answer)
+    WRITERS.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(words, ensure_ascii=False, indent=1), encoding="utf-8")
+    return len(words)
+
+
+def context_fix(words: list[dict], extra_lexicon: list[str] | None = None) -> list[dict]:
+    """Let an LLM resolve flagged words, choosing ONLY from the models' alternatives or lexicon matches.
+    extra_lexicon: e.g. a writer's human-confirmed words, used like lexicon words."""
+    lex = _lexicon() + list(extra_lexicon or [])
     lex_norm = {norm(w): w for w in lex}
     choices: dict[int, list[str]] = {}
     for i, w in enumerate(words):
@@ -348,7 +379,8 @@ def baseline(data: bytes, provider: str | None = None, model: str | None = None)
     return read_one(data, provider, model, prompt=BASELINE_PROMPT)
 
 
-def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_context: bool = True) -> dict:
+def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_context: bool = True,
+             writer: str | None = None) -> dict:
     img = clean(data) if use_clean else data
     if use_vote:
         r = read_all(img)
@@ -361,7 +393,7 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
             raise RuntimeError(f"{provider}:{model} failed: {str(e)[:200]}") from e
     words = vote(readings)
     if use_context:
-        words = context_fix(words)
+        words = context_fix(words, writer_words(writer))
     flagged = sum(1 for w in words if w.get("flagged"))
     return {
         "text": render(words),
