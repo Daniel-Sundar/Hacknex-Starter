@@ -3,4 +3,5 @@ uvicorn[standard]>=0.30
 python-dotenv>=1.0
 python-multipart>=0.0.9
 openai>=1.50
+anthropic>=1.12
 pypdf>=5.0

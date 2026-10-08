@@ -18,7 +18,7 @@ Install first: **Git** (git-scm.com), **Python 3.12** (python.org, tick "Add pyt
 
 ```powershell
 git clone https://github.com/Daniel-Sundar/Hacknex-Starter
-cd hacknex-starter
+cd Hacknex-Starter
 powershell -ExecutionPolicy Bypass -File .\setup.ps1 -ML   # drop -ML for the light version
 notepad backend\.env                                        # paste the API keys
 powershell -ExecutionPolicy Bypass -File .\dev.ps1          # opens backend + frontend + browser
@@ -35,6 +35,7 @@ Set `LLM_PROVIDER` in `backend/.env`; `LLM_FALLBACKS` is tried in order when a c
 
 | Provider | Get a key | Notes |
 |---|---|---|
+| `claude` | https://platform.claude.com (API credits, separate from Claude Pro) | Chat, Docs Q&A and Vision via the Anthropic SDK. Default model `claude-opus-5-5`; set `CLAUDE_MODEL=claude-haiku-5-5` to stretch credits. The Agent tab skips Claude and uses the next provider in `LLM_FALLBACKS` |
 | `gemini` | https://aistudio.google.com/apikey | Default. Multimodal, so the Vision "Ask" button works |
 | `groq` | https://console.groq.com/keys | Very fast Llama; great for agents |
 | `openrouter` | https://openrouter.ai/keys | Use `:free` models |

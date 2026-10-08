@@ -5,7 +5,7 @@
 ## Stack
 - `backend/`: FastAPI (Python 3.11+). Entry `app/main.py`. All routes under `/api`.
   - `app/llm.py`: the ONLY place that talks to LLMs. Use `llm.chat()`, `llm.stream()`, `llm.complete_json()`.
-    Providers are OpenAI-compatible (gemini, groq, openrouter, ollama, mock) with automatic fallback.
+    Providers: gemini, groq, openrouter, ollama, mock (OpenAI-compatible) plus claude (`app/claude_provider.py`, Anthropic SDK), with automatic fallback.
   - `app/rag.py`: in-memory RAG (ingest/search/answer).
   - `app/agent.py`: tool-calling loop. New tool = Python function + JSON schema in `TOOLS`.
   - `app/vision.py`: YOLO detection + vision-LLM Q&A (needs `requirements-ml.txt`).

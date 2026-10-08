@@ -4,6 +4,7 @@ Gemini, Groq, OpenRouter and Ollama all expose OpenAI-compatible endpoints,
 so we use the `openai` SDK and only swap base_url / key / model.
 Set LLM_PROVIDER in .env. If a call fails, we fall through LLM_FALLBACKS.
 Provider "mock" needs no key: handy for UI work and offline demos.
+Provider "claude" uses the official Anthropic SDK (see claude_provider.py).
 """
 import json
 import os
@@ -61,6 +62,16 @@ def chat(messages: list[dict], tools: list[dict] | None = None, **kwargs):
     for name in _order():
         if name == "mock":
             return {"role": "assistant", "content": _mock_reply(messages), "tool_calls": None}
+        if name == "claude":
+            if tools:  # agent.py's loop speaks the OpenAI tool format; use another provider for it
+                errors.append("claude: agent tools not wired for Claude, skipped")
+                continue
+            try:
+                from . import claude_provider
+                return {"role": "assistant", "content": claude_provider.chat(messages), "tool_calls": None}
+            except Exception as e:
+                errors.append(f"claude: {e}")
+                continue
         try:
             client, model = _client(name)
             args = {"model": model, "messages": messages, **kwargs}
@@ -80,6 +91,14 @@ def stream(messages: list[dict], **kwargs) -> Iterator[str]:
             for word in _mock_reply(messages).split(" "):
                 yield word + " "
             return
+        if name == "claude":
+            try:
+                from . import claude_provider
+                yield from claude_provider.stream(messages)
+                return
+            except Exception as e:
+                errors.append(f"claude: {e}")
+                continue
         try:
             client, model = _client(name)
             resp = client.chat.completions.create(model=model, messages=messages, stream=True, **kwargs)
