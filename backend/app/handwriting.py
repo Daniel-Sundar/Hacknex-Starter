@@ -15,6 +15,7 @@ Readers come from HW_READERS in .env: comma-separated provider or provider:model
 Readers that fail (no key, rate limit) are skipped; the vote uses whoever answered.
 Every model response is cached in backend/.cache/ so re-running eval costs nothing.
 """
+import ast
 import base64
 import hashlib
 import json
@@ -123,6 +124,8 @@ def _ms(t0: float) -> int:
 
 
 _exhausted: dict[str, float] = {}  # model name -> time it ran out of quota (this process only)
+_upstream_down: dict[str, float] = {}  # model name -> time its upstream host last failed (this process only)
+UPSTREAM_COOLDOWN = 300  # s
 _lock = threading.Lock()
 
 
@@ -153,6 +156,25 @@ def _cached(key_parts: list, fn):
 def _strip_reasoning(text: str) -> str:
     text = re.sub(r"<think>.*?</think>", "", text, flags=re.S)
     return text.strip().removeprefix("```").removesuffix("```").strip()
+
+
+def tidy_reading(text: str) -> str:
+    """Undo formatting some models wrap around a transcription, never the words themselves: a code fence, a
+    "Transcription:" label, a Python/JSON list of strings (['An hip'] -> An hip), quotes around the whole answer.
+    Without this the brackets and quotes become part of the voted words."""
+    t = _strip_reasoning(text)
+    t = re.sub(r"^```[a-z]*\s*|\s*```$", "", t).strip()
+    t = re.sub(r"^(transcription|transcribed text|text)\s*:\s*", "", t, flags=re.I)
+    if re.fullmatch(r"\[\s*(['\"]).*(['\"])\s*\]", t, flags=re.S):
+        try:
+            value = ast.literal_eval(t)  # literals only, never executes code
+        except (ValueError, SyntaxError):
+            value = None
+        if isinstance(value, list) and value and all(isinstance(x, str) for x in value):
+            t = "\n".join(x.strip() for x in value)
+    if len(t) >= 2 and t[0] == t[-1] and t[0] in "\"'`" and t.count(t[0]) == 2:
+        t = t[1:-1].strip()
+    return t
 
 
 def tokens(text: str) -> list[str]:
@@ -311,8 +333,9 @@ def _call_once_retry(provider: str, model: str | None, messages: list[dict]) -> 
 
 def read_one(data: bytes, provider: str, model: str | None, prompt: str = READ_PROMPT) -> str:
     img_hash = hashlib.sha256(data).hexdigest()
-    return _cached(["read", img_hash, provider, model, prompt],
+    text = _cached(["read", img_hash, provider, model, prompt],
                    lambda: _strip_reasoning(_call_once_retry(provider, model, _image_msg(data, prompt))))
+    return tidy_reading(text) if os.getenv("HW_TIDY", "1") == "1" else text
 
 
 def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str], progress=None,
@@ -332,6 +355,9 @@ def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str]
             if time.time() - _exhausted.get(name, 0) < EXHAUSTED_FOR:
                 tried.append(f"{name}: out of quota")
                 continue
+            if time.time() - _upstream_down.get(name, 0) < UPSTREAM_COOLDOWN:
+                tried.append(f"{name}: upstream provider failing, skipped for {UPSTREAM_COOLDOWN} s")
+                continue
             claimed.add(name)
         _emit(progress, {"type": "reader", "slot": index, "model": name, "status": "start"})
         try:
@@ -344,6 +370,11 @@ def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str]
             if _out_of_quota(e):
                 with _lock:
                     _exhausted[name] = time.time()
+            elif "provider returned error" in str(e).lower():
+                # A router (OpenRouter) says the model's own host is failing: asking again on every page only
+                # burns the daily request allowance, so rest the model for a few minutes.
+                with _lock:
+                    _upstream_down[name] = time.time()
             tried.append(f"{name}: {str(e)[:120]}")
     error = RuntimeError(" | ".join(tried) or "all models already in use")
     _emit(progress, {"type": "reader", "slot": index, "model": _name(*slot[0]), "status": "failed",
@@ -411,6 +442,8 @@ FLAG_RULE = os.getenv("HW_FLAG_RULE", "two_thirds")
 FLAG_RULE_RX = os.getenv("HW_FLAG_RULE_RX", "unanimous")
 DIGITS_STRICT = os.getenv("HW_DIGITS_STRICT", "1") == "1"
 DROP_MINORITY = os.getenv("HW_DROP_MINORITY", "1") == "1"
+JOIN_SPLITS = os.getenv("HW_JOIN_SPLITS", "1") == "1"  # join a word one reader split in two (see unsplit)
+DICTIONARY_FIX = os.getenv("HW_DICTIONARY_FIX", "1") == "1"  # dictionary + reader evidence (see dictionary_fix)
 #   HW_REREAD_MODE    vote = re-read answer is an extra vote and can clear a flag
 #                     suggest = re-read only improves the text, the flag stays   |   off = no re-read
 # Dev set: re-read as a vote raised confident errors 7 -> 13; as a suggestion it raised WER 3.6% -> 7.9%.
@@ -429,8 +462,52 @@ def trusted(votes: int, n: int, rule: str | None = None) -> bool:
     return votes * 2 > n  # majority
 
 
+def _lev(a: str, b: str) -> int:
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+def _near(a: str, b: str) -> bool:
+    """Same word up to a small slip: one character for short words, two for long ones."""
+    return _lev(a, b) <= (1 if max(len(a), len(b)) <= 8 else 2)
+
+
+def _is_word(t: str) -> bool:
+    return t != "\n" and t != MARGIN and UNREADABLE not in t
+
+
+def unsplit(toks: list[list[str]]) -> list[list[str]]:
+    """Readers disagree on where a handwritten word breaks ("Ni dazyl" / "Nidazyl"). Before aligning, join two
+    neighbouring pieces of one reader when the joined form matches (up to a small slip) a word another reader
+    wrote, and neither piece appears on its own in any other reading. Otherwise the fragments out-vote the word."""
+    out = []
+    for i, mine in enumerate(toks):
+        others = {norm(t) for j, o in enumerate(toks) if j != i for t in o if _is_word(t)}
+        res, k = [], 0
+        while k < len(mine):
+            a = mine[k]
+            b = mine[k + 1] if k + 1 < len(mine) else None
+            digits = any(c.isdigit() for c in a + (b or ""))  # doses are never re-segmented by a heuristic
+            if (b is not None and not digits and _is_word(a) and _is_word(b)
+                    and norm(a) not in others and norm(b) not in others):
+                joined = norm(a + b)
+                if len(joined) >= 4 and any(_near(joined, o) for o in others if len(o) >= 4):
+                    res.append(a + b)
+                    k += 2
+                    continue
+            res.append(a)
+            k += 1
+        out.append(res)
+    return out
+
+
 def vote(readings: dict[str, str], rule: str | None = None, digits_strict: bool | None = None,
-         drop_minority: bool | None = None) -> list[dict]:
+         drop_minority: bool | None = None, join_splits: bool | None = None) -> list[dict]:
     """Align every reading to a pivot reading and majority-vote each word.
 
     Returns [{text, confidence, flagged, alternatives, votes, readers, by_model}] where confidence = share
@@ -439,8 +516,11 @@ def vote(readings: dict[str, str], rule: str | None = None, digits_strict: bool 
     """
     digits_strict = DIGITS_STRICT if digits_strict is None else digits_strict
     drop_minority = DROP_MINORITY if drop_minority is None else drop_minority
+    join_splits = JOIN_SPLITS if join_splits is None else join_splits
     names = list(readings)
     toks = [tokens(readings[n]) for n in names]
+    if join_splits and len(toks) > 1:
+        toks = unsplit(toks)
     n_models = len(toks)
     p = _pivot(toks) if n_models > 1 else 0
     pivot = toks[p]
@@ -662,6 +742,41 @@ def reread(img: bytes, words: list[dict], kind: str = "note") -> list[dict]:
     return out
 
 
+KNOWLEDGE = Path(__file__).resolve().parent.parent / "data" / "knowledge"  # extra word lists, e.g. drug names
+
+
+def knowledge_words() -> list[str]:
+    """Every word list in data/knowledge/*.txt (one entry per line): the knowledge base for dictionary_fix."""
+    if not KNOWLEDGE.exists():
+        return []
+    return [w.strip() for f in sorted(KNOWLEDGE.glob("*.txt"))
+            for w in f.read_text(encoding="utf-8").splitlines() if w.strip() and not w.startswith("#")]
+
+
+def dictionary_fix(words: list[dict], extra: list[str] | None = None) -> list[dict]:
+    """Dictionary + visual evidence, no model call. A flagged word becomes a dictionary word only when a STRICT
+    majority of readers read something within a small slip of that entry (and no other entry ties). The context
+    LLM cannot do this for an isolated word (a drug name alone has no sentence to judge by). Words every reader
+    agreed on, and anything with a digit (doses), are never touched."""
+    lex = {norm(w): w for w in _lexicon() + list(extra or []) if len(norm(w)) >= 3}
+    keys = list(lex)
+    out = []
+    for w in words:
+        text = w.get("text", "")
+        if not w.get("flagged") or not _is_word(text) or any(c.isdigit() for c in text) or not w.get("votes"):
+            out.append(w)
+            continue
+        n = w.get("readers") or 1
+        cands = {m for s in w["votes"] for m in get_close_matches(norm(s), keys, n=3, cutoff=0.7)}
+        support = sorted(((sum(c for s, c in w["votes"].items() if _near(norm(s), k)), k) for k in cands), reverse=True)
+        if support and 2 * support[0][0] > n and (len(support) == 1 or support[1][0] < support[0][0]):
+            out.append({**w, "text": lex[support[0][1]], "flagged": False, "resolved_by": "dictionary",
+                        "evidence": f"dictionary, {support[0][0]}/{n} readers"})
+        else:
+            out.append(w)
+    return out
+
+
 def context_fix(words: list[dict], extra_lexicon: list[str] | None = None, kind: str = "note") -> list[dict]:
     """Let an LLM resolve flagged words, choosing ONLY from the models' alternatives or lexicon matches.
     extra_lexicon: e.g. a writer's human-confirmed words, used like lexicon words."""
@@ -762,6 +877,8 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
     stage("vote", "done", doc_type=kind)
     if use_context:
         stage("context", "start")
+        if DICTIONARY_FIX:  # dictionary + reader evidence first: no model call, works on isolated drug names
+            words = dictionary_fix(words, writer_words(writer) + knowledge_words())
         words = reread(img, words, kind)  # look again at the photo, with the sentence as a hint
         words = context_fix(words, writer_words(writer), kind)  # then lexicon / candidates only
         stage("context", "done")

@@ -135,6 +135,8 @@ def chat_one(provider: str, messages: list[dict], model: str | None = None,
     if opts:
         client = client.with_options(**opts)
     resp = client.chat.completions.create(model=model or default_model, messages=messages, **kwargs)
+    if not getattr(resp, "choices", None):  # some routers answer 200 with an error body and no choices
+        raise RuntimeError(f"{provider}: empty response from provider ({str(getattr(resp, 'error', '') or resp)[:150]})")
     return resp.choices[0].message.content or ""
 
 

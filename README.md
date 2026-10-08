@@ -95,6 +95,12 @@ answer is cached in `backend/.cache/`, so re-runs are free; `HW_CACHE_ONLY=1` re
 | `HW_READ_TIMEOUT` | `90` | Seconds per model call |
 | `HW_RETRY_WAIT` | `2` | Wait before the single retry on a 429 / 503 |
 | `HW_CACHE_ONLY` | unset | `1` = never call cloud vision models, replay the cache (experiments); local `ollama:` readers still run |
+| `HW_TIDY` | `1` | Strip formatting a model wraps around its reading (`['…']`, quotes, code fences) before the vote |
+| `HW_JOIN_SPLITS` | `1` | Join a word one reader split in two ("Ni dazyl") when another reader wrote it whole ("Nidazyl") |
+| `HW_DICTIONARY_FIX` | `1` | A flagged word becomes a dictionary word only when a strict majority of readers read something within one letter of it; never touches numbers. Word lists: `backend/data/lexicon.txt`, writer words and every `backend/data/knowledge/*.txt` (246 drug names shipped) |
+
+A model whose upstream host fails (OpenRouter "Provider returned error") is skipped for 5 minutes instead of being
+retried on every page.
 
 The text-only steps (context fix, prescription table) use `LLM_PROVIDER` then `LLM_FALLBACKS`. Ajay's `.env` ends the
 fallbacks with `ollama` and sets `OLLAMA_MODEL=nemotron-mini`, so those steps still work offline when every cloud
@@ -113,16 +119,26 @@ Written so a teammate or their Claude Code can pick up from here. Work top to bo
   json; unresolved words are marked, never stated as fact), browser-local history, 12 Indian languages (machine
   drafts, English fallback), clear error states. Backend: upload checks, error codes, rate limits (`RATE_LIMIT_*`,
   `RATE_LIMIT_OFF=1` to disable), `backend/tests/` (`pytest`). Rollback point: branch `checkpoint/before-audit-redesign`.
+- **Drug-name benchmark on RxHandBD + BD-Prescription (Mendeley Data): full report in
+  [`backend/bench/REPORT.md`](backend/bench/REPORT.md).** 39 test images. Single model: 9.5% exact, confidently
+  wrong on 90.5%. ClearScript: 28.2% exact, flags 61.5%, confidently wrong on 15.4% (2 of those 6 are dataset label
+  errors). Fixes from it are in the pipeline (`HW_TIDY`, `HW_JOIN_SPLITS`, `HW_DICTIONARY_FIX`); on the team's dev
+  pages they lowered CER 2.6% to 2.3% with confident errors unchanged.
 
 **To do, in order**
+0. **Benchmark follow-ups** (details in `backend/bench/REPORT.md` §12): require every reader to agree on drug-name
+   words everywhere (measured offline: confident errors 6 to 4), add a big Indian drug-name list to
+   `backend/data/knowledge/`, and finish the remaining 81 benchmark images with fresh quota
+   (`.venv\Scripts\python bench/words.py run --min-readers 3 --sleep 45`; needs the extracted datasets, see the
+   report). Raw results stay local (`backend/bench/results/` is git-ignored).
 1. **Run the held-out test split** (7 pages: a01, a07, a08, a10, a11, a15, a19). There is no `eval_results_test.json`
    yet, so the numbers above are still dev only. From `backend\`: `.venv\Scripts\python eval.py --split test`. It
    spends free quota, so run it early in the day. Then put the test numbers in the Results section above and in the
    pitch, and say "held-out".
 2. **Robustness on the test split.** `eval_robustness.md` covers only 2 samples, too few to quote:
    `.venv\Scripts\python augment.py` then `.venv\Scripts\python eval.py --robustness --split test`.
-3. **Grow the lexicon.** `backend/data/lexicon.txt` has 45 words. Add every drug and brand name from `DRUGS`,
-   `ALIASES` and `LASA_GROUPS` in `rx_safety.py`, so the context step can snap misread drug names onto real ones.
+3. **Grow the drug list.** Done in part: `backend/data/knowledge/drugs.txt` (246 names from `rx_safety.py` plus
+   common Indian generics and brands) feeds the dictionary step. A much larger Indian brand list would help more.
    Re-run the dev eval afterwards to check nothing got worse.
 4. **Study the 6 confident errors** (wrong words nobody flagged) in `eval_results_dev.json` → `per_sample`. Find a
    rule that would have flagged each kind; check it on dev only, never tune on test.
@@ -142,7 +158,9 @@ photo.
   `@@@@…` on real handwriting photos (Ollama 0.34.4 aborts with "token repeat limit reached"); on CPU it reads
   correctly but takes 45–75 s per page. It is not in `HW_READERS`. Worth retrying after an Ollama update; on a
   machine where it works, add `,ollama:qwen2.5vl:3b` to `HW_READERS` and compare on dev before keeping it.
-- Free tiers: Gemini 20 requests/day/model, so pages often get 3–4 of the 5 readers (dev average 3.6).
+- Free tiers: Gemini 20 requests/day/model, so pages often get 3–4 of the 5 readers (dev average 3.6). Groq's
+  vision reader also has a 200,000 tokens/day cap (about 75 page reads).
+- OpenRouter's free Gemma models failed upstream on every request during the 2026-10-09 benchmark.
 - `backend/.env` holds API keys and is git-ignored. Never commit it or a copy of it.
 
 ---

@@ -13,3 +13,6 @@ __pycache__/
 
 # Playwright MCP screenshots
 .playwright-mcp/
+
+# Benchmark raw results: dataset labels (licence unchecked) and local paths stay on the machine that ran them
+backend/bench/results/
