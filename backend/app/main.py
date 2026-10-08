@@ -83,3 +83,24 @@ async def vision_detect(file: UploadFile = File(...), conf: float = Form(0.35)):
 async def vision_describe(file: UploadFile = File(...), question: str = Form("Describe this image.")):
     from . import vision
     return {"answer": vision.describe(await file.read(), question, file.content_type or "image/jpeg")}
+
+
+# ---------- Handwriting digitizer (HNX26EPS04) ----------
+
+@app.post("/api/handwriting")
+async def handwriting_digitize(
+    file: UploadFile = File(...),
+    clean: bool = Form(True),
+    vote: bool = Form(True),
+    context: bool = Form(True),
+    baseline: bool = Form(False),
+):
+    from . import handwriting
+    data = await file.read()
+    try:
+        result = handwriting.digitize(data, use_clean=clean, use_vote=vote, use_context=context)
+        if baseline:
+            result["baseline"] = handwriting.baseline(data)
+        return result
+    except RuntimeError as e:
+        raise HTTPException(502, str(e))

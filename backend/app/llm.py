@@ -122,5 +122,16 @@ def complete_json(prompt: str, system: str = "Reply with valid JSON only.") -> d
         return {"raw": text}
 
 
+def chat_one(provider: str, messages: list[dict], model: str | None = None, **kwargs) -> str:
+    """Call ONE specific provider/model (no fallback). Used when you want several
+    different models to answer the same thing, e.g. the handwriting vote."""
+    if provider == "claude":
+        from . import claude_provider
+        return claude_provider.chat(messages, model=model)
+    client, default_model = _client(provider)
+    resp = client.chat.completions.create(model=model or default_model, messages=messages, **kwargs)
+    return resp.choices[0].message.content or ""
+
+
 def active_provider() -> str:
     return _order()[0]

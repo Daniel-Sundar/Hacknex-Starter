@@ -62,17 +62,17 @@ def _split(messages: list[dict]) -> tuple[str | None, list[dict]]:
     return system, convo
 
 
-def _request(messages: list[dict], max_tokens: int) -> dict:
+def _request(messages: list[dict], max_tokens: int, model: str | None = None) -> dict:
     system, convo = _split(messages)
-    model = _model()
+    model = model or _model()
     args = {"model": model, "max_tokens": max_tokens, "messages": convo, **_fallback_args(model)}
     if system:
         args["system"] = system
     return args
 
 
-def chat(messages: list[dict]) -> str:
-    response = _get_client().beta.messages.create(**_request(messages, 16000))
+def chat(messages: list[dict], model: str | None = None) -> str:
+    response = _get_client().beta.messages.create(**_request(messages, 16000, model))
     if response.stop_reason == "refusal":
         return "Sorry, I can't help with that request."
     return "".join(b.text for b in response.content if b.type == "text")
