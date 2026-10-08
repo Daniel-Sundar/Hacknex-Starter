@@ -35,16 +35,16 @@ export default function Agent() {
         <>
           <ol className="space-y-2">
             {res.trace.map((s, i) => (
-              <li key={i} className="flex gap-3 rounded-xl bg-zinc-950 p-3 text-xs">
-                <Wrench className="mt-0.5 size-4 shrink-0 text-brand" />
+              <li key={i} className="flex gap-3 rounded-xl bg-page p-3 text-xs">
+                <Wrench className="mt-0.5 size-4 shrink-0 text-brand-soft" />
                 <div>
-                  <p className="font-mono text-zinc-300">{s.tool}({JSON.stringify(s.args)})</p>
-                  <p className="text-zinc-500">→ {s.result.slice(0, 300)}</p>
+                  <p className="font-mono text-slate-300">{s.tool}({JSON.stringify(s.args)})</p>
+                  <p className="text-slate-400">→ {s.result.slice(0, 300)}</p>
                 </div>
               </li>
             ))}
           </ol>
-          <div className="rounded-xl bg-zinc-800 p-4 text-sm"><Markdown>{res.answer}</Markdown></div>
+          <div className="rounded-xl bg-line p-4 text-sm"><Markdown>{res.answer}</Markdown></div>
         </>
       )}
     </Card>

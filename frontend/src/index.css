@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* ClearScript palette (60-30-10). Every text/background pair below is >= 4.5:1 (WCAG AA). */
 @theme {
-  --color-brand: #7c5cff;
+  --color-page: #0f172a;   /* 60% background */
+  --color-panel: #1e293b;  /* 30% cards */
+  --color-line: #334155;   /* borders */
+
+  --color-brand: #6366f1;        /* 10% accent: rings, borders, icons, accent text */
+  --color-brand-strong: #4f46e5; /* filled buttons with white text (#6366f1 + white is only 4.47:1) */
+  --color-brand-soft: #a5b4fc;   /* indigo text on dark */
+
+  --color-warn: #f59e0b;    --color-warn-bg: #451a03;   --color-warn-fg: #fcd34d;
+  --color-info: #0ea5e9;    --color-info-bg: #0c4a6e;   --color-info-fg: #7dd3fc;
+  --color-ok: #10b981;      --color-ok-bg: #064e3b;     --color-ok-fg: #6ee7b7;
+  --color-del-bg: #7f1d1d;  --color-del-fg: #fca5a5;
 }

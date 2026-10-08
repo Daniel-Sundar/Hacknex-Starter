@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 ${className}`}>{children}</div>;
+  return <div className={`rounded-2xl border border-line bg-panel p-5 ${className}`}>{children}</div>;
 }
 
 export function Button({
@@ -15,7 +15,7 @@ export function Button({
     <button
       {...rest}
       disabled={loading || rest.disabled}
-      className={`inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50 ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand-strong px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page disabled:opacity-50 ${className}`}
     >
       {loading && <Loader2 className="size-4 animate-spin" />}
       {children}
@@ -29,4 +29,4 @@ export function ErrorNote({ error }: { error: string | null }) {
 }
 
 export const inputCls =
-  "w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-brand";
+  "w-full rounded-xl border border-line bg-page px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/40";

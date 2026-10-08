@@ -28,18 +28,18 @@ export default function App() {
     <div className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <ScanText className="size-6 text-brand" />
+          <ScanText className="size-6 text-brand-soft" />
           <h1 className="text-xl font-semibold">ClearScript</h1>
-          <span className="text-sm text-zinc-500">messy handwriting in, trusted text out</span>
+          <span className="text-sm text-slate-400">messy handwriting in, trusted text out</span>
         </div>
-        <span className="rounded-full border border-zinc-800 px-3 py-1 text-xs text-zinc-400">LLM: {provider}</span>
+        <span className="rounded-full border border-line px-3 py-1 text-xs text-slate-400">LLM: {provider}</span>
       </header>
-      <nav className="mb-4 flex gap-1 overflow-x-auto rounded-2xl bg-zinc-900 p-1">
+      <nav className="mb-4 flex gap-1 overflow-x-auto rounded-2xl bg-panel p-1">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm whitespace-nowrap transition ${tab === t.id ? "bg-brand text-white" : "text-zinc-400 hover:text-zinc-100"}`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm whitespace-nowrap transition ${tab === t.id ? "bg-brand-strong text-white ring-1 ring-brand" : "text-slate-400 hover:text-slate-100"}`}
           >
             <t.icon className="size-4" /> {t.label}
           </button>

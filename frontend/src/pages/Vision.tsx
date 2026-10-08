@@ -64,11 +64,11 @@ export default function Vision() {
     <div className="grid gap-4 md:grid-cols-2">
       <Card className="space-y-3">
         <div className="flex gap-2">
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-700 px-3 py-2 text-sm hover:border-brand">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-500 px-3 py-2 text-sm hover:border-brand">
             <ImageUp className="size-4" /> Upload
             <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
           </label>
-          <button onClick={() => setCamOn(!camOn)} className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-3 py-2 text-sm hover:border-brand">
+          <button onClick={() => setCamOn(!camOn)} className="inline-flex items-center gap-2 rounded-xl border border-slate-500 px-3 py-2 text-sm hover:border-brand">
             <Camera className="size-4" /> {camOn ? "Stop camera" : "Webcam"}
           </button>
           {camOn && <Button onClick={snapshot}>Capture</Button>}
@@ -85,11 +85,11 @@ export default function Vision() {
         <ErrorNote error={error} />
       </Card>
       <Card className="space-y-3 text-sm">
-        {!result && !description && <p className="text-zinc-500">Results appear here.</p>}
+        {!result && !description && <p className="text-slate-400">Results appear here.</p>}
         {result && (
           <div className="flex flex-wrap gap-2">
             {Object.entries(result.counts).map(([k, v]) => (
-              <span key={k} className="rounded-full bg-brand/20 px-3 py-1 text-brand">{k}: {v}</span>
+              <span key={k} className="rounded-full bg-brand/20 px-3 py-1 text-brand-soft">{k}: {v}</span>
             ))}
           </div>
         )}
