@@ -4,7 +4,7 @@ import { Button, DropZone, ErrorState, Input, Notice, Panel, Toggle } from "../.
 import { useT } from "../../i18n";
 import { ApiError } from "../../lib/api";
 import { ACCEPT, formatBytes, type Kind } from "../../lib/fileCheck";
-import { DEFAULT_OPTIONS, type Options } from "../../lib/handwriting";
+import { DEFAULT_OPTIONS, PAGE_TYPES, type Options } from "../../lib/handwriting";
 
 export const MOD_KEY = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
 
@@ -74,6 +74,23 @@ export function InputPanel(p: Props) {
         )}
 
         {p.problem && <ErrorState error={new ApiError(p.problem, "")} limits={{ maxUploadMb: p.maxMb }} />}
+
+        <fieldset className="space-y-2" disabled={p.running}>
+          <legend className="text-sm font-medium text-ink">{t("cs.page.label")}</legend>
+          <div className="flex flex-wrap gap-1" role="radiogroup" aria-label={t("cs.page.label")}>
+            {PAGE_TYPES.map((k) => {
+              const on = p.opts.page === k;
+              return (
+                <button key={k} type="button" role="radio" aria-checked={on} onClick={() => p.setOpts({ ...p.opts, page: k })}
+                  className={`min-h-9 rounded-md border px-3 text-xs font-medium transition-colors disabled:opacity-50 ${on
+                    ? "border-accent bg-accent-soft text-accent-text" : "border-line-strong bg-surface text-body hover:bg-subtle hover:text-ink"}`}>
+                  {t(`cs.page.${k}`)}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted">{t(`cs.page.${p.opts.page}.hint`)}</p>
+        </fieldset>
       </Panel>
 
       <details className="group rounded-lg border border-line bg-surface">

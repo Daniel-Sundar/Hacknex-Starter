@@ -33,8 +33,11 @@ export type RxRow = {
   warnings?: string[]; // dose sanity check: unusual strength, above the usual daily maximum
 };
 
-export type Options = { clean: boolean; vote: boolean; context: boolean; baseline: boolean };
-export const DEFAULT_OPTIONS: Options = { clean: true, vote: true, context: true, baseline: true };
+/** What kind of page it is. Sent as the `page` form field: the backend reads each type with its own instructions. */
+export type PageType = "auto" | "note" | "form" | "prescription" | "legal";
+export const PAGE_TYPES: PageType[] = ["auto", "note", "form", "prescription", "legal"];
+export type Options = { clean: boolean; vote: boolean; context: boolean; baseline: boolean; page: PageType };
+export const DEFAULT_OPTIONS: Options = { clean: true, vote: true, context: true, baseline: true, page: "auto" };
 
 export const isNewline = (w: Word) => w.text === "\n";
 export const isMarginTag = (w: Word) => w.text.toLowerCase() === "[margin]";

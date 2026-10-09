@@ -290,7 +290,7 @@ def _send(progress, event: dict) -> None:
 
 
 def run_digitize(data: bytes, clean: bool = True, vote: bool = True, context: bool = True,
-                 baseline: bool = False, writer: str | None = None, progress=None) -> dict:
+                 baseline: bool = False, writer: str | None = None, progress=None, page: str = "auto") -> dict:
     """The /api/handwriting job, shared by the plain and the streaming endpoint.
     The baseline is independent of the pipeline, so both run at once: same output, shorter wait."""
     planned = threading.Event()  # baseline events go out after the plan event
@@ -316,7 +316,7 @@ def run_digitize(data: bytes, clean: bool = True, vote: bool = True, context: bo
     with ThreadPoolExecutor(max_workers=2) as pool:
         base = pool.submit(run_baseline) if baseline else None
         result = handwriting.digitize(data, use_clean=clean, use_vote=vote, use_context=context, writer=writer,
-                                      progress=relay)
+                                      progress=relay, page=page)
         if base is not None:  # a failed baseline must not throw away the pipeline's result
             try:
                 result["baseline"] = base.result()
@@ -334,11 +334,12 @@ async def handwriting_digitize(
     context: bool = Form(True),
     baseline: bool = Form(False),
     writer: str | None = Form(None),
+    page: str = Form("auto"),  # auto | note | form | prescription | legal (anything else falls back to auto)
 ):
     data = await _read_image(file)
     _start_job()
     try:  # model calls take a while; don't block other requests
-        return await run_in_threadpool(run_digitize, data, clean, vote, context, baseline, writer)
+        return await run_in_threadpool(run_digitize, data, clean, vote, context, baseline, writer, None, page)
     except handwriting.InputError as e:
         raise _err(422, "bad_image", str(e))
     except RuntimeError as e:
@@ -361,6 +362,7 @@ async def handwriting_stream(
     context: bool = Form(True),
     baseline: bool = Form(False),
     writer: str | None = Form(None),
+    page: str = Form("auto"),  # auto | note | form | prescription | legal (anything else falls back to auto)
 ):
     """Same job as /api/handwriting, as NDJSON progress events (one JSON object per line). Upload checks,
     rate limit and busy check answer with normal HTTP errors first. The last line is always
@@ -380,7 +382,8 @@ async def handwriting_stream(
 
     def work():
         try:
-            final = {"type": "result", "result": run_digitize(data, clean, vote, context, baseline, writer, send)}
+            final = {"type": "result", "result": run_digitize(data, clean, vote, context, baseline, writer, send,
+                                                              page)}
         except handwriting.InputError as e:
             final = {"type": "error", "code": "bad_image", "message": str(e)}
         except RuntimeError as e:

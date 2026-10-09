@@ -583,3 +583,34 @@ def test_docs_ask_validation_and_llm_failure(client, monkeypatch):
     monkeypatch.setattr(llm, "chat", down)
     r = client.post("/api/docs/ask", json={"text": "When is metformin taken?"})
     assert r.status_code == 502 and detail(r)["code"] == "all_models_failed"
+
+
+# ---------- page types ----------
+
+@pytest.mark.parametrize("page,prompt,kind", [
+    ("form", "FORM_PROMPT", "note"),
+    ("legal", "LEGAL_PROMPT", "note"),
+    ("prescription", "RX_PROMPT", "prescription"),
+    ("note", "READ_PROMPT", "note"),
+    ("bogus", "READ_PROMPT", None),  # unknown values fall back to auto
+])
+def test_page_type_picks_prompt_and_rules(client, fake, monkeypatch, page, prompt, kind):
+    seen = []
+
+    def spy(data, provider, model, p=handwriting.READ_PROMPT):
+        seen.append(p)
+        return fake(data, provider, model, p)
+
+    monkeypatch.setattr(handwriting, "read_one", spy)
+    r = client.post("/api/handwriting", files={"file": ("p.png", PNG, "image/png")}, data={"page": page})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert seen and all(p == getattr(handwriting, prompt) for p in seen)
+    assert body["page_type"] == (page if page != "bogus" else "auto")
+    if kind:
+        assert body["doc_type"] == kind
+
+
+def test_prompts_never_invite_guessing():
+    for p in (handwriting.FORM_PROMPT, handwriting.RX_PROMPT, handwriting.LEGAL_PROMPT):
+        assert "[?]" in p and "NEVER guess" in p and "translate" in p.lower()

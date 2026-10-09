@@ -75,6 +75,56 @@ if os.getenv("HW_PROMPT", "v1") == "v2":
 
 BASELINE_PROMPT = "Transcribe the handwritten text in this image. Output only the text."
 
+# Page types the user can pick. "auto" and "note" keep READ_PROMPT (measured, and the cached readings stay valid);
+# the others tell the readers what kind of page it is. Every one keeps "copy exactly, [?] if unsure, never guess",
+# because a hint shared by all readers could otherwise make them agree on the same wrong guess.
+FORM_PROMPT = """Transcribe this filled-in FORM exactly as written.
+Rules:
+- Go through the form from top to bottom. For each field write its printed label, a colon, then exactly what is
+  handwritten in it, one field per line. Example: "Name: Ravi Kumar".
+- If a field is empty, write its label followed by ": (blank)".
+- Tick boxes and options: write ☑ before a ticked, circled or marked option and ☐ before an unmarked one,
+  for example "Gender: ☑ Male ☐ Female".
+- Copy handwritten words and numbers exactly: dates, phone and ID numbers digit by digit. Do not fix spelling or format.
+- Keep the original language and script. Do not translate.
+- Leave out printed instructions, logos and footers that are not field labels, and words that are crossed out.
+- If you cannot read a handwritten word or number with confidence, write [?] in its place. NEVER guess.
+- Output only the transcription, no commentary."""
+
+RX_PROMPT = """Transcribe this handwritten medical PRESCRIPTION exactly as written.
+What to expect (use it only to recognise what is written, never to add or change anything):
+- Patient details (name, age, sex, date), then the medicines, often numbered, one per line.
+- A medicine line usually has a form (Tab, Cap, Syp, Inj, Oint, Drops), the medicine name, a strength
+  (e.g. 500 mg, 5 ml, 40 mcg), how often (e.g. 1-0-1, 0-0-1, OD, BD, TDS, QID, HS, SOS, before or after food)
+  and for how long (e.g. x 5 days, 1 week). Doctors use abbreviations: copy them as written, do not expand them.
+Rules:
+- Copy every letter and digit exactly as you see it. NEVER replace a word with a similar medicine name you know.
+- Copy numbers, doses and units digit by digit.
+- Keep the line breaks. Leave out the printed letterhead (clinic name, address, phone) and crossed-out words.
+- Keep the original language and script. Do not translate.
+- If you cannot read a word or number with confidence, write [?] in its place. NEVER guess a medicine name or dose.
+- Output only the transcription, no commentary."""
+
+LEGAL_PROMPT = """Transcribe this LEGAL document (land record, sale deed, lease, agreement or affidavit) exactly as
+written, handwritten and typed text alike.
+Rules:
+- Copy every word exactly. Do not summarise, shorten, correct or translate. Keep the original language and script.
+- Keep the line breaks and the order of the paragraphs.
+- Copy every number digit by digit: survey and plot numbers, areas (acres, cents, sq.ft, hectares), amounts,
+  dates, document and registration numbers.
+- Amounts are often written twice, in figures and in words: copy both exactly as written.
+- Copy names exactly: the parties, father's or husband's names, witnesses.
+- Write [stamp], [seal], [signature] or [thumb impression] where one appears, instead of trying to read it.
+- Leave out words that are crossed out.
+- If you cannot read a word or number with confidence, write [?] in its place. NEVER guess.
+- Output only the transcription, no commentary."""
+
+PAGE_TYPES = ("auto", "note", "form", "prescription", "legal")
+
+
+def prompt_for(page: str | None) -> str:
+    return {"form": FORM_PROMPT, "prescription": RX_PROMPT, "legal": LEGAL_PROMPT}.get(page or "auto", READ_PROMPT)
+
 
 # ---------- helpers ----------
 
@@ -344,7 +394,7 @@ def read_one(data: bytes, provider: str, model: str | None, prompt: str = READ_P
 
 
 def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str], progress=None,
-              index: int = 0) -> tuple[str, str | Exception]:
+              index: int = 0, prompt: str = READ_PROMPT) -> tuple[str, str | Exception]:
     """Try the slot's models in order until one answers. `claimed` (shared by all slots of one
     request) stops two voters from using the same model, which would count one opinion twice.
     Returns (name of the model that answered, text) or (slot's first name, Exception).
@@ -366,7 +416,7 @@ def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str]
             claimed.add(name)
         _emit(progress, {"type": "reader", "slot": index, "model": name, "status": "start"})
         try:
-            text = read_one(data, provider, model)
+            text = read_one(data, provider, model, prompt)
             if text.strip():
                 _emit(progress, {"type": "reader", "slot": index, "model": name, "status": "done", "ms": _ms(t0)})
                 return name, text
@@ -387,7 +437,7 @@ def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str]
     return _name(*slot[0]), error
 
 
-def read_all(data: bytes, progress=None) -> dict:
+def read_all(data: bytes, progress=None, prompt: str = READ_PROMPT) -> dict:
     """{"readings": {reader: text}, "errors": {reader: error}}."""
     slots, claimed = _slots(), set()
     t0 = time.monotonic()
@@ -401,7 +451,7 @@ def read_all(data: bytes, progress=None) -> dict:
         return send
 
     pool = ThreadPoolExecutor(max_workers=len(slots))
-    futures = {pool.submit(read_slot, data, s, claimed, relay(i), i): s for i, s in enumerate(slots)}
+    futures = {pool.submit(read_slot, data, s, claimed, relay(i), i, prompt): s for i, s in enumerate(slots)}
     # Wait for every voter to answer or fail; the vote starts as soon as the last one is in, or after
     # VOTE_DEADLINE seconds for the whole page. Voters still running then are left out of this vote but keep
     # running in the background and fill the cache for next time. Wait longer only if nobody answered.
@@ -847,10 +897,14 @@ def baseline(data: bytes, provider: str | None = None, model: str | None = None)
 
 
 def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_context: bool = True,
-             writer: str | None = None, progress=None) -> dict:
+             writer: str | None = None, progress=None, page: str = "auto") -> dict:
     """progress (optional) gets one dict per event, in order: {"type": "plan", ...}, then
     {"type": "stage", "stage": prepare|clean|read|vote|context|safety, "status": start|done|skipped}
-    with {"type": "reader", ...} events (see read_slot / read_all) between read start and read done."""
+    with {"type": "reader", ...} events (see read_slot / read_all) between read start and read done.
+    page: one of PAGE_TYPES, picked by the user; "auto" reads with the general prompt and detects prescriptions."""
+    page = page if page in PAGE_TYPES else "auto"
+    prompt = prompt_for(page)
+
     def stage(name: str, status: str, **extra):
         _emit(progress, {"type": "stage", "stage": name, "status": status, **extra})
 
@@ -869,17 +923,19 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
         stage("clean", "skipped")
     stage("read", "start")
     if use_vote:
-        r = read_all(img, progress)
+        r = read_all(img, progress, prompt)
         readings, errors = r["readings"], r["errors"]
     else:
-        name, text = read_slot(img, _slots()[0], set(), progress)
+        name, text = read_slot(img, _slots()[0], set(), progress, 0, prompt)
         if isinstance(text, Exception):
             raise RuntimeError(f"{name} failed: {str(text)[:200]}")
         readings, errors = {name: text}, {}
     stage("read", "done", answered=len(readings), failed=len(errors))
     stage("vote", "start")
     words = vote(readings)
-    kind = doc_type(words)
+    # The user's choice wins: "prescription" always gets the strict prescription rules and safety checks.
+    kind = ("prescription" if page == "prescription" else "note" if page in ("form", "legal", "note")
+            else doc_type(words))
     if kind == "prescription" and FLAG_RULE_RX != FLAG_RULE:
         words = vote(readings, rule=FLAG_RULE_RX)  # drugs and doses: every reader must agree
     stage("vote", "done", doc_type=kind)
@@ -908,6 +964,7 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
         "flagged": flagged,
         "stages": {"clean": use_clean, "vote": use_vote, "context": use_context},
         "doc_type": kind,
+        "page_type": page,
     }
 
 

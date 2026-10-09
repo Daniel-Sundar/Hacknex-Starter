@@ -15,6 +15,17 @@ export default {
   "cs.input.added": "{name} added. Ready to digitize.",
 
   // advanced settings
+  "cs.page.label": "Page type",
+  "cs.page.auto": "Auto",
+  "cs.page.note": "Note",
+  "cs.page.form": "Form",
+  "cs.page.prescription": "Prescription",
+  "cs.page.legal": "Land / agreement",
+  "cs.page.auto.hint": "General reading. Prescriptions are detected automatically.",
+  "cs.page.note.hint": "Letters, notes and other free handwriting.",
+  "cs.page.form.hint": "Each printed label is kept with its handwritten answer; ticked boxes show as ☑.",
+  "cs.page.prescription.hint": "Readers expect medicines, doses and abbreviations. Every drug name and dose must be agreed by all readers.",
+  "cs.page.legal.hint": "Deeds, land records and agreements: names, numbers and amounts copied exactly; stamps and signatures are marked.",
   "cs.adv.title": "Advanced settings",
   "cs.adv.allOn": "All on",
   "cs.adv.someOff": "{n} off",
