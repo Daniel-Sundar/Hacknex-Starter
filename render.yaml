@@ -25,6 +25,13 @@ services:
         sync: false
       - key: OPENROUTER_API_KEY
         sync: false
+      # Optional extra keys (one per teammate's own account), comma-separated: used when a key runs out of quota.
+      - key: GEMINI_API_KEYS
+        sync: false
+      - key: GROQ_API_KEYS
+        sync: false
+      - key: OPENROUTER_API_KEYS
+        sync: false
       # Optional Supabase storage (writer profiles, reading cache). service_role key: server-side only.
       - key: SUPABASE_URL
         sync: false

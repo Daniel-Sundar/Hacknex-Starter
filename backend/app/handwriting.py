@@ -131,7 +131,7 @@ _lock = threading.Lock()
 
 def _out_of_quota(e: Exception) -> bool:
     """Daily quota gone (or model removed): no point asking again soon. Per-minute limits don't count."""
-    msg = str(e).lower().replace("-", "").replace("_", "")
+    msg = "".join(str(e).lower().replace("-", "").replace("_", "").split())  # Groq writes "per day"
     return getattr(e, "status_code", None) == 404 or (
         getattr(e, "status_code", None) == 429 and "perday" in msg)
 
