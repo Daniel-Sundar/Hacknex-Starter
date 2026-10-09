@@ -57,14 +57,3 @@ services:
       # Baked in at build time: redeploy the site if the backend URL changes. No trailing slash.
       - key: VITE_API_URL
         value: https://clearscript-hacknex-api.onrender.com
-      # Firebase sign-in + synced history (optional: leave unset to run without accounts). Firebase console >
-      # Project settings > Your apps > Web app. Also add this site's domain under Authentication > Settings >
-      # Authorized domains. Baked in at build time, like VITE_API_URL.
-      - key: VITE_FIREBASE_API_KEY
-        sync: false
-      - key: VITE_FIREBASE_AUTH_DOMAIN
-        sync: false
-      - key: VITE_FIREBASE_PROJECT_ID
-        sync: false
-      - key: VITE_FIREBASE_APP_ID
-        sync: false

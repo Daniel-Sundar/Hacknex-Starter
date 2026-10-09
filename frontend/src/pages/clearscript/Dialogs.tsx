@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, ClipboardCopy, FileJson, FileText, FileType2, Loader2, RotateCcw, Trash2 } from "lucide-react";
-import { Button, Dialog, Notice } from "../../components/ui";
+import { Badge, Button, Dialog, IconButton, Notice } from "../../components/ui";
 import { useT } from "../../i18n";
 import { stats, type HwResult, type RxRow, type Word } from "../../lib/handwriting";
 import { baseName, download, toJSON, toMarkdown, toText } from "../../lib/exporters";
 import { HISTORY_MAX, type HistoryEntry } from "../../lib/history";
-import { CLOUD_MAX } from "../../lib/cloudHistory";
-import { HistoryList } from "./HistoryPanel";
 import { MOD_KEY } from "./InputPanel";
 
 // ---------- camera: open -> capture -> preview -> retake / use ----------
@@ -169,12 +167,11 @@ export function ExportDialog({ open, onClose, words, result, name, ts, rows, onC
 
 // ---------- history ----------
 
-export function HistoryDialog({ open, onClose, entries, currentId, onOpen, onDelete, onClear, cloud, status }: {
+export function HistoryDialog({ open, onClose, entries, currentId, onOpen, onDelete, onClear }: {
   open: boolean; onClose: () => void; entries: HistoryEntry[]; currentId: string | null;
   onOpen: (e: HistoryEntry) => void; onDelete: (id: string) => void; onClear: () => void;
-  cloud: boolean; status: ReactNode;
 }) {
-  const { t } = useT();
+  const { t, tn, date } = useT();
   const [confirmAll, setConfirmAll] = useState(false);
   useEffect(() => { if (!open) setConfirmAll(false); }, [open]);
   return (
@@ -183,7 +180,7 @@ export function HistoryDialog({ open, onClose, entries, currentId, onOpen, onDel
       onClose={onClose}
       width="40rem"
       title={t("cs.history.title")}
-      description={cloud ? t("cs.history.descCloud", { max: CLOUD_MAX }) : t("cs.history.desc", { max: HISTORY_MAX })}
+      description={t("cs.history.desc", { max: HISTORY_MAX })}
       footer={entries.length > 0 ? (
         confirmAll ? (
           <>
@@ -194,10 +191,33 @@ export function HistoryDialog({ open, onClose, entries, currentId, onOpen, onDel
         ) : <Button variant="danger" icon={<Trash2 className="size-4" aria-hidden="true" />} onClick={() => setConfirmAll(true)}>{t("cs.history.clear")}</Button>
       ) : undefined}
     >
-      <div className="space-y-4">
-        {status}
-        <HistoryList entries={entries} currentId={currentId} onOpen={onOpen} onDelete={onDelete} />
-      </div>
+      {entries.length === 0 ? (
+        <p className="text-sm text-muted">{t("cs.history.empty")}</p>
+      ) : (
+        <ul className="divide-y divide-line">
+          {entries.map((e) => {
+            const s = stats(e.words, e.result);
+            return (
+              <li key={e.id} className="flex items-center gap-3 py-3">
+                {e.thumb
+                  ? <img src={e.thumb} alt="" className="size-12 shrink-0 rounded border border-line object-cover" />
+                  : <span aria-hidden="true" className="grid size-12 shrink-0 place-items-center rounded border border-line bg-subtle"><FileText className="size-5 text-muted" /></span>}
+                <div className="min-w-0 flex-1">
+                  <p className="break-all text-sm font-medium text-ink">{e.name}</p>
+                  <p className="text-xs text-muted"><time dateTime={new Date(e.ts).toISOString()}>{date(e.ts)}</time></p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    <Badge>{t(e.result.doc_type === "prescription" ? "cs.doc.prescription" : "cs.doc.note")}</Badge>
+                    {s.flagged ? <Badge tone="flag">{tn("cs.history.unverified", s.flagged)}</Badge> : <Badge tone="ok">{t("cs.history.verified")}</Badge>}
+                    {e.id === currentId && <Badge tone="accent">{t("cs.history.current")}</Badge>}
+                  </div>
+                </div>
+                <Button size="sm" onClick={() => onOpen(e)} aria-label={t("cs.history.openNamed", { name: e.name })}>{t("cs.history.open")}</Button>
+                <IconButton size="sm" label={t("cs.history.deleteNamed", { name: e.name })} icon={<Trash2 className="size-4" />} onClick={() => onDelete(e.id)} />
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Dialog>
   );
 }

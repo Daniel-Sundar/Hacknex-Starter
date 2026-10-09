@@ -5,9 +5,6 @@ import { JournalIntro } from "./components/JournalIntro";
 import { Dialog, IconButton, ToastProvider } from "./components/ui";
 import { I18nProvider, LOCALES, useT, type LocaleCode, type MessageKey } from "./i18n";
 import { HealthProvider, useHealth } from "./lib/health";
-import { AuthProvider } from "./lib/auth";
-import { firebaseEnabled } from "./lib/firebase";
-import { AccountMenu } from "./components/AccountMenu";
 
 // Docs Q&A (and its Markdown renderer) loads only when someone opens it.
 const Docs = lazy(() => import("./pages/Docs"));
@@ -30,9 +27,7 @@ export default function App() {
       <JournalIntro />
       <I18nProvider>
         <HealthProvider>
-          <AuthProvider>
-            <Shell />
-          </AuthProvider>
+          <Shell />
         </HealthProvider>
       </I18nProvider>
     </>
@@ -108,7 +103,6 @@ function Shell() {
                 icon={light ? <Moon className="size-4" /> : <Sun className="size-4" />}
                 onClick={() => setLight((v) => !v)}
               />
-              <AccountMenu />
             </div>
           </div>
         </header>
@@ -143,9 +137,7 @@ function Shell() {
 
         <Dialog open={privacy} onClose={() => setPrivacy(false)} title={t("shell.privacy.title")}>
           <ul className="list-disc space-y-2 ps-4 text-sm text-body">
-            {(["models", "images", "writer", "history", "account", "docs", "medical"] as const)
-              .filter((k) => k !== "account" || firebaseEnabled)
-              .map((k) => <li key={k}>{t(`shell.privacy.${k}`)}</li>)}
+            {(["models", "images", "writer", "history", "docs", "medical"] as const).map((k) => <li key={k}>{t(`shell.privacy.${k}`)}</li>)}
           </ul>
         </Dialog>
       </ToastProvider>

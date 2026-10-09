@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { History, Keyboard, PanelLeftOpen } from "lucide-react";
+import { History, Keyboard } from "lucide-react";
 import { ApiError, postForm, postJSON, streamNDJSON } from "../lib/api";
 import { Button, Dialog, ErrorState, useToast } from "../components/ui";
 import { useT } from "../i18n";
@@ -8,9 +8,7 @@ import { checkFile, thumbnail, type Kind } from "../lib/fileCheck";
 import {
   DEFAULT_OPTIONS, SAMPLE, SAMPLE_ROWS, markWords, reviewQueue, stats, type HwResult, type Options, type RxRow, type Word,
 } from "../lib/handwriting";
-import { HISTORY_MAX, loadHistory, newId, saveHistory, upsert, type HistoryEntry } from "../lib/history";
-import { CLOUD_MAX, batchCloud, saveCloudEntry, watchHistory } from "../lib/cloudHistory";
-import { useAuth } from "../lib/auth";
+import { loadHistory, newId, saveHistory, upsert, type HistoryEntry } from "../lib/history";
 import { toText } from "../lib/exporters";
 import { newRun, step, type Run } from "../lib/progress";
 import { InputPanel } from "./clearscript/InputPanel";
@@ -19,23 +17,9 @@ import { Guide } from "./clearscript/Guide";
 import { ResultView } from "./clearscript/ResultView";
 import { WordDialog } from "./clearscript/WordDialog";
 import { CameraDialog, ExportDialog, HistoryDialog, ShortcutsDialog } from "./clearscript/Dialogs";
-import { HistoryList, HistorySidebar, HistoryStatus } from "./clearscript/HistoryPanel";
 
 const WRITER_KEY = "cs-writer";
 const readWriter = () => { try { return localStorage.getItem(WRITER_KEY) ?? ""; } catch { return ""; } };
-const DOCK_KEY = "cs-history-dock";
-const WIDE = "(min-width: 80rem)"; // the history sidebar docks beside the page from Tailwind's xl up
-
-function useMedia(q: string) {
-  const [match, setMatch] = useState(() => window.matchMedia(q).matches);
-  useEffect(() => {
-    const m = window.matchMedia(q);
-    const on = () => setMatch(m.matches);
-    m.addEventListener("change", on);
-    return () => m.removeEventListener("change", on);
-  }, [q]);
-  return match;
-}
 
 type Shown = { result: HwResult; words: Word[]; name: string; ts: number; sample: boolean; entryId: string | null; fromHistory: boolean };
 
@@ -44,8 +28,6 @@ export default function Handwriting({ active }: { active: boolean }) {
   const { toast, announce } = useToast();
   const health = useHealth();
   const maxMb = health.limits.maxUploadMb;
-  const { enabled: canSignIn, user } = useAuth();
-  const uid = user?.uid ?? null;
 
   // input
   const [file, setFile] = useState<Blob | null>(null);
@@ -81,11 +63,6 @@ export default function Handwriting({ active }: { active: boolean }) {
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory);
   const historyRef = useRef(history);
   historyRef.current = history;
-  const [localCount, setLocalCount] = useState(0); // browser-only results that could move to the account
-  const [importing, setImporting] = useState(false);
-  const wide = useMedia(WIDE);
-  const [docked, setDocked] = useState(() => { try { return localStorage.getItem(DOCK_KEY) !== "0"; } catch { return true; } });
-  const showSide = wide && docked;
   const previous = useRef<Shown | null>(null); // shown again if a re-run is stopped or fails
 
   const workspace = useRef<HTMLDivElement>(null);
@@ -203,7 +180,7 @@ export default function Handwriting({ active }: { active: boolean }) {
       const entryId = newId();
       const thumb = kind === "pdf" ? undefined : await thumbnail(file);
       show({ result: r, words: r.words, name, ts, sample: false, entryId, fromHistory: false });
-      saveEntry({ id: entryId, ts, name, thumb, result: r, words: r.words });
+      persist(upsert(historyRef.current, { id: entryId, ts, name, thumb, result: r, words: r.words }));
       previous.current = null;
       const s = stats(r.words, r);
       announce(s.flagged ? tn("cs.run.doneFlags", s.flagged) : t("cs.run.doneClear"));
@@ -248,57 +225,10 @@ export default function Handwriting({ active }: { active: boolean }) {
 
   // ---------- history ----------
 
-  // Signed in: the account's history, live from Firestore. Signed out: this browser's history.
-  const lastUid = useRef(uid);
-  useEffect(() => {
-    // Signing out (or switching account) must not leave the previous account's result on screen.
-    if (lastUid.current && lastUid.current !== uid) { setShown(null); setRows(null); }
-    lastUid.current = uid;
-    const local = loadHistory();
-    if (!uid) {
-      setList(local);
-      return;
-    }
-    setList([]);
-    setLocalCount(local.length);
-    return watchHistory(uid, setList, () => toast(t("cs.history.loadFailed"), "flag"));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- resubscribe only when the account changes
-  }, [uid]);
-
-  function setList(xs: HistoryEntry[]) {
+  function persist(xs: HistoryEntry[]) {
     historyRef.current = xs;
     setHistory(xs);
-  }
-
-  function saveEntry(e: HistoryEntry) {
-    const xs = upsert(historyRef.current, e, uid ? CLOUD_MAX : HISTORY_MAX);
-    setList(xs);
-    if (uid) saveCloudEntry(uid, e).catch(() => toast(t("cs.history.cloudFailed"), "flag"));
-    else if (!saveHistory(xs)) toast(t("cs.history.notSaved"), "flag");
-  }
-
-  function removeEntries(ids: string[]) {
-    const xs = historyRef.current.filter((x) => !ids.includes(x.id));
-    setList(xs);
-    if (shown?.entryId && ids.includes(shown.entryId)) setShown((s) => s && { ...s, entryId: null });
-    if (uid) batchCloud(uid, [], ids).catch(() => toast(t("cs.history.cloudFailed"), "flag"));
-    else saveHistory(xs);
-  }
-
-  async function importLocal() {
-    if (!uid) return;
-    setImporting(true);
-    try {
-      const local = loadHistory();
-      await batchCloud(uid, local);
-      saveHistory([]);
-      setLocalCount(0);
-      toast(tn("cs.history.imported", local.length), "ok");
-    } catch {
-      toast(t("cs.history.cloudFailed"), "flag");
-    } finally {
-      setImporting(false);
-    }
+    if (!saveHistory(xs)) toast(t("cs.history.notSaved"), "flag");
   }
 
   function openEntry(e: HistoryEntry) {
@@ -307,18 +237,13 @@ export default function Handwriting({ active }: { active: boolean }) {
     setHistoryOpen(false);
   }
 
-  function dock(on: boolean) {
-    setDocked(on);
-    try { localStorage.setItem(DOCK_KEY, on ? "1" : "0"); } catch { /* not persisted */ }
-  }
-
   // ---------- corrections ----------
 
   // Corrections are saved into the result's History entry as they happen.
   useEffect(() => {
     if (!shown?.entryId) return;
     const entry = historyRef.current.find((x) => x.id === shown.entryId);
-    if (entry && entry.words !== shown.words) saveEntry({ ...entry, words: shown.words, updated: Date.now() });
+    if (entry && entry.words !== shown.words) persist(upsert(historyRef.current, { ...entry, words: shown.words, updated: Date.now() }));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- persist only when the words change
   }, [shown?.words, shown?.entryId]);
 
@@ -419,30 +344,16 @@ export default function Handwriting({ active }: { active: boolean }) {
   const reviewPos = review ? Math.max(1, review.total - queue.filter((i) => !review.skipped.includes(i)).length + 1) : 0;
   const canRerun = !!file && !!shown && !shown.sample && !shown.fromHistory;
 
-  const historyStatus = (
-    <HistoryStatus account={user ? user.displayName || user.email || "" : null} canSignIn={canSignIn}
-      localCount={uid ? localCount : 0} importing={importing} onImport={importLocal} />
-  );
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-end gap-2">
         <Button size="sm" variant="ghost" icon={<Keyboard className="size-4" aria-hidden="true" />} onClick={() => setKeysOpen(true)}>{t("cs.keys.title")}</Button>
-        {!showSide && (
-          <Button size="sm" variant="ghost" icon={wide ? <PanelLeftOpen className="size-4" aria-hidden="true" /> : <History className="size-4" aria-hidden="true" />}
-            onClick={() => (wide ? dock(true) : setHistoryOpen(true))} title={wide ? t("cs.history.show") : undefined}>
-            {t("cs.history.button", { n: history.length })}
-          </Button>
-        )}
+        <Button size="sm" variant="ghost" icon={<History className="size-4" aria-hidden="true" />} onClick={() => setHistoryOpen(true)}>
+          {t("cs.history.button", { n: history.length })}
+        </Button>
       </div>
 
-      <div className={showSide ? "grid items-start gap-6 xl:grid-cols-[15rem_minmax(0,1fr)]" : ""}>
-      {showSide && (
-        <HistorySidebar count={history.length} status={historyStatus} onHide={() => dock(false)} onManage={() => setHistoryOpen(true)}>
-          <HistoryList compact entries={history} currentId={shown?.entryId ?? null} onOpen={openEntry} onDelete={(id) => removeEntries([id])} />
-        </HistorySidebar>
-      )}
-      <div className={`grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] ${showSide ? "" : "xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]"}`}>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
         <div className="min-w-0">
           <InputPanel
             file={file} name={name} preview={preview} kind={kind} problem={problem} isSample={!!shown?.sample}
@@ -476,7 +387,6 @@ export default function Handwriting({ active }: { active: boolean }) {
           )}
         </div>
       </div>
-      </div>
 
       <WordDialog
         open={wordIdx !== null} index={wordIdx} words={words} models={Object.keys(shown?.result.readings ?? {}).length}
@@ -489,9 +399,9 @@ export default function Handwriting({ active }: { active: boolean }) {
           name={shown.name} ts={shown.ts} rows={rows} onCopy={copy} />
       )}
       <HistoryDialog open={historyOpen} onClose={() => setHistoryOpen(false)} entries={history} currentId={shown?.entryId ?? null}
-        cloud={!!uid} status={historyStatus} onOpen={openEntry}
-        onDelete={(id) => removeEntries([id])}
-        onClear={() => removeEntries(historyRef.current.map((x) => x.id))} />
+        onOpen={openEntry}
+        onDelete={(id) => { persist(historyRef.current.filter((x) => x.id !== id)); if (shown?.entryId === id) setShown((s) => s && { ...s, entryId: null }); }}
+        onClear={() => { persist([]); setShown((s) => s && { ...s, entryId: null }); }} />
       <ShortcutsDialog open={keysOpen} onClose={() => setKeysOpen(false)} />
       <Dialog open={confirmRerun} onClose={() => setConfirmRerun(false)} title={t("cs.rerun.title")}
         footer={<>
