@@ -28,7 +28,7 @@ from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from difflib import SequenceMatcher, get_close_matches
 from pathlib import Path
 
-from . import llm, rx_safety
+from . import llm, rx_safety, store
 
 CACHE = Path(__file__).resolve().parent.parent / ".cache"
 LEXICON = Path(__file__).resolve().parent.parent / "data" / "lexicon.txt"
@@ -144,12 +144,17 @@ def _cached(key_parts: list, fn):
         value = json.loads(f.read_text(encoding="utf-8"))
         if not (isinstance(value, str) and not value.strip()):  # never trust a cached empty reply
             return value
+    value = store.cache_get(key)  # shared copy in Supabase survives server restarts
+    if value is not None and not (isinstance(value, str) and not value.strip()):
+        f.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+        return value
     local = len(key_parts) > 2 and key_parts[2] == "ollama"  # runs on this laptop: free, so always allowed
     if os.getenv("HW_CACHE_ONLY") == "1" and key_parts[0] in ("read", "reread") and not local:
         raise RuntimeError("not in cache (HW_CACHE_ONLY=1)")  # experiments replay, never call cloud vision models
     value = fn()
     if not (isinstance(value, str) and not value.strip()):
         f.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+        store.cache_put(key, value)
     return value
 
 
@@ -633,7 +638,9 @@ def writer_words(writer: str | None) -> list[str]:
     if not writer or not writer.strip():
         return []
     f = _writer_file(writer)
-    return json.loads(f.read_text(encoding="utf-8")) if f.exists() else []
+    words = json.loads(f.read_text(encoding="utf-8")) if f.exists() else []
+    seen = {norm(w) for w in words}
+    return words + [w for w in store.writer_words(f.stem) if norm(w) not in seen]  # Supabase copy, if set up
 
 
 def save_answer(writer: str, original: str, answer: str) -> int:
@@ -647,6 +654,7 @@ def save_answer(writer: str, original: str, answer: str) -> int:
         words.append(answer)
     WRITERS.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps(words, ensure_ascii=False, indent=1), encoding="utf-8")
+    store.save_answer(f.stem, original, answer)
     return len(words)
 
 
