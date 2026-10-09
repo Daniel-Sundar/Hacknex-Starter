@@ -5,7 +5,7 @@ import { isMarginTag, isNewline, markWords, stats, wordStatus, type HwResult, ty
 export type ExportMeta = { name: string; ts: number; rows?: RxRow[] | null };
 
 export function toText(words: Word[]): string {
-  const flagged = stats(words, null).flagged;
+  const flagged = stats(words, null).marked;
   const body = markWords(words);
   return flagged
     ? `${body}\n\n---\n${flagged} word(s) in [[ ]] were not verified. Check them against the original.\n`
@@ -24,7 +24,7 @@ export function toMarkdown(words: Word[], result: HwResult, meta: ExportMeta): s
     `- Digitized: ${new Date(meta.ts).toISOString()}`,
     `- Document type: ${result.doc_type ?? "note"}`,
     `- Models that read it: ${s.models}${s.failed ? ` (${s.failed} failed)` : ""}`,
-    `- Unverified words: ${s.flagged}`,
+    `- Unverified words: ${s.marked}${s.likely ? ` (${s.likely} probably right)` : ""}`,
     `- Corrected by a person: ${s.human}`,
     "",
     "## Text",
@@ -32,7 +32,7 @@ export function toMarkdown(words: Word[], result: HwResult, meta: ExportMeta): s
     lines.join("  \n"),
     "",
   ];
-  if (s.flagged) {
+  if (s.marked) {
     out.push("> Words in **[[ ]]** were not verified. Check them against the original before use.", "");
     out.push("## Needs verification", "", "| Word | Models read | Note |", "| --- | --- | --- |");
     for (const w of words.filter((x) => x.flagged && !isNewline(x))) {
@@ -55,7 +55,7 @@ export function toMarkdown(words: Word[], result: HwResult, meta: ExportMeta): s
 
 export function toJSON(words: Word[], result: HwResult, meta: ExportMeta): string {
   const s = stats(words, result);
-  const status = { agreed: "agreed", flagged: "needs_verification", lookalike: "needs_verification", context: "fixed_by_context",
+  const status = { agreed: "agreed", likely: "probably_right_unverified", flagged: "needs_verification", lookalike: "needs_verification", context: "fixed_by_context",
     guess: "fixed_by_context", human: "confirmed_by_person" } as const;
   return JSON.stringify({
     format: "clearscript/1",

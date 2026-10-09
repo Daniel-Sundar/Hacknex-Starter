@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { AlertTriangle, Check, ClipboardCopy, Download, ListChecks, Loader2, Pill, RotateCcw } from "lucide-react";
+import { AlertTriangle, Check, ClipboardCopy, Download, Eye, EyeOff, ListChecks, Loader2, Pill, RotateCcw } from "lucide-react";
 import { Badge, Button, ErrorState, Notice, Panel, type Tone } from "../../components/ui";
 import { useT } from "../../i18n";
 import {
@@ -17,6 +17,7 @@ type Props = {
 export function ResultView(p: Props) {
   const { t, tn, pct } = useT();
   const s = stats(p.words, p.result);
+  const [showLikely, setShowLikely] = useState(false);
   const isRx = p.result.doc_type === "prescription";
   const ours = useMemo(() => joinWords(p.words), [p.words]);
   const failed = Object.entries(p.result.errors).filter(([k]) => k !== "baseline");
@@ -31,7 +32,8 @@ export function ResultView(p: Props) {
               {s.flagged ? <AlertTriangle className="size-5 shrink-0" aria-hidden="true" /> : <Check className="size-5 shrink-0" aria-hidden="true" />}
               {s.flagged ? tn("cs.verdict.flagged", s.flagged) : t("cs.verdict.clear")}
             </h2>
-            <p className="text-sm text-ink">{s.flagged ? t("cs.verdict.flagged.body") : s.models > 1 ? t("cs.verdict.clear.body") : t("cs.verdict.clear.single")}</p>
+            <p className="text-sm text-ink">{s.flagged ? t("cs.verdict.flagged.body") : s.models <= 1 ? t("cs.verdict.clear.single")
+              : s.likely ? t("cs.verdict.clear.likely") : t("cs.verdict.clear.body")}</p>
             {s.lookalikes > 0 && <p className="text-sm font-medium text-danger-fg">{tn("cs.verdict.lookalikes", s.lookalikes)}</p>}
           </div>
           {s.flagged > 0 && (
@@ -74,8 +76,18 @@ export function ResultView(p: Props) {
           <Stat label={t("cs.stat.agreement")} value={pct(s.agreement)} hint={t("cs.stat.agreement.hint")} />
           <Stat label={t("cs.stat.models")} value={failed.length ? t("cs.stat.modelsOf", { done: s.models, n: s.models + failed.length }) : String(s.models)} />
         </dl>
-        <Transcript words={p.words} onOpen={p.onOpenWord} focusWord={p.focusWord} />
-        <Legend />
+        <Transcript words={p.words} onOpen={p.onOpenWord} focusWord={p.focusWord} showLikely={showLikely} />
+        {s.likely > 0 && (
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+            <span>{tn("cs.likely.more", s.likely)}</span>
+            <button type="button" aria-pressed={showLikely} onClick={() => setShowLikely((v) => !v)}
+              className="inline-flex min-h-8 items-center gap-1 rounded-md px-1 font-medium text-accent-text underline-offset-2 hover:underline">
+              {showLikely ? <EyeOff className="size-3.5" aria-hidden="true" /> : <Eye className="size-3.5" aria-hidden="true" />}
+              {showLikely ? t("cs.likely.hide") : t("cs.likely.show")}
+            </button>
+          </p>
+        )}
+        <Legend showLikely={showLikely && s.likely > 0} />
         {(s.human > 0 || s.context > 0) && (
           <p className="text-xs text-muted">
             {[s.human ? tn("cs.result.human", s.human) : "", s.context ? tn("cs.result.context", s.context) : ""].filter(Boolean).join(" · ")}
@@ -103,6 +115,7 @@ function Stat({ label, value, hint, tone }: { label: string; value: string; hint
 
 const WORD_CLS: Record<WordStatus, string> = {
   agreed: "hover:bg-surface",
+  likely: "underline decoration-flag-line decoration-dotted decoration-1 underline-offset-4 hover:bg-surface",
   flagged: "bg-flag-bg text-flag-fg underline decoration-flag-line decoration-dashed decoration-2 underline-offset-4",
   lookalike: "bg-danger-bg text-danger-fg underline decoration-danger-line decoration-wavy decoration-2 underline-offset-4",
   context: "bg-info-bg text-info-fg underline decoration-info-line decoration-dotted decoration-2 underline-offset-4",
@@ -112,10 +125,12 @@ const WORD_CLS: Record<WordStatus, string> = {
 const MARKER: Partial<Record<WordStatus, string>> = { flagged: "?", lookalike: "!", human: "✓" };
 
 /** The text as buttons: one tab stop, arrow keys move between words, Enter opens a word. */
-function Transcript({ words, onOpen, focusWord }: { words: Word[]; onOpen: (i: number) => void; focusWord: number | null }) {
+function Transcript({ words, onOpen, focusWord, showLikely }: {
+  words: Word[]; onOpen: (i: number) => void; focusWord: number | null; showLikely: boolean;
+}) {
   const { t } = useT();
   const order = useMemo(() => words.flatMap((w, i) => (isNewline(w) || isMarginTag(w) ? [] : [i])), [words]);
-  const firstFlag = order.find((i) => words[i].flagged);
+  const firstFlag = order.find((i) => words[i].flagged && !words[i].likely);
   const [active, setActive] = useState<number | undefined>(firstFlag ?? order[0]);
   const refs = useRef(new Map<number, HTMLButtonElement>());
   const tabStop = active !== undefined && order.includes(active) ? active : order[0];
@@ -156,7 +171,8 @@ function Transcript({ words, onOpen, focusWord }: { words: Word[]; onOpen: (i: n
           <p key={li} className="break-words">
             {line.map(({ w, i }) => {
               if (isMarginTag(w)) return <Badge key={i} className="me-1 align-middle">{t("cs.word.margin")}</Badge>;
-              const st = wordStatus(w);
+              const raw = wordStatus(w);
+              const st = raw === "likely" && !showLikely ? "agreed" : raw; // probably right: plain text unless asked
               return (
                 <Fragment key={i}>
                   <button
@@ -182,9 +198,11 @@ function Transcript({ words, onOpen, focusWord }: { words: Word[]; onOpen: (i: n
   );
 }
 
-function Legend() {
+function Legend({ showLikely }: { showLikely: boolean }) {
   const { t } = useT();
-  const items: [WordStatus, string][] = [["flagged", "?"], ["lookalike", "!"], ["context", ""], ["human", "✓"]];
+  const items: [WordStatus, string][] = [
+    ["flagged", "?"], ...(showLikely ? [["likely", ""] as [WordStatus, string]] : []), ["lookalike", "!"], ["context", ""], ["human", "✓"],
+  ];
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-body">
       <span className="sr-only">{t("cs.legend.title")}</span>

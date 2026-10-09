@@ -5,6 +5,7 @@ export type Word = {
   text: string;
   confidence?: number;          // share of models that read this word (agreement, not a probability)
   flagged?: boolean;
+  likely?: boolean;             // flagged, but most models agree and it is no number, dose or drug: "probably right"
   alternatives?: string[];
   resolved_by?: "context" | "human" | string;
   evidence?: string;            // context fix: "lexicon" (dictionary-backed) | "guess" | "reread" | ...
@@ -25,6 +26,8 @@ export type HwResult = {
   stages: { clean: boolean; vote: boolean; context: boolean };
   baseline?: string;
   doc_type?: "prescription" | "note";
+  page_type?: PageType;
+  to_check?: number;
 };
 
 /** One medicine from POST /api/handwriting/table. Numbers are shown exactly as returned. */
@@ -44,12 +47,13 @@ export const isMarginTag = (w: Word) => w.text.toLowerCase() === "[margin]";
 export const isUnreadable = (w: Word) => w.text === "[?]";
 export const hasDigit = (s: string) => /\d/.test(s);
 
-export type WordStatus = "agreed" | "flagged" | "lookalike" | "context" | "guess" | "human";
+export type WordStatus = "agreed" | "likely" | "flagged" | "lookalike" | "context" | "guess" | "human";
 
 /** One status per word, in the order a reader must care about. */
 export function wordStatus(w: Word): WordStatus {
   if (w.resolved_by === "human") return "human";
   if (w.flagged && w.lookalikes?.length) return "lookalike";
+  if (w.flagged && w.likely) return "likely";
   if (w.flagged) return "flagged";
   if (w.resolved_by === "context") return w.evidence === "guess" ? "guess" : "context";
   return "agreed";
@@ -75,7 +79,7 @@ export function markWords(words: Word[]): string {
 export function reviewQueue(words: Word[]): number[] {
   return words
     .map((w, i) => ({ w, i }))
-    .filter(({ w }) => w.flagged)
+    .filter(({ w }) => w.flagged && !w.likely)
     .sort((a, b) =>
       Number(hasDigit(b.w.text) || (b.w.alternatives ?? []).some(hasDigit)) -
         Number(hasDigit(a.w.text) || (a.w.alternatives ?? []).some(hasDigit)) ||
@@ -112,7 +116,9 @@ export function stats(words: Word[], result: HwResult | null) {
   const failed = Object.keys(result?.errors ?? {}).filter((k) => k !== "baseline").length;
   return {
     words: real.length,
-    flagged: real.filter((w) => w.flagged).length,
+    flagged: real.filter((w) => w.flagged && !w.likely).length, // needs checking by a person
+    likely: real.filter((w) => w.flagged && w.likely).length,  // probably right: shown plain unless asked
+    marked: real.filter((w) => w.flagged).length,              // every word not verified (exports mark these)
     lookalikes: real.filter((w) => w.flagged && w.lookalikes?.length).length,
     human: real.filter((w) => w.resolved_by === "human").length,
     context: real.filter((w) => w.resolved_by === "context" && !w.flagged).length,

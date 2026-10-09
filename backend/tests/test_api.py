@@ -614,3 +614,43 @@ def test_page_type_picks_prompt_and_rules(client, fake, monkeypatch, page, promp
 def test_prompts_never_invite_guessing():
     for p in (handwriting.FORM_PROMPT, handwriting.RX_PROMPT, handwriting.LEGAL_PROMPT):
         assert "[?]" in p and "NEVER guess" in p and "translate" in p.lower()
+
+
+# ---------- two flag levels ----------
+
+def _w(text, votes, readers=4, **extra):
+    return {"text": text, "flagged": True, "votes": votes, "readers": readers, "alternatives": [], **extra}
+
+
+def test_likely_only_for_clear_majorities_of_plain_words():
+    words = [
+        _w("fever", {"fever": 2, "fewer": 1, "fiver": 1}),        # clear winner: probably right
+        _w("fever", {"fever": 2, "fewer": 2}),                    # tie: check
+        _w("fever", {"fever": 1, "fewer": 1, "a": 1, "b": 1}),   # no majority: check
+        _w("fever", {"fever": 2, "fewer": 1}, readers=2),         # too few readers: check
+        _w("500", {"500": 3, "800": 1}),                          # numbers: always check
+        _w("BD", {"BD": 3, "OD": 1}),                             # dose frequency: always check
+        _w("Metformin", {"Metformin": 3, "Metfornin": 1}),        # drug name: always check
+        _w("fever", {"fever": 3, "fewer": 1}, alternatives=["5mg"]),  # an alternative is a dose: check
+        _w("fever", {"fever": 3, "fewer": 1}, lookalikes=["x"]),  # look-alike drug: check
+        _w("[?]", {"[?]": 3, "a": 1}),                            # unreadable: check
+    ]
+    out = handwriting.mark_likely(words, "auto")
+    assert [bool(w.get("likely")) for w in out] == [True] + [False] * 9
+    assert all(w["flagged"] for w in out)  # still unverified for exports and the eval
+
+
+def test_likely_never_on_names_in_legal_pages():
+    out = handwriting.mark_likely([_w("Ravi", {"Ravi": 3, "Ravl": 1}), _w("land", {"land": 3, "lend": 1})], "legal")
+    assert [bool(w.get("likely")) for w in out] == [False, True]
+
+
+def test_likely_can_be_switched_off(monkeypatch):
+    monkeypatch.setattr(handwriting, "LIKELY", False)
+    assert not handwriting.mark_likely([_w("fever", {"fever": 3, "fewer": 1})])[0].get("likely")
+
+
+def test_result_reports_words_to_check(client):
+    r = client.post("/api/handwriting", files={"file": ("p.png", PNG, "image/png")})
+    body = r.json()
+    assert body["to_check"] == sum(1 for w in body["words"] if w.get("flagged") and not w.get("likely"))

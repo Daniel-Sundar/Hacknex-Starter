@@ -100,3 +100,9 @@ def test_error_never_contains_the_key(monkeypatch, capsys):
     monkeypatch.setenv("GEMINI_API_KEYS", "secretAAAA,secretBBBB")
     run({"secretAAAA": Err(429, "Quota exceeded per day")})
     assert "secret" not in capsys.readouterr().out
+
+
+def test_openrouter_upstream_limit_does_not_burn_other_keys(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEYS", "a,b")
+    with pytest.raises(Err):
+        run({"a": Err(429, "Provider returned error: model is temporarily rate-limited upstream")})

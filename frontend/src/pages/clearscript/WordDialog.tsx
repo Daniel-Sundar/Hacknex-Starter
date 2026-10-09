@@ -5,7 +5,7 @@ import { useT } from "../../i18n";
 import { agreement, candidates, hasDigit, isMarginTag, isNewline, wordStatus, type Word, type WordStatus } from "../../lib/handwriting";
 import { modelLabel } from "../../lib/progress";
 
-const TONE: Record<WordStatus, Tone> = { agreed: "ok", flagged: "flag", lookalike: "danger", context: "info", guess: "info", human: "ok" };
+const TONE: Record<WordStatus, Tone> = { agreed: "ok", likely: "neutral", flagged: "flag", lookalike: "danger", context: "info", guess: "info", human: "ok" };
 
 /** One word up close: what each model read, why it is (or isn't) flagged, and the person's final answer.
  *  In review mode it steps through the flagged words. */

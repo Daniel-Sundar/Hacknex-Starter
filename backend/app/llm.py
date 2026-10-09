@@ -84,6 +84,8 @@ def _key_problem(e: Exception) -> float:
     """Seconds to rest this key, 0 = try the next key now without resting it, -1 = not a key problem."""
     status = getattr(e, "status_code", None)
     msg = "".join(str(e).lower().replace("-", "").replace("_", "").split())  # "PerDay", "per day", "per_day"
+    if status == 429 and ("upstream" in msg or "providerreturnederror" in msg):
+        return -1  # OpenRouter: the model's own host is busy for everyone; another key won't help
     if status == 429:
         return DAY_COOL if "perday" in msg else 0  # per-minute: another account's minute is still free
     if status in (401, 403):

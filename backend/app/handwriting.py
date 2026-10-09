@@ -803,6 +803,54 @@ def reread(img: bytes, words: list[dict], kind: str = "note") -> list[dict]:
 KNOWLEDGE = Path(__file__).resolve().parent.parent / "data" / "knowledge"  # extra word lists, e.g. drug names
 
 
+# ---------- two flag levels ----------
+# A flagged word whose readers mostly agree is shown as "probably right" (likely=True) instead of "check this".
+# It stays flagged=True, so exports and the eval still treat it as unverified. Never for numbers, units or dose
+# frequencies, drug names, look-alike drugs, unreadable words, or names on legal pages.
+LIKELY = os.getenv("HW_LIKELY", "1") == "1"
+LIKELY_MIN = float(os.getenv("HW_LIKELY_MIN", "0.5"))  # dev pages: 99 flags -> 42 to check; 91% of "likely" right
+_STRICT_TOKEN = re.compile(r"^(mg|mcg|ml|g|gm|iu|units?|od|bd|bid|tds|tid|qid|qds|hs|sos|stat|prn|ac|pc|tab|cap|syp|inj)\.?$",
+                           re.I)
+
+
+def _drug_words() -> set[str]:
+    global _DRUGS
+    try:
+        return _DRUGS
+    except NameError:
+        _DRUGS = {norm(w) for w in knowledge_words() + list(getattr(rx_safety, "DRUGS", [])) if len(w) > 3}
+        return _DRUGS
+
+
+def _strict(text: str, page: str) -> bool:
+    if "?" in text:  # [?] = no reader could read it
+        return True
+    t = text.strip(".,;:()[]")
+    if not t or re.search(r"\d", t) or _STRICT_TOKEN.match(t):
+        return True
+    if norm(t) in _drug_words():
+        return True
+    return page == "legal" and t[:1].isupper()  # names, places and parties on deeds and agreements
+
+
+def mark_likely(words: list[dict], page: str = "auto") -> list[dict]:
+    """Sets likely=True on flagged words that most readers agree on (see the comment above)."""
+    if not LIKELY:
+        return words
+    for w in words:
+        w.pop("likely", None)
+        if not w.get("flagged") or w.get("lookalikes") or w.get("resolved_by") == "human":
+            continue
+        votes = sorted((w.get("votes") or {}).values(), reverse=True)
+        readers = w.get("readers") or 0
+        if readers < 3 or not votes or votes[0] / readers < LIKELY_MIN or (len(votes) > 1 and votes[1] >= votes[0]):
+            continue
+        if _strict(w["text"], page) or any(_strict(a, page) for a in w.get("alternatives") or []):
+            continue
+        w["likely"] = True
+    return words
+
+
 def knowledge_words() -> list[str]:
     """Every word list in data/knowledge/*.txt (one entry per line): the knowledge base for dictionary_fix."""
     if not KNOWLEDGE.exists():
@@ -954,7 +1002,8 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
         stage("safety", "done")
     else:
         stage("safety", "skipped")
-    flagged =sum(1 for w in words if w.get("flagged"))
+    words = mark_likely(words, page)
+    flagged = sum(1 for w in words if w.get("flagged"))
     return {
         "text": render(words),
         "marked": render(words, mark_flags=True),
@@ -962,6 +1011,7 @@ def digitize(data: bytes, use_clean: bool = True, use_vote: bool = True, use_con
         "readings": readings,
         "errors": errors,
         "flagged": flagged,
+        "to_check": sum(1 for w in words if w.get("flagged") and not w.get("likely")),
         "stages": {"clean": use_clean, "vote": use_vote, "context": use_context},
         "doc_type": kind,
         "page_type": page,
