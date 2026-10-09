@@ -139,6 +139,7 @@ export default {
   "cs.fail.slow": "took too long to answer",
   "cs.fail.key": "its API key was refused",
   "cs.fail.other": "unavailable right now",
+  "cs.fail.translated": "wrote a translation instead of copying the page, so it was left out",
   "cs.result.single": "Only one model read this page (Ask several models is off), so nothing can be flagged by disagreement.",
   "cs.result.human_one": "{count} word confirmed by you",
   "cs.result.human_other": "{count} words confirmed by you",

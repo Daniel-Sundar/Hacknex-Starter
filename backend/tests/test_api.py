@@ -735,3 +735,38 @@ def test_docs_search_keeps_indian_words_whole(client):
     upload(client, "ta.txt", "காய்ச்சலுக்கு மருந்து காலை மாலை சாப்பிடவும்.".encode())
     upload(client, "other.txt", b"The garden must be kept clean.")
     assert rag.search("மருந்து எப்போது?")[0]["source"] == "ta.txt"
+
+
+# ---------- non-Latin pages: never one reader, never a translation ----------
+
+TA = "நிலம் விற்பனை பத்திரம்\nசர்வே எண் 45"
+EN = "Land sale deed\nSurvey number 45"
+
+
+def test_translation_is_left_out_of_the_vote(fake):
+    fake.texts = {"a": TA, "b": TA, "b2": TA, "c": EN}
+    r = handwriting.digitize(PNG)
+    assert "fake:c" not in r["readings"] and "translated" in r["errors"]["fake:c"]
+    assert "நிலம்" in r["text"]
+
+
+def test_english_pages_drop_nobody():
+    kept, dropped = handwriting.drop_translations({"a": EN, "b": EN.lower(), "c": "Land sale"})
+    assert len(kept) == 3 and dropped == {}
+
+
+def test_never_drops_every_reader():
+    kept, dropped = handwriting.drop_translations({"a": EN})
+    assert kept == {"a": EN} and dropped == {}
+
+
+def test_waits_for_a_second_reader_instead_of_voting_alone(fake, monkeypatch):
+    monkeypatch.setattr(handwriting, "VOTE_DEADLINE", 0.2)
+    fake.delay = {"b": 0.6, "b2": 0.6, "c": 0.6}  # only "a" answers before the deadline
+    r = handwriting.digitize(PNG)
+    assert len(r["readings"]) >= 2
+
+
+def test_every_prompt_forbids_translation():
+    for p in (handwriting.READ_PROMPT, handwriting.FORM_PROMPT, handwriting.RX_PROMPT, handwriting.LEGAL_PROMPT):
+        assert "NEVER translate" in p

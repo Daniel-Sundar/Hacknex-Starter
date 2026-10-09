@@ -422,4 +422,5 @@ export default {
   "cs.fail.slow": "जवाब देने में बहुत देर लगी",
   "cs.fail.key": "इसकी API कुंजी अस्वीकार हुई",
   "cs.fail.other": "अभी उपलब्ध नहीं है",
+  "cs.fail.translated": "पन्ने की नकल की जगह अनुवाद लिखा, इसलिए हटाया गया",
 } satisfies Messages;

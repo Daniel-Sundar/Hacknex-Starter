@@ -17,6 +17,7 @@ type Props = {
 /** A short, human reason for a model that didn't answer (the raw provider error stays in the tooltip). */
 function failReason(e: string): MessageKey {
   const x = e.toLowerCase();
+  if (/translat/.test(x)) return "cs.fail.translated";
   if (/429|quota|rate.?limit|too many/.test(x)) return "cs.fail.busy";
   if (/timeout|timed out|no answer within/.test(x)) return "cs.fail.slow";
   if (/401|403|api key|not set/.test(x)) return "cs.fail.key";

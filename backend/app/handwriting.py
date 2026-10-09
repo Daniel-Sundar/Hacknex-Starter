@@ -50,8 +50,9 @@ DEFAULT_READERS = (
 )
 EXHAUSTED_FOR = 3600  # s; a model out of daily quota is not asked again for this long
 DEFAULT_BASELINE = "groq:qwen/qwen3.8-27b"  # same model as the first reader, plain prompt
-READ_TIMEOUT = float(os.getenv("HW_READ_TIMEOUT", "90"))  # seconds per model call
-VOTE_DEADLINE = float(os.getenv("HW_VOTE_DEADLINE", "60"))  # wait for every voter, at most this long per page
+READ_TIMEOUT = float(os.getenv("HW_READ_TIMEOUT", "150"))  # seconds per model call (dense non-Latin pages are slow)
+VOTE_DEADLINE = float(os.getenv("HW_VOTE_DEADLINE", "90"))  # wait for every voter, at most this long per page...
+MIN_READERS = int(os.getenv("HW_MIN_READERS", "2"))  # ...but keep waiting until this many usable readings are in
 
 READ_PROMPT = """Transcribe the handwriting in this image exactly as written.
 Rules:
@@ -59,6 +60,7 @@ Rules:
 - Skip words that are crossed out.
 - Put margin notes on their own line, starting with "[margin] ".
 - If you cannot read a word with confidence, write [?] in its place. NEVER guess.
+- Write the text in the same language and script as the page: Tamil stays in Tamil script, Hindi in Devanagari, and so on. NEVER translate into English.
 - Output only the transcription, no commentary."""
 
 READ_PROMPT_V2 = """Transcribe the HANDWRITING in this image exactly as written.
@@ -69,6 +71,7 @@ Rules:
   word written above or next to it, write only the new word.
 - Put real margin notes on their own line, starting with "[margin] ". Never repeat lines of the main text as margin notes.
 - If you cannot read a word with confidence, write [?] in its place. NEVER guess.
+- Write the text in the same language and script as the page: Tamil stays in Tamil script, Hindi in Devanagari, and so on. NEVER translate into English.
 - Output only the transcription, no commentary."""
 if os.getenv("HW_PROMPT", "v1") == "v2":
     READ_PROMPT = READ_PROMPT_V2
@@ -86,7 +89,7 @@ Rules:
 - Tick boxes and options: write ☑ before a ticked, circled or marked option and ☐ before an unmarked one,
   for example "Gender: ☑ Male ☐ Female".
 - Copy handwritten words and numbers exactly: dates, phone and ID numbers digit by digit. Do not fix spelling or format.
-- Keep the original language and script. Do not translate.
+- Keep the original language and script (Tamil stays Tamil). NEVER translate into English.
 - Leave out printed instructions, logos and footers that are not field labels, and words that are crossed out.
 - If you cannot read a handwritten word or number with confidence, write [?] in its place. NEVER guess.
 - Output only the transcription, no commentary."""
@@ -101,14 +104,14 @@ Rules:
 - Copy every letter and digit exactly as you see it. NEVER replace a word with a similar medicine name you know.
 - Copy numbers, doses and units digit by digit.
 - Keep the line breaks. Leave out the printed letterhead (clinic name, address, phone) and crossed-out words.
-- Keep the original language and script. Do not translate.
+- Keep the original language and script (Tamil stays Tamil). NEVER translate into English.
 - If you cannot read a word or number with confidence, write [?] in its place. NEVER guess a medicine name or dose.
 - Output only the transcription, no commentary."""
 
 LEGAL_PROMPT = """Transcribe this LEGAL document (land record, sale deed, lease, agreement or affidavit) exactly as
 written, handwritten and typed text alike.
 Rules:
-- Copy every word exactly. Do not summarise, shorten, correct or translate. Keep the original language and script.
+- Copy every word exactly. Do not summarise, shorten, correct or translate. Keep the original language and script (Tamil stays Tamil). NEVER translate into English.
 - Keep the line breaks and the order of the paragraphs.
 - Copy every number digit by digit: survey and plot numbers, areas (acres, cents, sq.ft, hectares), amounts,
   dates, document and registration numbers.
@@ -437,6 +440,23 @@ def read_slot(data: bytes, slot: list[tuple[str, str | None]], claimed: set[str]
     return _name(*slot[0]), error
 
 
+def _non_latin_share(text: str) -> float:
+    letters = [c for c in text if c.isalpha()]
+    return sum(1 for c in letters if ord(c) > 0x024F) / len(letters) if letters else 0.0
+
+
+def drop_translations(readings: dict[str, str]) -> tuple[dict[str, str], dict[str, str]]:
+    """If some readers wrote the page in a non-Latin script (Tamil, Hindi...) and others wrote almost only Latin
+    letters, the Latin ones translated instead of copying: leave them out of the vote.
+    Returns (kept readings, {reader: reason} for the dropped ones). Never drops everyone."""
+    share = {n: _non_latin_share(t) for n, t in readings.items()}
+    if not share or max(share.values()) < 0.4:
+        return readings, {}
+    kept = {n: t for n, t in readings.items() if share[n] >= 0.1}
+    dropped = {n: "translated the page instead of copying it in its own script" for n in readings if n not in kept}
+    return (kept, dropped) if kept else (readings, {})
+
+
 def read_all(data: bytes, progress=None, prompt: str = READ_PROMPT) -> dict:
     """{"readings": {reader: text}, "errors": {reader: error}}."""
     slots, claimed = _slots(), set()
@@ -454,10 +474,15 @@ def read_all(data: bytes, progress=None, prompt: str = READ_PROMPT) -> dict:
     futures = {pool.submit(read_slot, data, s, claimed, relay(i), i, prompt): s for i, s in enumerate(slots)}
     # Wait for every voter to answer or fail; the vote starts as soon as the last one is in, or after
     # VOTE_DEADLINE seconds for the whole page. Voters still running then are left out of this vote but keep
-    # running in the background and fill the cache for next time. Wait longer only if nobody answered.
+    # running in the background and fill the cache for next time. If fewer than MIN_READERS usable readings are
+    # in by then (one reader alone can't be cross-checked), keep waiting for the others, up to READ_TIMEOUT + 30 s.
+    def usable(fs) -> int:
+        texts = {i: f.result()[1] for i, f in enumerate(fs) if isinstance(f.result()[1], str) and f.result()[1].strip()}
+        return len(drop_translations({str(i): t for i, t in texts.items()})[0])
+
     done, pending = wait(futures, timeout=VOTE_DEADLINE)
-    give_up = time.time() + READ_TIMEOUT * 3
-    while pending and not any(isinstance(f.result()[1], str) for f in done) and time.time() < give_up:
+    give_up = time.time() + max(5.0, READ_TIMEOUT + 30 - (time.monotonic() - t0))
+    while pending and usable(done) < MIN_READERS and time.time() < give_up:
         more, pending = wait(pending, timeout=give_up - time.time(), return_when=FIRST_COMPLETED)
         done |= more
     pool.shutdown(wait=False)
@@ -472,6 +497,8 @@ def read_all(data: bytes, progress=None, prompt: str = READ_PROMPT) -> dict:
     readings = {n: t for n, t in results if isinstance(t, str) and t.strip()}
     errors = {n: (str(t)[:200] if not isinstance(t, str) else "empty reply")
               for n, t in results if n not in readings}
+    readings, translated = drop_translations(readings)
+    errors.update(translated)
     if not readings:
         raise RuntimeError("No vision model answered: " + json.dumps(errors))
     return {"readings": readings, "errors": errors}

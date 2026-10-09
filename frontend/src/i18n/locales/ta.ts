@@ -422,4 +422,5 @@ export default {
   "cs.fail.slow": "பதிலளிக்க அதிக நேரம் எடுத்தது",
   "cs.fail.key": "அதன் API சாவி நிராகரிக்கப்பட்டது",
   "cs.fail.other": "இப்போது கிடைக்கவில்லை",
+  "cs.fail.translated": "பக்கத்தை நகலெடுக்காமல் மொழிபெயர்த்தது, எனவே விலக்கப்பட்டது",
 } satisfies Messages;
