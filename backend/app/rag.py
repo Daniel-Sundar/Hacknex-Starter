@@ -205,7 +205,13 @@ def answer(question: str) -> dict:
         "original.\n\n"
         f"Context:\n{context or '(no documents)'}\n\nQuestion: {question}")
     msg = llm.chat([{"role": "user", "content": prompt}])
-    return {"answer": msg["content"] if isinstance(msg, dict) else msg.content, "sources": hits}
+    text = (msg["content"] if isinstance(msg, dict) else msg.content) or ""
+    return {"answer": fix_citations(text), "sources": hits}
+
+
+def fix_citations(text: str) -> str:
+    """Some models cite like 【1】 or 【1†source】; the app links [1]."""
+    return re.sub(r"【\s*(\d{1,3})[^】]*】", r"[\1]", text)
 
 
 def clear():

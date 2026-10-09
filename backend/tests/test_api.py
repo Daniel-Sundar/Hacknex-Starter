@@ -711,3 +711,8 @@ def test_result_reports_words_to_check(client):
     r = client.post("/api/handwriting", files={"file": ("p.png", PNG, "image/png")})
     body = r.json()
     assert body["to_check"] == sum(1 for w in body["words"] if w.get("flagged") and not w.get("likely"))
+
+
+def test_docs_citation_brackets_are_normalised():
+    assert rag.fix_citations("500 mg for 5 days【1】 and【2†L3-L5】.") == "500 mg for 5 days[1] and[2]."
+    assert rag.fix_citations("Plain [1] stays.") == "Plain [1] stays."

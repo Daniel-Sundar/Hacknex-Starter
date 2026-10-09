@@ -2,7 +2,7 @@
 export default {
   // How it works (before any document is loaded)
   "docs.empty.title": "How it works",
-  "docs.empty.step1": "Add PDF, TXT, MD or CSV files under Documents.",
+  "docs.empty.step1": "Add PDFs, Word files, text files or photos of handwritten pages under Documents.",
   "docs.empty.step2": "Ask a question in plain language.",
   "docs.empty.step3": "Check the cited passages. Each answer links to the parts of your files it comes from.",
   "docs.noAnswers.title": "No questions yet",

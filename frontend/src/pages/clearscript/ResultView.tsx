@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { AlertTriangle, Check, ClipboardCopy, Download, Eye, EyeOff, ListChecks, Loader2, Pill, RotateCcw } from "lucide-react";
 import { Badge, Button, ErrorState, Notice, Panel, type Tone } from "../../components/ui";
-import { useT } from "../../i18n";
+import { useT, type MessageKey } from "../../i18n";
 import {
   isMarginTag, isNewline, isUnreadable, joinWords, stats, wordStatus, type HwResult, type RxRow, type Word, type WordStatus,
 } from "../../lib/handwriting";
@@ -13,6 +13,15 @@ type Props = {
   onOpenWord: (i: number) => void; onReview: () => void; onExport: () => void; onCopy: () => void; onRerun: () => void;
   focusWord: number | null;
 };
+
+/** A short, human reason for a model that didn't answer (the raw provider error stays in the tooltip). */
+function failReason(e: string): MessageKey {
+  const x = e.toLowerCase();
+  if (/429|quota|rate.?limit|too many/.test(x)) return "cs.fail.busy";
+  if (/timeout|timed out|no answer within/.test(x)) return "cs.fail.slow";
+  if (/401|403|api key|not set/.test(x)) return "cs.fail.key";
+  return "cs.fail.other";
+}
 
 export function ResultView(p: Props) {
   const { t, tn, pct } = useT();
@@ -47,10 +56,12 @@ export function ResultView(p: Props) {
       {p.isSample && <Notice tone="info">{t("cs.result.sample")}</Notice>}
       {p.fromHistory && <Notice tone="neutral">{t("cs.result.fromHistory")}</Notice>}
       {failed.length > 0 && (
-        <Notice tone="flag" title={t("cs.result.partial", { done: s.models, n: s.models + failed.length })}>
-          <span className="block">{t("cs.result.partial.body")}</span>
+        <Notice tone={s.models >= 3 ? "neutral" : "flag"} title={t("cs.result.partial", { done: s.models, n: s.models + failed.length })}>
+          <span className="block">{t(s.models >= 3 ? "cs.result.partial.enough" : "cs.result.partial.body")}</span>
           <ul className="mt-1 space-y-0.5 text-xs">
-            {failed.map(([m, e]) => <li key={m} className="break-words"><span className="font-mono">{modelLabel(m)}</span>: {e}</li>)}
+            {failed.map(([m, e]) => (
+              <li key={m} className="break-words" title={e}><span className="font-mono">{modelLabel(m)}</span>: {t(failReason(e))}</li>
+            ))}
           </ul>
         </Notice>
       )}
