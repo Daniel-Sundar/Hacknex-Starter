@@ -26,7 +26,9 @@ def is_enabled() -> bool:
 
 def _req(method: str, table: str, **kw):
     url, key = _cfg()
-    headers = {"apikey": key, "Authorization": f"Bearer {key}", **kw.pop("headers", {})}
+    headers = {"apikey": key, **kw.pop("headers", {})}
+    if key.startswith("eyJ"):  # legacy JWT keys also go in Authorization; new sb_secret_ keys only in apikey
+        headers["Authorization"] = f"Bearer {key}"
     r = _client.request(method, f"{url}/rest/v1/{table}", headers=headers, **kw)
     r.raise_for_status()
     return r.json() if r.content else None
