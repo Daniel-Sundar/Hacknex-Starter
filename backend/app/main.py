@@ -452,7 +452,7 @@ def handwriting_eval():
     """Ablation, calibration and robustness results for the Results tab.
     Prefers the held-out test split; falls back to dev (and says so) when test files are missing."""
     from pathlib import Path
-    root = Path(__file__).resolve().parent.parent
+    root = Path(__file__).resolve().parent.parent / "results"  # written there by eval.py
 
     def first(*names):
         for name, split in names:

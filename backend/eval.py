@@ -252,7 +252,8 @@ def main():
     SLEEP = args.sleep
     sys.stdout.reconfigure(encoding="utf-8")  # Windows console chokes on arrows/Tamil otherwise
     suffix = "_".join(x for x in [args.name, args.split if args.split != "all" else ""] if x)
-    out = HERE / f"eval_results{'_' + suffix if suffix else ''}"
+    (HERE / "results").mkdir(exist_ok=True)
+    out = HERE / "results" / f"eval_results{'_' + suffix if suffix else ''}"
 
     if args.robustness:
         aug = HERE / "data" / "handwriting" / "augmented"
