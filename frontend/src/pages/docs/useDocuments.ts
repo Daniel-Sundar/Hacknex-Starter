@@ -106,7 +106,7 @@ export function useDocuments() {
       setUploads((us) => us.filter((u) => u.id !== id));
       files.current.delete(id);
       const { t: tt, tn: ttn, say: s } = latest.current;
-      s(tt("docs.upload.done", { name, passages: ttn("docs.files.passages", chunks) }));
+      s(tt(r.read_by === "handwriting" ? "docs.upload.doneHand" : "docs.upload.done", { name, passages: ttn("docs.files.passages", chunks) }));
     } catch (e) {
       fail(id, file.name, describeDocsError(e, latest.current.limitMb));
     }

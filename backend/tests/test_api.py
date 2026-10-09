@@ -558,10 +558,12 @@ def test_docs_upload_validation(client, monkeypatch):
     assert r.status_code == 415 and detail(r)["code"] == "unsupported_type"
     r = upload(client, "broken.pdf", b"%PDF-1.4 garbage")
     assert r.status_code == 422 and detail(r)["code"] == "bad_file"
-    r = upload(client, "scan.pdf", EMPTY_PDF)
-    assert r.status_code == 422
-    d = detail(r)
-    assert d["code"] == "no_text" and d["message"] == "No selectable text found. Scanned PDFs need OCR first."
+    r = upload(client, "fake.docx", b"just text, not a zip")
+    assert r.status_code == 415 and detail(r)["code"] == "unsupported_type"
+    r = upload(client, "broken.docx", b"PK\x03\x04 not really a zip")
+    assert r.status_code == 422 and detail(r)["code"] == "bad_file"
+    r = upload(client, "fake.png", b"not an image at all")
+    assert r.status_code == 415 and detail(r)["code"] == "unsupported_type"
     r = upload(client, "blank.txt", b"   \n  ")
     assert r.status_code == 422 and detail(r)["code"] == "no_text"
     r = upload(client, "empty.md", b"")
@@ -570,6 +572,61 @@ def test_docs_upload_validation(client, monkeypatch):
     r = upload(client, "big.csv", b"a,b\n" * 1000)
     assert r.status_code == 413 and detail(r)["code"] == "too_large"
     assert client.get("/api/docs").json() == {"docs": [], "total_chunks": 0}
+
+
+def make_docx(paragraphs: list[str]) -> bytes:
+    import io
+    import zipfile
+    from xml.sax.saxutils import escape
+    body = "".join(f"<w:p><w:r><w:t>{escape(t)}</w:t></w:r></w:p>" for t in paragraphs)
+    xml = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+           '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+           f"<w:body>{body}</w:body></w:document>")
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("[Content_Types].xml", "<Types/>")
+        z.writestr("word/document.xml", xml)
+    return buf.getvalue()
+
+
+def test_docs_docx_upload_and_page_citations(client):
+    r = upload(client, "lease.docx", make_docx(["Lease agreement.", "The monthly rent is Rs. 12,000 payable by the 5th."]))
+    assert r.status_code == 200 and r.json()["chunks"] >= 1
+    assert "read_by" not in r.json()
+    hits = rag.search("What is the monthly rent?")
+    assert hits[0]["source"] == "lease.docx" and "12,000" in hits[0]["text"] and hits[0]["page"] is None
+    assert upload(client, "dose.pdf", TEXT_PDF).status_code == 200
+    assert any(h["page"] == 1 for h in rag.search("dose", k=10) if h["source"] == "dose.pdf")
+
+
+def test_docs_photo_and_scanned_pdf_are_read_by_the_handwriting_pipeline(client, fake):
+    r = upload(client, "letter.png", PNG)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["read_by"] == "handwriting" and body["chunks"] >= 1 and fake.calls >= 3
+    assert any("letter" in h["text"] for h in rag.search("letter"))
+    r = upload(client, "scan.pdf", make_pdf(jpeg=JPEG))  # no text layer: first page read like a photo
+    assert r.status_code == 200 and r.json()["read_by"] == "handwriting" and r.json()["first_page_only"] is True
+    r = upload(client, "nothing.pdf", EMPTY_PDF)  # neither text nor a scanned image
+    assert r.status_code == 422 and detail(r)["code"] == "bad_image"
+    fake.fail = {"*"}
+    r = upload(client, "down.jpg", JPEG)
+    assert r.status_code == 502 and detail(r)["code"] == "all_models_failed"
+
+
+def test_docs_search_ranks_the_right_passage_first(client):
+    upload(client, "a.txt", b"The warranty covers the motor for two years. " * 3)
+    upload(client, "b.txt", b"A late fine of Rs. 500 applies when rent is paid after the due date. " * 3)
+    upload(client, "c.txt", b"The garden must be kept clean by the tenant. " * 3)
+    assert rag.search("What fine applies for late rent?")[0]["source"] == "b.txt"
+    assert rag.search("how long is the motor warranty")[0]["source"] == "a.txt"
+
+
+def test_docs_chunks_keep_sentences_whole():
+    text = " ".join(f"Sentence number {i} ends here." for i in range(200))
+    chunks = rag._chunks(text, size=300)
+    assert len(chunks) > 5 and all(len(c) <= 300 for c in chunks)
+    assert all(c.endswith("here.") for c in chunks)  # never cut mid-sentence
 
 
 def test_docs_ask_validation_and_llm_failure(client, monkeypatch):

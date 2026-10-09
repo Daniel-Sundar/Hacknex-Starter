@@ -28,18 +28,19 @@ export default {
   // Upload
   "docs.upload.title": "Add documents",
   "docs.upload.titleMore": "Add more documents",
-  "docs.upload.hint": "Drop files here or choose them. PDF, TXT, MD or CSV, up to {limit} MB each.",
+  "docs.upload.hint": "Drop files here or choose them: PDF, Word, TXT, MD or CSV, or photos and scans (JPG, PNG, WEBP), up to {limit} MB each.",
   "docs.upload.listLabel": "Uploads",
   "docs.upload.waiting": "Waiting…",
-  "docs.upload.uploading": "Uploading and reading…",
+  "docs.upload.uploading": "Uploading and reading… Photos and scans take up to a minute.",
   "docs.upload.retry": "Try again: {name}",
   "docs.upload.dismiss": "Dismiss {name}",
   "docs.upload.done": "Added {name}, {passages}.",
+  "docs.upload.doneHand": "Read {name} with the handwriting models and added it, {passages}. Uncertain words are marked.",
   "docs.upload.failed": "Couldn't add {name}. {reason}",
 
   // Checks before uploading, and upload errors with copy specific to documents
   "docs.check.type.title": "This file type can't be added",
-  "docs.check.type.body": "Use a PDF, TXT, MD or CSV file.",
+  "docs.check.type.body": "Use a PDF, Word (DOCX), TXT, MD or CSV file, or a JPG, PNG or WEBP photo.",
   "docs.check.size.body": "This file is {size} MB. The limit is {limit} MB. Split it or upload a smaller file.",
   "docs.check.pdf.title": "This isn't a real PDF",
   "docs.check.pdf.body": "The name ends in .pdf but the contents don't match. Export it as PDF again, or save it as a TXT file.",
@@ -90,6 +91,7 @@ export default {
   // Sources and citations
   "docs.sources.title": "Sources",
   "docs.sources.number": "Source {n}:",
+  "docs.sources.page": "page {page}",
   "docs.sources.more": "Show full passage",
   "docs.sources.less": "Show less",
   "docs.cite.label": "Source {n}: {name}",

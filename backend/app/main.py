@@ -197,28 +197,65 @@ def extract(req: TextRequest):
 
 # ---------- Docs Q&A ----------
 
-DOC_TYPES = (".pdf", ".txt", ".md", ".csv")
+DOC_TYPES = (".pdf", ".txt", ".md", ".csv", ".docx")
+PHOTO_TYPES = (".jpg", ".jpeg", ".png", ".webp")
+
+
+async def _read_by_hand(data: bytes) -> dict:
+    """A photo or scanned page goes through the handwriting pipeline (several models vote).
+    Uncertain words come back marked as [[word?]], so answers can say what to double-check."""
+    _start_job()
+    try:
+        return await run_in_threadpool(handwriting.digitize, data)
+    except handwriting.InputError as e:
+        raise _err(422, "bad_image", str(e))
+    except RuntimeError as e:
+        raise _err(502, "all_models_failed", MODELS_FAILED, reason=str(e)[:500])
+    finally:
+        _end_job()
 
 
 @app.post("/api/docs/upload", dependencies=[Depends(rate_limit("docs_upload"))])
 async def upload_doc(file: UploadFile = File(...)):
     name = (file.filename or "").replace("\\", "/").rsplit("/", 1)[-1].strip()
-    if not name.lower().endswith(DOC_TYPES):
-        raise _err(415, "unsupported_type", "Upload a PDF, TXT, MD or CSV file.")
+    lower = name.lower()
+    if not lower.endswith(DOC_TYPES + PHOTO_TYPES):
+        raise _err(415, "unsupported_type", "Upload a PDF, Word (DOCX), TXT, MD or CSV file, or a JPG, PNG or WEBP photo.")
     data = await _read_upload(file, _mb("DOCS_MAX_UPLOAD_MB", 10), "Split it or upload a smaller file.")
-    is_pdf = name.lower().endswith(".pdf")
-    if is_pdf and data[:5] != b"%PDF-":
-        raise _err(415, "unsupported_type", "This file is not a real PDF. Export it as PDF again or upload a TXT.")
-    try:
-        text = await run_in_threadpool(rag.extract_text, name, data)
-    except Exception:
-        raise _err(422, "bad_file", "Could not open this PDF. It may be damaged or password-protected.")
-    if not text.strip():
-        raise _err(422, "no_text", "No selectable text found. Scanned PDFs need OCR first." if is_pdf
-                   else "This file has no text in it.")
     replaced = any(d["source"] == name for d in rag.list_docs())
-    n = await run_in_threadpool(rag.ingest, name, data, text)  # same name: replaces the old chunks
-    return {"file": name, "chunks": n, "total_chunks": len(rag.STORE), "replaced": replaced}
+    extra = {}
+
+    if lower.endswith(PHOTO_TYPES):
+        kind = file_kind(data)
+        if kind == "heic":
+            raise _err(415, "heic_unsupported", "HEIC photos (the iPhone default) are not supported. "
+                       "Export the photo as JPG or PNG and upload that.")
+        if kind not in ("jpeg", "png", "webp"):
+            raise _err(415, "unsupported_type", "This file is not a real JPG, PNG or WEBP image.")
+        r = await _read_by_hand(data)
+        pages = [(None, r["marked"])]
+        extra = {"read_by": "handwriting", "unverified": r.get("to_check", r["flagged"])}
+    else:
+        is_pdf = lower.endswith(".pdf")
+        if is_pdf and data[:5] != b"%PDF-":
+            raise _err(415, "unsupported_type", "This file is not a real PDF. Export it as PDF again or upload a TXT.")
+        if lower.endswith(".docx") and data[:2] != b"PK":
+            raise _err(415, "unsupported_type", "This file is not a real Word (DOCX) file. Save it as .docx again.")
+        try:
+            pages = await run_in_threadpool(rag.extract_pages, name, data)
+        except Exception:
+            raise _err(422, "bad_file", "Could not open this file. It may be damaged or password-protected.")
+        if not any(t.strip() for _, t in pages):
+            if not is_pdf:
+                raise _err(422, "no_text", "This file has no text in it.")
+            # A scanned PDF: read its first page like a photo.
+            r = await _read_by_hand(data)
+            pages = [(1, r["marked"])]
+            extra = {"read_by": "handwriting", "unverified": r.get("to_check", r["flagged"]), "first_page_only": True}
+    if not any(t.strip() for _, t in pages):
+        raise _err(422, "no_text", "No text could be read from this file.")
+    n = await run_in_threadpool(rag.ingest, name, data, None, pages)  # same name: replaces the old chunks
+    return {"file": name, "chunks": n, "total_chunks": len(rag.STORE), "replaced": replaced, **extra}
 
 
 @app.get("/api/docs")

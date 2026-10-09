@@ -135,6 +135,7 @@ export function AnswerCard({ entry, open, onToggle, collapsible }: {
                       <div className="min-w-0 flex-1 space-y-1">
                         <p className="wrap-anywhere text-sm font-medium text-ink">
                           <span className="sr-only">{t("docs.sources.number", { n })} </span>{s.source}
+                          {s.page ? <span className="font-normal text-muted"> · {t("docs.sources.page", { page: s.page })}</span> : null}
                         </p>
                         <blockquote id={exId} className={`wrap-break-word border-s-2 border-line-strong ps-3 text-sm text-body ${isOpen ? "" : "line-clamp-3"}`}>
                           {s.text}

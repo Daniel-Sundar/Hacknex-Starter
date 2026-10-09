@@ -4,12 +4,17 @@ import { describeError, type Problem } from "../../lib/errors";
 import type { MessageKey } from "../../i18n";
 
 export type DocInfo = { source: string; chunks: number };
-export type Source = { source: string; text: string };
+export type Source = { source: string; text: string; page?: number | null };
 export type AskResult = { answer: string; sources: Source[]; grounded?: boolean };
-export type UploadResult = { file: string; chunks: number; total_chunks?: number; replaced?: boolean };
+export type UploadResult = {
+  file: string; chunks: number; total_chunks?: number; replaced?: boolean;
+  read_by?: "handwriting"; unverified?: number; first_page_only?: boolean; // photos and scanned PDFs
+};
 
-export const DOC_EXTS = [".pdf", ".txt", ".md", ".csv"];
-export const DOC_ACCEPT = ".pdf,.txt,.md,.csv,application/pdf,text/plain,text/markdown,text/csv";
+export const DOC_EXTS = [".pdf", ".docx", ".txt", ".md", ".csv", ".jpg", ".jpeg", ".png", ".webp"];
+export const DOC_ACCEPT = ".pdf,.docx,.txt,.md,.csv,.jpg,.jpeg,.png,.webp,application/pdf,"
+  + "application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,text/csv,"
+  + "image/jpeg,image/png,image/webp";
 export const MAX_QUESTION = 1000;
 export const COUNTER_FROM = 800; // show the character counter from here on
 

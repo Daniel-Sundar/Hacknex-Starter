@@ -8,7 +8,7 @@ export default {
   "shell.page.clearscript.title": "Digitize handwriting",
   "shell.page.clearscript.blurb": "Several AI models read the page. Where they disagree, ClearScript flags the word for you to check instead of guessing.",
   "shell.page.docs.title": "Ask your documents",
-  "shell.page.docs.blurb": "Upload PDF or text files, then ask questions. Answers come only from those files, with citations.",
+  "shell.page.docs.blurb": "Upload PDFs, Word files, text, or photos of handwritten pages, then ask questions. Answers come only from those files, with citations.",
   "shell.status.checking": "Checking server…",
   "shell.status.online": "Server connected",
   "shell.status.offline": "Server offline",
