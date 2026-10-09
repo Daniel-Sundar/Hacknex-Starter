@@ -2,10 +2,12 @@
 export default {
   // input
   "cs.input.title": "1. Add a page",
+  "cs.verdict.auto": "Auto mode: best reading",
+  "cs.verdict.auto.body": "Shown as clean text without flags. Switch to Review to see uncertain words, look-alike drugs and dose checks.",
   "cs.mode.label": "Reading mode",
   "cs.mode.auto": "Auto",
   "cs.mode.review": "Review",
-  "cs.mode.autoHint": "Auto: ClearScript reads the page and marks uncertain words. Check them when you like.",
+  "cs.mode.autoHint": "Auto: ClearScript gives its best reading as clean text, with no flags. Switch to Review to see and check uncertain words.",
   "cs.mode.reviewHint": "Review: right after reading, ClearScript asks you about each uncertain word, drugs and numbers first.",
   "cs.input.drop": "Drop a photo or scan here",
   "cs.input.dropHint": "JPG, PNG, WEBP or a scanned PDF, up to {mb} MB. You can also paste an image.",

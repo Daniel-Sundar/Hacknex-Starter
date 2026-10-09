@@ -39,6 +39,9 @@ function useMedia(q: string) {
 
 type Shown = { result: HwResult; words: Word[]; name: string; ts: number; sample: boolean; entryId: string | null; fromHistory: boolean };
 
+// Auto mode shows the best reading as clean text: no flag marks, look-alike or dose warnings. Review mode shows them.
+const plainWords = (ws: Word[]): Word[] => ws.map((w) => (w.flagged ? { ...w, flagged: false, lookalikes: undefined } : w));
+
 export default function Handwriting({ active }: { active: boolean }) {
   const { t, tn } = useT();
   const { toast, announce } = useToast();
@@ -471,8 +474,8 @@ export default function Handwriting({ active }: { active: boolean }) {
             </div>
           ) : shown ? (
             <ResultView
-              result={shown.result} words={shown.words} isSample={shown.sample} fromHistory={shown.fromHistory} canRerun={canRerun}
-              rows={rows} rowsLoading={rowsLoading} rowsError={rowsError} onRetryRows={() => setRowsTick((n) => n + 1)}
+              result={shown.result} words={mode === "auto" ? plainWords(shown.words) : shown.words} auto={mode === "auto"} isSample={shown.sample} fromHistory={shown.fromHistory} canRerun={canRerun}
+              rows={mode === "auto" && rows ? rows.map((r) => ({ ...r, flagged: false, warnings: [] })) : rows} rowsLoading={rowsLoading} rowsError={rowsError} onRetryRows={() => setRowsTick((n) => n + 1)}
               onOpenWord={(i) => { setReview(null); setWordIdx(i); }} onReview={startReview}
               onExport={() => setExporting(true)} onCopy={copy}
               onRerun={() => (stats(shown.words, null).human ? setConfirmRerun(true) : digitize())}

@@ -11,7 +11,7 @@ type Props = {
   result: HwResult; words: Word[]; isSample: boolean; fromHistory: boolean; canRerun: boolean;
   rows: RxRow[] | null; rowsLoading: boolean; rowsError: unknown; onRetryRows: () => void;
   onOpenWord: (i: number) => void; onReview: () => void; onExport: () => void; onCopy: () => void; onRerun: () => void;
-  focusWord: number | null;
+  focusWord: number | null; auto?: boolean; // Auto mode: flags hidden, so the verdict must not claim everything was checked
 };
 
 /** A short, human reason for a model that didn't answer (the raw provider error stays in the tooltip). */
@@ -39,9 +39,9 @@ export function ResultView(p: Props) {
           <div className="min-w-0 space-y-1">
             <h2 id="cs-verdict-h" className={`flex items-center gap-2 text-base font-semibold ${s.flagged ? "text-flag-fg" : "text-ok-fg"}`}>
               {s.flagged ? <AlertTriangle className="size-5 shrink-0" aria-hidden="true" /> : <Check className="size-5 shrink-0" aria-hidden="true" />}
-              {s.flagged ? tn("cs.verdict.flagged", s.flagged) : t("cs.verdict.clear")}
+              {s.flagged ? tn("cs.verdict.flagged", s.flagged) : p.auto ? t("cs.verdict.auto") : t("cs.verdict.clear")}
             </h2>
-            <p className="text-sm text-ink">{s.flagged ? t("cs.verdict.flagged.body") : s.models <= 1 ? t("cs.verdict.clear.single")
+            <p className="text-sm text-ink">{s.flagged ? t("cs.verdict.flagged.body") : p.auto ? t("cs.verdict.auto.body") : s.models <= 1 ? t("cs.verdict.clear.single")
               : s.likely ? t("cs.verdict.clear.likely") : t("cs.verdict.clear.body")}</p>
             {s.lookalikes > 0 && <p className="text-sm font-medium text-danger-fg">{tn("cs.verdict.lookalikes", s.lookalikes)}</p>}
           </div>
