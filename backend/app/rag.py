@@ -22,7 +22,8 @@ STORE: list[dict] = []  # {"source", "page", "text", "vec", "toks"}
 _lock = threading.Lock()  # uploads, deletes and searches can run at the same time
 _model = None
 TOP_K = 5
-_WORD = re.compile(r"\w+")
+# \w alone splits Indic words at vowel signs; also keep U+0900-U+0DFF (Devanagari ... Sinhala) and Urdu marks.
+_WORD = re.compile("[\\w\u0900-\u0DFF\u064B-\u065F\u0670]+")
 
 
 def _embedder():

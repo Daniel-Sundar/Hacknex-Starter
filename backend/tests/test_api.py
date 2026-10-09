@@ -727,3 +727,11 @@ def test_preflight_finds_readings_the_app_saved(monkeypatch, tmp_path):
     handwriting._cached(parts, lambda: "Tab. Amoxicillin 500 mg")
     assert preflight.cache_file(parts).exists()  # same file name as the app's cache
     assert not preflight.cache_file(parts[:-1] + [handwriting.prompt_for("auto")]).exists()
+
+
+def test_docs_search_keeps_indian_words_whole(client):
+    for text, n in [("மருந்து காலை மாலை", 3), ("दवा सुबह शाम", 3), ("ಔಷಧಿ ಬೆಳಿಗ್ಗೆ", 2), ("دوائی صبح شام", 3), ("Paracetamol 500 mg", 3)]:
+        assert len(rag._tokens(text)) == n, text
+    upload(client, "ta.txt", "காய்ச்சலுக்கு மருந்து காலை மாலை சாப்பிடவும்.".encode())
+    upload(client, "other.txt", b"The garden must be kept clean.")
+    assert rag.search("மருந்து எப்போது?")[0]["source"] == "ta.txt"
