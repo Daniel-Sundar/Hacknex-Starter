@@ -74,3 +74,14 @@ def save_answer(writer: str, original: str, answer: str) -> None:
              headers={"Prefer": "resolution=ignore-duplicates"})
     except Exception as e:  # noqa: BLE001
         log.warning("supabase save_answer failed: %s", e)
+
+
+def status() -> str:
+    """For /api/health: 'off', 'ok', or the error (never the key)."""
+    if not is_enabled():
+        return "off"
+    try:
+        _req("GET", "readings_cache", params={"select": "key", "limit": "1"})
+        return "ok"
+    except Exception as e:  # noqa: BLE001
+        return f"error: {getattr(getattr(e, 'response', None), 'status_code', '')} {type(e).__name__}".strip()

@@ -20,7 +20,7 @@ from fastapi.responses import StreamingResponse  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 from starlette.concurrency import run_in_threadpool  # noqa: E402
 
-from . import agent, handwriting, llm, rag  # noqa: E402
+from . import agent, handwriting, llm, rag, store  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -176,7 +176,7 @@ PIPELINE_FAILED = "Something went wrong while reading this page. Try again."
 @app.get("/api/health")
 def health():
     return {"ok": True, "provider": llm.active_provider(), "docs": len(rag.STORE),
-            "readers": handwriting.reader_names(),
+            "readers": handwriting.reader_names(), "database": store.status(),
             "limits": {"max_upload_mb": _num(_mb("MAX_UPLOAD_MB", 15)),
                        "docs_max_upload_mb": _num(_mb("DOCS_MAX_UPLOAD_MB", 10))}}
 
