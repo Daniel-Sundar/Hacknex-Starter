@@ -46,7 +46,7 @@ services:
       - key: GEMINI_MODEL
         value: gemini-3.5-flash
       - key: HW_READERS
-        value: "groq:qwen/qwen3.8-27b,gemini:gemini-3.5-flash|gemini:gemini-3.7-flash|gemini:gemini-3.1-flash-lite,openrouter:dots-studio/dots-3-note-preview:free,gemini:gemini-3.6-flash|gemini:gemini-3.8-flash|gemini:gemini-3.7-flash|gemini:gemini-3.1-flash-lite,openrouter:google/gemma-4-31b-it:free|openrouter:google/gemma-4-26b-a4b-it:free"
+        value: "groq:qwen/qwen3.8-27b,gemini:gemini-3.5-flash|gemini:gemini-3.7-flash|gemini:gemini-3.1-flash-lite,openrouter:dots-studio/dots-3-note-preview:free,gemini:gemini-3.6-flash|gemini:gemini-3.8-flash|gemini:gemini-3.7-flash|gemini:gemini-3.1-flash-lite"
       - key: HW_BASELINE
         value: groq:qwen/qwen3.8-27b
       # Render is a reverse proxy: rate limits must use the real client IP.

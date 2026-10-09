@@ -37,7 +37,9 @@ Written so a teammate or their Claude Code can pick up from here. Work top to bo
    Re-run the dev eval afterwards to check nothing got worse.
 4. **Study the 6 confident errors** (wrong words nobody flagged) in `eval_results_dev.json` → `per_sample`. Find a
    rule that would have flagged each kind; check it on dev only, never tune on test.
-5. **Demo-proof.** Run every image you will show (including `rx_test/`) through the app once so it is cached, then
+5. **Demo-proof.** Put the pages you will show in `backend\data\demo\` (git-ignored), digitize each once, then run
+   `.\preflight.ps1`: it checks keys, reading models, servers and that every demo page is saved, using no AI quota,
+   and ends with READY or NOT READY. Run every image you will show (including `rx_test/`) through the app once so it is cached, then
    check the demo works with `HW_CACHE_ONLY=1` in `.env` (no internet needed for cached pages). The **Sample**
    button always works offline and shows a look-alike drug (Amlodipine).
 6. **Keep the Docs Q&A tab** (Daniel wants it in the demo). Do not remove it.

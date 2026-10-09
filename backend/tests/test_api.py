@@ -716,3 +716,14 @@ def test_result_reports_words_to_check(client):
 def test_docs_citation_brackets_are_normalised():
     assert rag.fix_citations("500 mg for 5 days【1】 and【2†L3-L5】.") == "500 mg for 5 days[1] and[2]."
     assert rag.fix_citations("Plain [1] stays.") == "Plain [1] stays."
+
+
+# ---------- pre-flight check ----------
+
+def test_preflight_finds_readings_the_app_saved(monkeypatch, tmp_path):
+    import preflight
+    monkeypatch.setattr(handwriting, "CACHE", tmp_path / "cache")
+    parts = ["read", "abc123", "gemini", "gemini-3.5-flash", handwriting.prompt_for("prescription")]
+    handwriting._cached(parts, lambda: "Tab. Amoxicillin 500 mg")
+    assert preflight.cache_file(parts).exists()  # same file name as the app's cache
+    assert not preflight.cache_file(parts[:-1] + [handwriting.prompt_for("auto")]).exists()
