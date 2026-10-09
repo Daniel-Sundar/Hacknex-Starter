@@ -5,6 +5,8 @@ venv/
 __pycache__/
 *.pyc
 .env
+.env.*
+!.env.example
 *.pt
 *.onnx
 .DS_Store

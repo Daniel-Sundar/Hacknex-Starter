@@ -1,4 +1,5 @@
-// History lives only in this browser (localStorage). No server copy, nothing invented: an entry is a
+// Browser-only history (localStorage), used when nobody is signed in; signed-in history is in
+// lib/cloudHistory.ts with the same entry shape. Nothing invented: an entry is a
 // result the user really got, with their corrections. The original image is not kept (too large);
 // a small thumbnail is.
 import type { HwResult, Word } from "./handwriting";
@@ -44,8 +45,8 @@ export function saveHistory(xs: HistoryEntry[]): boolean {
 }
 
 /** New entries go first; an existing entry (corrections saved) keeps its place. */
-export function upsert(xs: HistoryEntry[], e: HistoryEntry): HistoryEntry[] {
-  return xs.some((x) => x.id === e.id) ? xs.map((x) => (x.id === e.id ? e : x)) : [e, ...xs].slice(0, HISTORY_MAX);
+export function upsert(xs: HistoryEntry[], e: HistoryEntry, max = HISTORY_MAX): HistoryEntry[] {
+  return xs.some((x) => x.id === e.id) ? xs.map((x) => (x.id === e.id ? e : x)) : [e, ...xs].slice(0, max);
 }
 
 export const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;

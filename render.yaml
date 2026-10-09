@@ -62,3 +62,8 @@ services:
       # Baked in at build time: redeploy the site if the backend URL changes. No trailing slash.
       - key: VITE_API_URL
         value: https://clearscript-hacknex-api.onrender.com
+      # Supabase sign-in: Project URL and the publishable key (safe in the browser; RLS protects the data).
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
