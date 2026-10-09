@@ -60,6 +60,59 @@ ALIASES = {
     "thyronorm": "levothyroxine", "eltroxin": "levothyroxine",
 }
 
+# More medicines commonly prescribed in India (essential-medicine generics and the brands written for them).
+# Adult oral strengths and usual maximum per day from standard formularies; a reading-error net, not advice.
+DRUGS.update({
+    "cefuroxime": ("mg", [125, 250, 500], 1000), "cefpodoxime": ("mg", [100, 200], 400),
+    "levofloxacin": ("mg", [250, 500, 750], 750), "ofloxacin": ("mg", [200, 400], 800),
+    "norfloxacin": ("mg", [400], 800), "nitrofurantoin": ("mg", [50, 100], 400),
+    "clarithromycin": ("mg", [250, 500], 1000), "linezolid": ("mg", [600], 1200),
+    "fluconazole": ("mg", [50, 150, 200], 400), "albendazole": ("mg", [400], 800),
+    "ivermectin": ("mg", [3, 6, 12], None), "acyclovir": ("mg", [200, 400, 800], 4000),
+    "tinidazole": ("mg", [300, 500, 1000], 2000), "esomeprazole": ("mg", [20, 40], 80),
+    "famotidine": ("mg", [20, 40], 80), "itopride": ("mg", [50], 150), "drotaverine": ("mg", [40, 80], 240),
+    "dicyclomine": ("mg", [10, 20], 160), "loperamide": ("mg", [2], 16), "mefenamic": ("mg", [250, 500], 1500),
+    "tramadol": ("mg", [50, 100], 400), "nimesulide": ("mg", [100], 200), "etoricoxib": ("mg", [60, 90, 120], 120),
+    "chlorpheniramine": ("mg", [4], 24), "fexofenadine": ("mg", [120, 180], 180), "hydroxyzine": ("mg", [10, 25], 100),
+    "losartan": ("mg", [25, 50, 100], 100), "olmesartan": ("mg", [10, 20, 40], 40), "enalapril": ("mg", [2.5, 5, 10, 20], 40),
+    "ramipril": ("mg", [1.25, 2.5, 5, 10], 10), "metoprolol": ("mg", [25, 50, 100], 400), "atenolol": ("mg", [25, 50, 100], 100),
+    "bisoprolol": ("mg", [2.5, 5, 10], 20), "cilnidipine": ("mg", [5, 10, 20], 20),
+    "hydrochlorothiazide": ("mg", [12.5, 25], 50), "furosemide": ("mg", [20, 40], None),
+    "spironolactone": ("mg", [25, 50, 100], 400), "rosuvastatin": ("mg", [5, 10, 20, 40], 40),
+    "gliclazide": ("mg", [30, 40, 60, 80], 320), "glipizide": ("mg", [2.5, 5, 10], 40),
+    "sitagliptin": ("mg", [25, 50, 100], 100), "vildagliptin": ("mg", [50], 100), "teneligliptin": ("mg", [20], 40),
+    "voglibose": ("mg", [0.2, 0.3], 0.9), "pioglitazone": ("mg", [15, 30], 45), "dapagliflozin": ("mg", [5, 10], 10),
+    "empagliflozin": ("mg", [10, 25], 25), "salbutamol": ("mg", [2, 4], 32), "methylprednisolone": ("mg", [4, 8, 16], None),
+    "dexamethasone": ("mg", [0.5, 4], None), "deflazacort": ("mg", [6, 24, 30], None),
+    "ursodeoxycholic": ("mg", [150, 300], None), "sertraline": ("mg", [25, 50, 100], 200),
+    "escitalopram": ("mg", [5, 10, 20], 20), "fluoxetine": ("mg", [10, 20], 80), "amitriptyline": ("mg", [10, 25], 150),
+    "alprazolam": ("mg", [0.25, 0.5, 1], 4), "clonazepam": ("mg", [0.25, 0.5, 1, 2], 20),
+    "gabapentin": ("mg", [100, 300, 400], 3600), "pregabalin": ("mg", [75, 150], 600),
+    "carbamazepine": ("mg", [100, 200, 400], 1600), "valproate": ("mg", [200, 300, 500], 2500),
+    "levetiracetam": ("mg", [250, 500, 750], 3000), "phenytoin": ("mg", [100], 600), "warfarin": ("mg", [1, 2, 5], None),
+    "allopurinol": ("mg", [100, 300], 900), "febuxostat": ("mg", [40, 80], 120), "tamsulosin": ("mg", [0.4], 0.8),
+})
+ALIASES.update({
+    "pacimol": "paracetamol", "zerodol": "aceclofenac", "hifenac": "aceclofenac", "meftal": "mefenamic", "nise": "nimesulide",
+    "nucoxia": "etoricoxib", "cifran": "ciprofloxacin", "levoflox": "levofloxacin", "zanocin": "ofloxacin",
+    "norflox": "norfloxacin", "ceftum": "cefuroxime", "cepodem": "cefpodoxime", "zifi": "cefixime",
+    "claribid": "clarithromycin", "forcan": "fluconazole", "zentel": "albendazole", "ivecop": "ivermectin",
+    "zovirax": "acyclovir", "aciclovir": "acyclovir", "tiniba": "tinidazole", "nexpro": "esomeprazole", "razo": "rabeprazole",
+    "famocid": "famotidine", "ganaton": "itopride", "drotin": "drotaverine", "imodium": "loperamide",
+    "ondem": "ondansetron", "vomikind": "ondansetron", "cetzine": "cetirizine", "allegra": "fexofenadine",
+    "atarax": "hydroxyzine", "losar": "losartan", "olmezest": "olmesartan", "envas": "enalapril", "cardace": "ramipril",
+    "metolar": "metoprolol", "tenormin": "atenolol", "aten": "atenolol", "concor": "bisoprolol", "cilacar": "cilnidipine",
+    "lasix": "furosemide", "frusemide": "furosemide", "aldactone": "spironolactone", "rosuvas": "rosuvastatin",
+    "crestor": "rosuvastatin", "lipitor": "atorvastatin", "diamicron": "gliclazide", "januvia": "sitagliptin",
+    "galvus": "vildagliptin", "volix": "voglibose", "pioz": "pioglitazone", "forxiga": "dapagliflozin",
+    "jardiance": "empagliflozin", "amaryl": "glimepiride", "glynase": "glipizide", "asthalin": "salbutamol",
+    "albuterol": "salbutamol", "medrol": "methylprednisolone", "dexona": "dexamethasone", "defcort": "deflazacort",
+    "udiliv": "ursodeoxycholic", "nexito": "escitalopram", "fludac": "fluoxetine", "tryptomer": "amitriptyline",
+    "alprax": "alprazolam", "clonotril": "clonazepam", "rivotril": "clonazepam", "gabapin": "gabapentin",
+    "lyrica": "pregabalin", "tegretol": "carbamazepine", "valparin": "valproate", "levipil": "levetiracetam",
+    "eptoin": "phenytoin", "dilantin": "phenytoin", "zyloric": "allopurinol", "febutaz": "febuxostat", "urimax": "tamsulosin",
+})
+
 # Look-alike / sound-alike pairs that are known to be confused (ISMP list and common handwriting mix-ups).
 LASA_GROUPS = [
     ["hydroxyzine", "hydralazine"], ["celebrex", "celexa", "cerebyx"], ["clonidine", "clonazepam", "klonopin"],
@@ -70,6 +123,8 @@ LASA_GROUPS = [
     ["morphine", "hydromorphone"], ["adderall", "inderal"], ["avandia", "coumadin"], ["metformin", "metronidazole"],
     ["atorvastatin", "rosuvastatin", "pravastatin"], ["losartan", "valsartan"], ["azithromycin", "erythromycin"],
     ["doxycycline", "dicyclomine"], ["cetirizine", "levocetirizine"],
+    ["alprazolam", "lorazepam"], ["clonazepam", "clobazam"], ["sitagliptin", "sumatriptan"],
+    ["fluoxetine", "duloxetine", "paroxetine"], ["metoprolol", "misoprostol"],
 ]
 
 _LASA: dict[str, set[str]] = {}

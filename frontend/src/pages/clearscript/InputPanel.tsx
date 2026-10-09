@@ -12,6 +12,7 @@ type Props = {
   file: Blob | null; name: string; preview: string | null; kind: Kind | null; problem: string | null; isSample: boolean;
   onFiles: (files: File[]) => void; onCamera: () => void; onSample: () => void; onRemove: () => void;
   opts: Options; setOpts: (o: Options) => void; writer: string; setWriter: (w: string) => void;
+  mode: "auto" | "review"; setMode: (m: "auto" | "review") => void;
   running: boolean; hasResult: boolean; onDigitize: () => void; onStop: () => void; maxMb: number;
 };
 
@@ -126,6 +127,15 @@ export function InputPanel(p: Props) {
 
       <div className={`space-y-2 ${sticky ? "max-lg:sticky max-lg:bottom-0 max-lg:z-20 max-lg:-mx-4 max-lg:border-t max-lg:border-line max-lg:bg-surface max-lg:px-4 max-lg:py-3" : ""}`}
         style={sticky ? { paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))" } : undefined}>
+        <div role="radiogroup" aria-label={t("cs.mode.label")} className="grid grid-cols-2 gap-1 rounded-md border border-line bg-subtle p-1">
+          {(["auto", "review"] as const).map((m) => (
+            <button key={m} type="button" role="radio" aria-checked={p.mode === m} disabled={p.running} onClick={() => p.setMode(m)}
+              className={`min-h-10 rounded px-2 text-sm font-medium ${p.mode === m ? "bg-accent text-accent-fg" : "text-body hover:bg-surface"}`}>
+              {t(m === "auto" ? "cs.mode.auto" : "cs.mode.review")}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted">{t(p.mode === "auto" ? "cs.mode.autoHint" : "cs.mode.reviewHint")}</p>
         {p.running ? (
           <Button size="lg" className="w-full" icon={<Square className="size-4" aria-hidden="true" />} onClick={p.onStop}>{t("cs.run.stop")}</Button>
         ) : (

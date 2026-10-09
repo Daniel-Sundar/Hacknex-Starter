@@ -2,6 +2,11 @@
 export default {
   // input
   "cs.input.title": "1. Add a page",
+  "cs.mode.label": "Reading mode",
+  "cs.mode.auto": "Auto",
+  "cs.mode.review": "Review",
+  "cs.mode.autoHint": "Auto: ClearScript reads the page and marks uncertain words. Check them when you like.",
+  "cs.mode.reviewHint": "Review: right after reading, ClearScript asks you about each uncertain word, drugs and numbers first.",
   "cs.input.drop": "Drop a photo or scan here",
   "cs.input.dropHint": "JPG, PNG, WEBP or a scanned PDF, up to {mb} MB. You can also paste an image.",
   "cs.input.choose": "Choose file",

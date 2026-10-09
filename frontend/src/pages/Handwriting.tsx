@@ -72,6 +72,9 @@ export default function Handwriting({ active }: { active: boolean }) {
   // dialogs
   const [wordIdx, setWordIdx] = useState<number | null>(null);
   const [review, setReview] = useState<{ skipped: number[]; total: number } | null>(null);
+  // Auto: show the result and stop. Review: walk through the flagged words as soon as the result arrives.
+  const [mode, setModeState] = useState<"auto" | "review">(() => { try { return localStorage.getItem("cs-mode") === "review" ? "review" : "auto"; } catch { return "auto"; } });
+  const setMode = (m: "auto" | "review") => { setModeState(m); try { localStorage.setItem("cs-mode", m); } catch { /* storage blocked */ } };
   const [focusWord, setFocusWord] = useState<number | null>(null);
   const [camera, setCamera] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -207,6 +210,10 @@ export default function Handwriting({ active }: { active: boolean }) {
       previous.current = null;
       const s = stats(r.words, r);
       announce(s.flagged ? tn("cs.run.doneFlags", s.flagged) : t("cs.run.doneClear"));
+      if (mode === "review") {
+        const q = reviewQueue(r.words);
+        if (q.length) setTimeout(() => { setReview({ skipped: [], total: q.length }); setWordIdx(q[0]); }, 300);
+      }
     } catch (e) {
       if (previous.current) setShown(previous.current); // a failed re-run leaves the last result in place
       if (e instanceof ApiError && e.code === "aborted") {
@@ -447,7 +454,7 @@ export default function Handwriting({ active }: { active: boolean }) {
           <InputPanel
             file={file} name={name} preview={preview} kind={kind} problem={problem} isSample={!!shown?.sample}
             onFiles={pick} onCamera={() => setCamera(true)} onSample={loadSample} onRemove={removeFile}
-            opts={opts} setOpts={setOpts} writer={writer} setWriter={setWriter}
+            opts={opts} setOpts={setOpts} writer={writer} setWriter={setWriter} mode={mode} setMode={setMode}
             running={running} hasResult={!!shown && !shown.sample && !shown.fromHistory} onDigitize={digitize}
             onStop={() => abort.current?.abort()} maxMb={maxMb}
           />
