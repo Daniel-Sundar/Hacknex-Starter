@@ -20,7 +20,7 @@ from fastapi.responses import StreamingResponse  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 from starlette.concurrency import run_in_threadpool  # noqa: E402
 
-from . import agent, handwriting, llm, rag, store  # noqa: E402
+from . import handwriting, llm, rag, store  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -32,11 +32,6 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["Retry-After"],
 )
-
-
-class ChatRequest(BaseModel):
-    messages: list[dict]
-    system: str | None = None
 
 
 class TextRequest(BaseModel):
@@ -181,20 +176,6 @@ def health():
                        "docs_max_upload_mb": _num(_mb("DOCS_MAX_UPLOAD_MB", 10))}}
 
 
-@app.post("/api/chat")
-def chat(req: ChatRequest):
-    msgs = ([{"role": "system", "content": req.system}] if req.system else []) + req.messages
-    return StreamingResponse(llm.stream(msgs), media_type="text/plain")
-
-
-@app.post("/api/extract")
-def extract(req: TextRequest):
-    """Example structured-output endpoint: adapt the prompt to your problem."""
-    return llm.complete_json(
-        "Extract a JSON object with keys: summary (string), category (string), "
-        f"urgency (low|medium|high), entities (list of strings).\n\nText:\n{req.text}")
-
-
 # ---------- Docs Q&A ----------
 
 DOC_TYPES = (".pdf", ".txt", ".md", ".csv", ".docx")
@@ -294,26 +275,6 @@ def delete_doc(source: str):
     if not n:
         raise _err(404, "not_found", "No document with that name. Refresh the list.")
     return {"ok": True, "removed": n, "total_chunks": len(rag.STORE)}
-
-
-@app.post("/api/agent")
-def run_agent(req: TextRequest):
-    return agent.run(req.text)
-
-
-@app.post("/api/vision/detect")
-async def vision_detect(file: UploadFile = File(...), conf: float = Form(0.35)):
-    try:
-        from . import vision
-        return vision.detect(await file.read(), conf=conf)
-    except ImportError:
-        raise HTTPException(501, "Install requirements-ml.txt for YOLO detection")
-
-
-@app.post("/api/vision/describe")
-async def vision_describe(file: UploadFile = File(...), question: str = Form("Describe this image.")):
-    from . import vision
-    return {"answer": vision.describe(await file.read(), question, file.content_type or "image/jpeg")}
 
 
 # ---------- Handwriting digitizer (HNX26EPS04) ----------

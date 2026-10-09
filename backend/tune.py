@@ -138,9 +138,9 @@ def main():
                      f"rank {results.index(current) + 1} of {len(results)}, score {current[0]:.3f}.")
     md = "\n".join(lines) + "\n"
     print("\n" + md)
-    (HERE / "tune_results.md").write_text(md, encoding="utf-8")
+    (HERE / "results" / "tune_results.md").write_text(md, encoding="utf-8")
     best = results[0]
-    (HERE / "tune_best.json").write_text(json.dumps(
+    (HERE / "results" / "tune_best.json").write_text(json.dumps(
         {"readers": list(best[1]), "flag_rule": best[2], "digits_strict": best[3], "drop_minority": best[4],
          "dev_metrics": {k: v for k, v in best[5].items()}}, indent=1), encoding="utf-8")
     print("Saved tune_results.md and tune_best.json")

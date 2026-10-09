@@ -403,14 +403,3 @@ export function useToast() {
   if (!ctx) throw new Error("useToast() outside <ToastProvider>");
   return ctx;
 }
-
-// ---------- kept for the starter pages (Chat, Agent, Vision) that are not in the app ----------
-
-export function Card({ children, className = "", flush = false }: { children: ReactNode; className?: string; flush?: boolean }) {
-  return <div className={`rounded-lg border border-line bg-surface ${flush ? "" : "p-4"} ${className}`}>{children}</div>;
-}
-
-export function ErrorNote({ error }: { error: string | null }) {
-  if (!error) return null;
-  return <p role="alert" className="rounded-md border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger-fg">{error}</p>;
-}

@@ -1,353 +1,201 @@
+<div align="center">
+
 # ClearScript
 
-**Multi-model handwriting digitisation that shows disagreement instead of guessing.**
+### Read the unreadable. Know what you don't know.
 
-ClearScript turns photos of hard-to-read handwriting into editable text. It is built for doctors' prescriptions and clinic notes. Several independent AI vision models read every page. Where they agree, the text is accepted. Where they disagree, ClearScript flags the word and shows what each model read, so a person checks only those words.
+**ClearScript turns photos of messy handwriting, starting with doctors' prescriptions, into clean, checked text.**
+Several AI models read every page side by side. Where they agree, the text stands. Where they disagree, ClearScript flags the word instead of guessing.
 
-Built at HackNEX 2026 (Karunya, Coimbatore) for problem statement **HNX26EPS04: Extreme Bad-Handwriting Digitizing Stack**.
+[**Live app**](https://clearscript-hacknex.onrender.com) · [Backend health](https://clearscript-hacknex-api.onrender.com/api/health) · Built at **HackNEX 2026** for **HNX26EPS04: Extreme Bad-Handwriting Digitizing Stack**
+
+</div>
 
 > ClearScript is a reading aid, not a medical device. Always check flagged words, drug names and doses against the original.
 
 ---
 
-## Contents
-- [Why ClearScript](#why-clearscript)
-- [How it works](#how-it-works)
-- [Features](#features)
-- [Results](#results)
-- [Quick start](#quick-start)
-- [Hosting](#hosting)
-- [Configuration](#configuration)
-- [API](#api)
-- [Evaluation](#evaluation)
-- [Project structure](#project-structure)
-- [Privacy and security](#privacy-and-security)
-- [Limitations](#limitations)
-- [Team](#team)
+## The problem
 
----
+A pharmacist squints at a prescription. Is that **amlodipine** or **amiloride**? **650 mg** or **6500**?
 
-## Why ClearScript
+Phone OCR is built for print and falls apart on handwriting. A single AI model reads handwriting far better, but it **answers confidently even when it is wrong** and never says when it is unsure. On a prescription, a confident mistake can hurt someone.
 
-Prescriptions, clinic notes, forms and old records are still handwritten, often illegibly. Normal OCR is built for print and fails on bad handwriting.
+## The idea
 
-Modern vision language models read handwriting much better, but a single model **answers confidently even when it is wrong**, and never says when it is unsure. On a prescription, a confidently wrong drug name or dose can hurt someone.
+**Different models make different mistakes, so the places where they disagree are exactly where the errors hide.**
 
-ClearScript's answer is to **measure uncertainty instead of hiding it**. Different models make different mistakes, so the places where they disagree are where the errors are. On our development set, when every model agreed on a word, it was right 937 times out of 937.
+ClearScript turns that disagreement into a confidence signal you can trust. On our development set, when every model agreed on a word, it was right **937 times out of 937**.
+
+## What it does
+
+| | |
+|---|---|
+| 🗳️ **Many readers, one vote** | 3–5 independent vision models read the page in parallel. Their readings are aligned word by word and voted. |
+| 🚩 **Honest flags** | A word the models disagree on is flagged, with what each model read. On prescriptions every word, and every number anywhere, needs all readers to agree. |
+| 💊 **Prescription safety net** | Look-alike drug names (hydroxyzine / hydralazine) are flagged even when every model agrees. Each dose is checked against usual strengths and daily maximums. |
+| ✍️ **Ask the human, then remember** | You confirm only the flagged words. Your answer is final and is remembered for that writer's next page. |
+| ⚡ **Auto or Review** | **Auto** gives the best reading as clean text. **Review** walks you through every uncertain word, drugs and numbers first. |
+| 🔐 **Your history, everywhere** | Sign in with Google or email (Supabase) to keep your pages and corrections across devices, or continue without an account. |
+| 🌏 **Made for India** | Interface in English and 12 Indian languages. 97 common generics and 116 Indian brand names (Dolo, Augmentin, Telma…) in the safety checks. |
+
+Also included: live progress from the server, a side-by-side comparison with a single model, a structured medicines table, export to TXT / Markdown / JSON (uncertain words stay marked `[[word?]]`, never exported as fact), a Docs Q&A tab with cited answers, light and dark themes, and full keyboard and screen-reader support.
 
 ## How it works
 
 ```
 photo / scan / PDF
-  → validate  file type checked by content, size and pixel limits
-  → prepare   PDF → page image; very large photos resized
-  → clean     OpenCV: denoise, contrast (CLAHE), deskew
-  → read      3–5 different vision models read the page in parallel
-              (Groq Qwen, Google Gemini, OpenRouter dots / Gemma)
-  → vote      readings aligned word by word, majority vote; disagreement = flag
-              prescriptions: every reader must agree; numbers always need every reader
-  → context   a constrained fix may only choose the readers' own words,
-              dictionary words or words the writer has confirmed. It never invents text.
-  → safety    prescriptions only, no AI: look-alike drug names are flagged even when every
-              reader agrees, and each dose is checked against usual strengths and daily maximums
-  → review    the user confirms or corrects flagged words; answers are final and
-              remembered per writer
+  → clean     denoise, contrast, deskew (OpenCV)
+  → read      3–5 different vision models in parallel (Gemini, Groq, OpenRouter)
+  → vote      align word by word; disagreement = flag
+  → context   a constrained fix may only choose words the readers saw or known words. It never invents text or changes numbers
+  → safety    look-alike drug alarm + dose sanity check (plain Python, no AI)
+  → review    the user confirms flagged words; answers are remembered per writer
 ```
 
-No model is trained or fine-tuned: ClearScript is **training-free** and combines pretrained models, so a better model can be swapped in by changing one setting. The pipeline settings were chosen on a development split only.
-
-### Prescription safety
-
-Voting catches readers that disagree. It cannot catch every reader making the same mistake, and on a prescription that mistake can be a different drug or a 10× dose. Two plain-Python checks in `backend/app/rx_safety.py` cover that case:
-
-- **Look-alike drug alarm.** A drug name close to a *different* drug is flagged even when every reader agreed. Examples are hydroxyzine / hydralazine, amlodipine / amiloride and prednisone / prednisolone. The check uses ISMP's confused-name pairs plus a spelling-distance rule. The other drugs are offered as answers, but never fed to the context step, so it can't swap in a drug nobody read.
-- **Dose sanity check.** Each prescription row is checked against usual strengths and the usual adult daily maximum for about 30 common drugs. Brand names such as Dolo, Augmentin and Pan map to their generic. It catches 650 read as 6500, thyroxine in mg instead of mcg, `10-10-10` and `500 g`. A warning never changes the text: the row turns red and gives the reason.
-
-The reference values are a safety net for reading errors, not clinical advice.
-
-## Features
-
-| Area | What you get |
-|---|---|
-| **Input** | Drag and drop, file picker, paste, or phone camera (capture, preview, then retake or use). JPG, PNG, WEBP and PDF, checked in the browser and on the server. |
-| **Live progress** | Real stages streamed from the server: cleaning, each model as it answers or fails, then voting and the context fix. No fake progress bars. |
-| **Results** | Full transcript with every uncertain word marked. Model agreement and model count. Verdict showing how many words need checking. A notice when some models failed. |
-| **Word review** | For any flagged word: what each model read, candidate answers (keys 1–9), or a typed correction. Review mode walks through flags with numbers and doses first. |
-| **Prescriptions** | A structured medicines table (drug, strength, form, frequency, duration) with look-alike and dose warnings. |
-| **Baseline comparison** | A side-by-side diff against a single model, so you can see what one model would have got wrong. |
-| **Writer profiles** | Optional. Confirmed words are remembered per writer and used for that writer's later pages. |
-| **Export** | TXT, Markdown and JSON. Unresolved words stay marked `[[word?]]` and are listed as needing verification. They are never exported as fact. |
-| **History** | The last 20 results, stored only in your browser, and deletable at any time. |
-| **Docs Q&A** | Upload PDF, TXT, MD or CSV files and ask questions. Answers come from your files with numbered citations, and are marked "grounded" only when they cite a retrieved passage. |
-| **Accessibility** | Keyboard operable throughout, native dialogs with focus handling, visible focus, screen-reader labels and live regions, reduced-motion support, and a light/dark theme. Targets WCAG 2.2 AA (keyboard- and browser-tested; no formal audit). |
-| **Languages** | Interface in English plus 12 Indian languages: हिन्दी, தமிழ், తెలుగు, ಕನ್ನಡ, മലയാളം, বাংলা, मराठी, ગુજરાતી, ਪੰਜਾਬੀ, ଓଡ଼ିଆ, অসমীয়া and اردو (right-to-left). The non-English text is machine-drafted and not yet reviewed. |
-
-A **Try a sample** button shows a full labelled example result with no API keys.
+**Training-free by design.** No model is trained or fine-tuned. ClearScript combines ready-made models, so a better model can be swapped in with one setting.
 
 ## Results
 
-> All numbers are from small labelled sets and should be read as early evidence, not clinical validation.
+> Early evidence from small labelled sets, not clinical validation.
 
-### Full pages (development split: 14 labelled samples, 1,146 words)
+**Full pages** (development split: 14 pages, 1,146 words)
 
-| Variant | CER | WER | Confident errors (wrong, not flagged) | Flag recall |
-|---|---:|---:|---:|---:|
-| Baseline: one model, one pass | 14.4% | 17.8% | 152 | 0% |
-| Clean, single reader | 11.7% | 16.9% | 166 | 0.6% |
-| Clean + vote | 2.6% | 3.3% | 6 | 80.0% |
-| **Clean + vote + context (ClearScript)** | **2.6%** | **3.2%** | **6** | **79.3%** |
+| | Character error rate | Confident errors (wrong and not flagged) |
+|---|---:|---:|
+| One model | 14.4% | 152 |
+| **ClearScript** | **2.6%** | **6** |
 
-How these are measured:
-- **CER and WER** are the character and word error rates: the share of characters or words you would have to fix.
-- **Flag recall** is the share of wrong words that ClearScript flagged.
-- **Calibration:** how often a word was right, by how many readers agreed on it.
+**Agreement predicts correctness:**
 
 | Readers agreeing | Word was right |
 |---|---:|
-| All | 100% (937 / 937 words) |
+| All | 100% (937 / 937) |
 | Most | 93.7% |
 | Half | 79.3% |
 | Few | 42.9% |
 
-This calibration is why disagreement works as a flag.
+**Handwritten drug names** (39 single-word images from RxHandBD and BD-Prescription)
 
-The **held-out test split** (7 pages) has not been scored yet, so these numbers are development-split only.
-
-### Handwritten drug names (RxHandBD + BD-Prescription, 39 test images)
-
-| | Single model | ClearScript |
+| | One model | ClearScript |
 |---|---:|---:|
-| Drug name read exactly right | 9.5% | 28.2% |
 | **Confidently wrong** | **90.5%** | **15.4%** |
+| Read exactly right | 9.5% | 28.2% |
 
-On the same images, confident mistakes fell from 19 to 2. Two of ClearScript's remaining 6 confident errors are verified mistakes in the dataset labels.
+The held-out test split has not been scored yet, and dose accuracy has not been measured. With 39 images, every percentage is about ±15 points. Full method and caveats: [`backend/bench/REPORT.md`](backend/bench/REPORT.md); experiment logs: [`backend/results/`](backend/results/).
 
-Further fixes found with this benchmark reached 38.5% exact and 10.3% confidently wrong. Those settings were chosen on these same images, so treat them as optimistic until they are re-checked on fresh images. With 39 images, every percentage is roughly ±15 points.
+## Tech stack
 
-Dose, frequency and duration accuracy has **not** been measured yet: the datasets contain single words only. The full report, with the datasets, method and caveats, is in [`backend/bench/REPORT.md`](backend/bench/REPORT.md).
+| Layer | Choice |
+|---|---|
+| Frontend | React 19, Vite, TypeScript, Tailwind v4 |
+| Backend | Python FastAPI, streaming NDJSON progress |
+| AI readers | Gemini, Groq and OpenRouter vision models behind one gateway, with automatic fallback and several keys per provider |
+| Data and sign-in | Supabase (Postgres, Auth, row-level security) |
+| Hosting | Render (web service + static site) |
 
 ## Quick start
 
-**Requirements:**
-- Git
-- Python 3.11 or newer (3.12 recommended)
-- Node.js 22 LTS
-- API keys for at least one vision provider; free tiers work:
-  - [Gemini](https://aistudio.google.com/apikey)
-  - [Groq](https://console.groq.com/keys)
-  - [OpenRouter](https://openrouter.ai/keys)
+**You need:** Git, Python 3.11+, Node.js 22, and a free API key from at least one of [Gemini](https://aistudio.google.com/apikey), [Groq](https://console.groq.com/keys) or [OpenRouter](https://openrouter.ai/keys).
 
-### Windows (PowerShell)
+**Windows (PowerShell)**
 
 ```powershell
 git clone https://github.com/Daniel-Sundar/Hacknex-Starter
 cd Hacknex-Starter
 git checkout feat/handwriting-mvp
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
-notepad backend\.env                                    # add GEMINI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY
-powershell -ExecutionPolicy Bypass -File .\dev.ps1      # backend on :8000, frontend on :5173, opens the browser
+notepad backend\.env                                  # add your API keys
+powershell -ExecutionPolicy Bypass -File .\dev.ps1    # backend :8000, frontend :5173
 ```
 
-### macOS / Linux
+**macOS / Linux:** `./setup.sh`, add keys to `backend/.env`, then `./dev.sh`.
 
-```bash
-./setup.sh
-$EDITOR backend/.env
-./dev.sh
-```
-
-### Manual start
-
-```bash
-cd backend && uvicorn app.main:app --reload --port 8000
-cd frontend && npm install && npm run dev               # http://localhost:5173
-```
-
-**No keys?** Use **Try a sample** in the app, or set `LLM_PROVIDER=mock` for the text-only features.
-
-## Hosting
-
-**Live app:** not deployed yet. After the first deploy: frontend `https://clearscript-hacknex.onrender.com`,
-backend health `https://clearscript-hacknex-api.onrender.com/api/health` (Render may add a suffix if a name is taken).
-
-`render.yaml` defines two Render services from branch `feat/handwriting-mvp`:
-
-| Service | Type | Root | Build | Serves |
-|---|---|---|---|---|
-| `clearscript-hacknex-api` | Python web service (free) | `backend` | `pip install -r requirements.txt` | `uvicorn app.main:app`, health check `/api/health` |
-| `clearscript-hacknex` | Static site | `frontend` | `npm ci && npm run build` | `dist/` |
-
-**Deploy:** Render dashboard → New → Blueprint → this repo. Render asks for `GEMINI_API_KEY`, `GROQ_API_KEY` and
-`OPENROUTER_API_KEY`: paste them there only, never into a file in the repo. Then open the health URL and check
-`"ok": true` and the reader list.
-
-- **URLs:** `CORS_ORIGINS` (backend) and `VITE_API_URL` (frontend, baked in at build time, no trailing slash) are set
-  to the URLs above. If Render assigns different ones, change both in the dashboard and redeploy both services.
-- **Rate limits** stay on for the public link (`TRUST_PROXY=1` makes them use the real client IP). For a live
-  judging slot you may set `RATE_LIMIT_OFF=1` temporarily.
-- **Free plan:** the backend sleeps after 15 minutes idle (open the health URL a minute before a demo; the first
-  request takes about a minute). Its disk resets on every deploy or restart, which clears the reading cache, writer
-  profiles and Docs Q&A uploads. Before a demo, run each demo image through the hosted app once and don't redeploy.
-- **Quota:** the hosted app shares the same free API quotas as the keys you enter. Keep a local setup with
-  `HW_CACHE_ONLY=1` as a backup.
+Supabase is optional. Without it the app runs with no login page and keeps history in the browser. To enable it, run [`backend/supabase.sql`](backend/supabase.sql) in the Supabase SQL editor and fill in the Supabase variables in `backend/.env.example` and `frontend/.env.example`.
 
 ## Configuration
 
-All settings live in `backend/.env`, which is git-ignored. Never commit it. `backend/.env.example` lists every variable.
+Secrets live only in `backend/.env` (git-ignored) or the hosting dashboard. Never commit them.
 
-### Pipeline
-
-| Variable | Default | What it does |
+| Variable | Where | Purpose |
 |---|---|---|
-| Variable | Default | What it does |
-|---|---|---|
-| `HW_READERS` | Groq Qwen, 2 Gemini slots with spares, OpenRouter dots, Gemma | Voters, comma-separated `provider:model`; `\|` lists spares for one voter |
-| `HW_BASELINE` | `groq:qwen/qwen3.8-27b` | The single-model baseline we compare against |
-| `HW_FLAG_RULE` | `two_thirds` | How many readers must agree to trust a word: `majority`, `two_thirds`, `unanimous` |
-| `HW_FLAG_RULE_RX` | `unanimous` | The same rule for prescriptions |
-| `HW_DIGITS_STRICT` | `1` | Any disagreement on a number is flagged |
-| `HW_DROP_MINORITY` | `1` | A word fewer than half the readers saw is dropped |
-| `HW_REREAD_MODE` | `off` | Context-aware re-read of flagged words: `vote`, `suggest`, `off` (off won on dev) |
-| `HW_PROMPT` | `v1` | Reading instruction version (`v2` also ignores printed text and crossed-out words) |
-| `HW_VOTE_DEADLINE` | `60` | Seconds per page to wait for every reader; the vote starts as soon as all have answered |
-| `HW_READ_TIMEOUT` | `90` | Seconds per model call |
-| `HW_RETRY_WAIT` | `2` | Wait before the single retry on a 429 / 503 |
-| `HW_CACHE_ONLY` | unset | `1` = never call cloud vision models, replay the cache (experiments); local `ollama:` readers still run |
-| `HW_TIDY` | `1` | Strip formatting a model wraps around its reading (`['…']`, quotes, code fences) before the vote |
-| `HW_JOIN_SPLITS` | `1` | Join a word one reader split in two ("Ni dazyl") when another reader wrote it whole ("Nidazyl") |
-| `HW_DICTIONARY_FIX` | `1` | A flagged word becomes a dictionary word only when a strict majority of readers read something within one letter of it; never touches numbers. Word lists: `backend/data/lexicon.txt`, writer words and every `backend/data/knowledge/*.txt` (246 drug names shipped) |
+| `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` | backend | Model keys |
+| `GEMINI_API_KEYS`, `GROQ_API_KEYS`, `OPENROUTER_API_KEYS` | backend | Optional extra keys, comma-separated; used in turn when one hits its quota |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` | backend | Reading cache and writer profiles that survive restarts (secret key, server only) |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | frontend | Sign-in and per-user history (publishable key only) |
+| `VITE_API_URL` | frontend | Backend URL when hosted |
+| `HW_READERS`, `HW_FLAG_RULE`, `HW_FLAG_RULE_RX` | backend | Which models vote and how many must agree |
+| `RATE_LIMIT_OFF` | backend | `1` disables rate limits for a judging slot |
 
-A model whose upstream host fails is skipped for 5 minutes instead of being retried on every page.
-
-The text-only steps (the context fix and the prescription table) use `LLM_PROVIDER`, then `LLM_FALLBACKS` in order. Supported providers:
-- `gemini`, `groq`, `openrouter`;
-- `claude`, via the Anthropic SDK;
-- `ollama`, local and offline;
-- `mock`, with no keys.
-
-### Limits and protection
-
-| Variable | Default | What it does |
-|---|---|---|
-| `MAX_UPLOAD_MB` | `15` | Largest page upload |
-| `DOCS_MAX_UPLOAD_MB` | `10` | Largest Docs Q&A upload |
-| `RATE_LIMIT_DIGITIZE` | `10/60` | Digitizations per IP per window (requests/seconds) |
-| `RATE_LIMIT_DOCS_UPLOAD`, `RATE_LIMIT_DOCS_ASK`, `RATE_LIMIT_HW_TOOLS` | see `.env.example` | Limits for the other routes |
-| `RATE_LIMIT_OFF` | unset | `1` turns rate limiting off (useful for a demo where everyone shares one IP) |
-| `HW_MAX_CONCURRENT` | `4` | Pages processed at once; extra requests get a "busy" answer |
-| `TRUST_PROXY` | unset | `1` reads the client IP from `X-Forwarded-For` behind a reverse proxy |
-
-### Free-tier quotas
-
-Free tiers are small:
-- Gemini: about 20 requests a day per model.
-- OpenRouter free models: about 50 a day.
-- Groq: 200k tokens a day.
-
-Every model answer is cached as text in `backend/.cache/`, so reading the same page again is free. `HW_CACHE_ONLY=1` replays the cache without calling any cloud vision model, which is useful for an offline demo.
+Every variable is documented in [`backend/.env.example`](backend/.env.example).
 
 ## API
 
-All routes are under `/api`. Errors use one shape: `{"detail": {"code": "...", "message": "..."}}`. The codes are:
-- `too_large`, `unsupported_type`, `heic_unsupported`, `bad_image`
-- `rate_limited` (with `Retry-After`), `busy`, `all_models_failed`
+All routes are under `/api`. Errors always look like `{"detail": {"code", "message"}}`.
 
-| Method | Route | Purpose |
-|---|---|---|
-| `GET` | `/api/health` | Status, text provider, active readers and limits |
-| `POST` | `/api/handwriting` | Digitize one page (multipart `file` + options); returns text, per-word results and each model's reading |
-| `POST` | `/api/handwriting/stream` | Same, as a newline-delimited JSON stream of `plan`, `stage`, `reader`, then `result` or `error` events |
-| `POST` | `/api/handwriting/answer` | Save a confirmed word to a writer profile |
-| `POST` | `/api/handwriting/recontext` | Re-run the context step with the writer's confirmed words |
-| `POST` | `/api/handwriting/table` | Prescription text → medicines table with safety warnings |
-| `GET` | `/api/handwriting/eval` | Latest evaluation results |
-| `POST` | `/api/docs/upload` | Add a document to Docs Q&A |
-| `GET` / `DELETE` | `/api/docs` | List or remove all documents |
-| `DELETE` | `/api/docs/{source}` | Remove one document |
-| `POST` | `/api/docs/ask` | Ask a question; returns an answer, sources, cited passages and `grounded` |
-
-Each word in a result carries:
-- `text`
-- `flagged`
-- `confidence`, the share of readers that agreed
-- `alternatives`
-- `lookalikes`
-- `by_model`: what each model wrote at that position
-
-New fields are only ever added; existing ones are never renamed.
-
-## Evaluation
-
-From `backend/` (Windows paths shown):
-
-```powershell
-.venv\Scripts\python eval.py --split dev              # ablation + calibration -> eval_results_dev.md/.json
-.venv\Scripts\python eval.py --split test             # held-out numbers (run once, never tune on them)
-.venv\Scripts\python augment.py                       # blurred / dark / noisy / rotated / phone copies
-.venv\Scripts\python eval.py --robustness --split test
-.venv\Scripts\python tune.py                          # settings search on dev, offline from cached readings
-.venv\Scripts\python -m pytest                        # API and pipeline tests
-```
-
-The drug-name benchmark scripts are in `backend/bench/` (see its report). Synthetic test prescriptions for the safety checks are in `backend/data/handwriting/rx_test/`.
+| Route | Purpose |
+|---|---|
+| `GET /api/health` | Status, active readers, database status |
+| `POST /api/handwriting/stream` | Digitize a page with live progress events |
+| `POST /api/handwriting` | Same, as a single response |
+| `POST /api/handwriting/answer` | Save a confirmed word to a writer profile |
+| `POST /api/handwriting/table` | Prescription → medicines table with safety warnings |
+| `POST /api/docs/upload`, `POST /api/docs/ask` | Docs Q&A |
 
 ## Project structure
 
 ```
 backend/
-  app/
-    main.py          routes, upload validation, rate limits, streaming
-    handwriting.py   pipeline: clean, read, vote, context fix
-    rx_safety.py     look-alike drug alarm and dose sanity check
-    llm.py           the only module that calls LLMs (providers + fallback)
-    claude_provider.py
-    rag.py           Docs Q&A: chunking, embeddings, retrieval
-  data/              labelled samples, drug list, rx_test prescriptions
-  bench/             drug-name benchmark and report
-  tests/             pytest suite
-  eval.py  tune.py  augment.py
-frontend/
-  src/
-    App.tsx          app shell, tabs, language and theme
-    pages/           Handwriting.tsx (+ clearscript/), Docs.tsx (+ docs/)
-    components/      shared UI (ui.tsx), intro animation, loading card
-    lib/             API client, errors, exporters, history, file checks
-    i18n/            English source strings and 12 locale files
-docs/HANDOFF.md      team status, to-do and known issues
+  app/            main.py (routes) · handwriting.py (pipeline) · rx_safety.py (drug checks)
+                  llm.py (model gateway) · store.py (Supabase) · rag.py (Docs Q&A)
+  data/           labelled samples, drug lists, test prescriptions
+  bench/          drug-name benchmark and report
+  results/        evaluation and tuning results
+  tests/          pytest suite
+  eval.py · tune.py · augment.py · supabase.sql
+frontend/src/
+  pages/          Handwriting (+ clearscript/), Docs (+ docs/), Login
+  components/     shared UI, intro animation, account menu
+  lib/            API client, auth, history, exporters
+  i18n/           English source and 12 Indian languages
+render.yaml       one-click Render deploy
 ```
 
-The repository started from a HackNEX starter template. The template's Chat, Agent and Vision pages (and `agent.py`, `vision.py`) are still in the code but are not part of the ClearScript app.
+## Evaluation
 
-## Privacy and security
+From `backend/`:
 
-- **Third-party processing.** Pages are sent to third-party AI providers (Google Gemini, Groq, OpenRouter) to be read. Use only data you are allowed to share with them.
-- **Stored on the server:**
-  - each model's reading, as text in `backend/.cache/` (the server does not keep the images);
-  - confirmed words, under a writer profile name;
-  - Docs Q&A documents, in memory only, until they are removed or the server restarts.
-- **Stored in the browser:** history, in `localStorage`.
-- **API keys** are read from the backend environment only and never reach the browser.
-- **Input checks:** uploads are checked by their actual bytes, not the file extension, and size, pixel and question-length limits apply. Rate limiting and a concurrency cap protect the server.
-- **Not implemented:**
-  - user accounts or authentication;
-  - encryption at rest;
-  - formal compliance for health data.
+```powershell
+.venv\Scripts\python -m pytest                 # 69 tests, no network
+.venv\Scripts\python eval.py --split dev       # ablation and calibration
+.venv\Scripts\python eval.py --split test      # held-out numbers (run once, never tune on them)
+```
 
-  Do not use the app with real patient data without consent and an appropriate deployment.
+## Privacy
+
+- Pages are sent to third-party AI providers (Google, Groq, OpenRouter) to be read. Use only data you are allowed to share.
+- The server keeps model readings as text, never the images. Signed-in history is protected by row-level security, so each user sees only their own pages.
+- API keys never reach the browser.
+- Not yet: encryption at rest or health-data compliance. Don't use real patient data without consent.
 
 ## Limitations
 
-- **Evaluation:** small evaluation sets (14 dev pages, 39 drug-name images). The held-out test split has not been scored yet.
-- **Not measured:**
-  - dose, frequency and duration accuracy;
-  - how often a flagged word was actually correct (flag precision);
-  - processing time per page.
-- **Quotas:** free-tier quotas limit throughput. Pages often get 3–4 of the 5 readers.
-- **Handwriting languages:** reading is tuned for English handwriting. Indian-script handwriting has not been evaluated.
-- **Translations:** interface translations are machine drafts.
-- **Deployment:** Render hosting is configured (see [Hosting](#hosting)); on the free plan the server sleeps when
-  idle and loses its cache and writer profiles on every restart.
+- Small evaluation sets, and the held-out test split is not scored yet.
+- Dose and frequency accuracy not measured.
+- The drug list is a curated set of common Indian medicines, not the full national list.
+- Free-tier quotas limit throughput, and the free Render server sleeps when idle.
+- Tuned for English handwriting; Indian-script handwriting is not evaluated. Interface translations are machine drafts.
 
-## Team
+## Roadmap
 
-Daniel S, Ajay, Aaron and Gladys, at HackNEX 2026.
+Flag boxes drawn on the photo · Tamil and English mixed script · the full National List of Essential Medicines · pharmacy system integration · self-hosted models for privacy and cost.
+
+---
+
+<div align="center">
+
+**Team:** Daniel S · Ajay · Aaron · Gladys. HackNEX 2026, Karunya, Coimbatore.
+
+*Several models read. Disagreements are surfaced. Nothing uncertain is presented as fact.*
+
+</div>

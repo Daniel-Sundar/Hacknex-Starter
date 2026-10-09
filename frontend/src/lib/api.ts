@@ -122,24 +122,3 @@ export async function streamNDJSON(
     outer?.removeEventListener("abort", onAbort);
   }
 }
-
-/** Streams plain-text chunks from /api/chat. */
-export async function streamChat(
-  messages: { role: string; content: string }[],
-  onChunk: (text: string) => void,
-  system?: string,
-) {
-  const r = await fetch(API + "/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, system }),
-  });
-  if (!r.ok || !r.body) throw new Error(`${r.status}`);
-  const reader = r.body.getReader();
-  const decoder = new TextDecoder();
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    onChunk(decoder.decode(value, { stream: true }));
-  }
-}

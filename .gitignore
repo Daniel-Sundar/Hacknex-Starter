@@ -21,3 +21,4 @@ backend/bench/results/
 
 # Pages for a demo (may be real documents): checked by preflight.ps1, never committed
 backend/data/demo/
+*.tsbuildinfo

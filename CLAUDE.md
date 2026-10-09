@@ -13,9 +13,7 @@ the final numbers). Several people push to this branch: `git pull --rebase` befo
 - `backend/`: FastAPI (Python 3.11+). Entry `app/main.py`. All routes under `/api`.
   - `app/llm.py`: the ONLY place that talks to LLMs. Use `llm.chat()`, `llm.stream()`, `llm.complete_json()`.
     Providers: gemini, groq, openrouter, ollama, mock (OpenAI-compatible) plus claude (`app/claude_provider.py`, Anthropic SDK), with automatic fallback.
-  - `app/rag.py`: in-memory RAG (ingest/search/answer).
-  - `app/agent.py`: tool-calling loop. New tool = Python function + JSON schema in `TOOLS`.
-  - `app/vision.py`: YOLO detection + vision-LLM Q&A (needs `requirements-ml.txt`).
+  - `app/rag.py`: in-memory RAG for Docs Q&A. `app/store.py`: optional Supabase storage.
   - `app/handwriting.py` + `app/rx_safety.py`: the ClearScript pipeline (see README).
 - `frontend/`: React 19 + Vite + TypeScript + Tailwind v4 + lucide-react icons.
   - Pages in `src/pages/`, registered in the `TABS` array in `src/App.tsx`.

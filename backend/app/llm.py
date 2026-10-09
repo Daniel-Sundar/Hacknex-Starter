@@ -138,7 +138,7 @@ def chat(messages: list[dict], tools: list[dict] | None = None, **kwargs):
         if name == "mock":
             return {"role": "assistant", "content": _mock_reply(messages), "tool_calls": None}
         if name == "claude":
-            if tools:  # agent.py's loop speaks the OpenAI tool format; use another provider for it
+            if tools:  # tool calls use the OpenAI tool format; use another provider for them
                 errors.append("claude: agent tools not wired for Claude, skipped")
                 continue
             try:
