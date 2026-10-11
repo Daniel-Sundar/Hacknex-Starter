@@ -14,10 +14,10 @@ export function LoginPage() {
     <main className="grid min-h-dvh place-items-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <span aria-hidden="true" className="grid size-12 place-items-center rounded-lg bg-accent text-accent-fg"><ScanText className="size-6" /></span>
+          <span aria-hidden="true" className="cs-primary grid size-12 place-items-center rounded-2xl text-accent-fg"><ScanText className="size-6" /></span>
           <p className="cs-wordmark text-sm text-muted">ClearScript</p>
         </div>
-        <div className="rounded-xl border border-line bg-surface px-6 py-8 shadow-[var(--shadow-card)] sm:px-8">
+        <div className="cs-glass-elevated rounded-[1.5rem] px-6 py-8 sm:px-8">
           <h1 className="cs-title text-center">{t(mode === "in" ? "auth.signInTitle" : "auth.signUpTitle")}</h1>
           <p className="mt-2 mb-6 text-center text-sm text-body">{t("auth.pageDesc")}</p>
           <SignInForm mode={mode} setMode={setMode} />

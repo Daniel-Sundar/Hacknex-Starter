@@ -33,12 +33,18 @@ export function InputPanel(p: Props) {
         {p.file ? (
           <figure className="space-y-2">
             {p.kind === "pdf" ? (
-              <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md border border-line bg-subtle px-4 text-center">
+              <div className="cs-well flex h-40 flex-col items-center justify-center gap-2 rounded-xl px-4 text-center">
                 <FileText className="size-6 text-muted" aria-hidden="true" />
                 <span className="text-sm text-body">{t("cs.input.pdfNote")}</span>
               </div>
             ) : (
-              p.preview && <img src={p.preview} alt={t("cs.input.previewAlt", { name: p.name })} className="max-h-80 w-full rounded-md border border-line bg-subtle object-contain" />
+              p.preview && (
+                // The page sits on a recessed stage like a sheet of paper: crisp, never blurred or tinted.
+                <div className="cs-well grid place-items-center rounded-xl p-3 sm:p-4">
+                  <img src={p.preview} alt={t("cs.input.previewAlt", { name: p.name })}
+                    className="max-h-80 w-auto max-w-full rounded-md bg-white object-contain shadow-[0_1px_2px_rgb(0_0_0/0.08),0_10px_24px_-10px_rgb(20_22_40/0.35)]" />
+                </div>
+              )
             )}
             <figcaption className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
               <span className="min-w-0 break-all">{p.name} · {formatBytes(p.file.size)}</span>
@@ -67,7 +73,7 @@ export function InputPanel(p: Props) {
               title={t("cs.input.drop")}
               hint={t("cs.input.dropHint", { mb: p.maxMb })}
             >
-              <span aria-hidden="true" className="mt-2 inline-flex min-h-10 items-center rounded-md bg-accent px-4 text-sm font-medium text-accent-fg">
+              <span aria-hidden="true" className="cs-primary mt-2 inline-flex min-h-10 items-center rounded-md px-5 text-sm font-semibold text-accent-fg">
                 {t("cs.input.choose")}
               </span>
             </DropZone>
@@ -79,13 +85,13 @@ export function InputPanel(p: Props) {
 
         <fieldset className="space-y-2" disabled={p.running}>
           <legend className="cs-label mb-2">{t("cs.page.label")}</legend>
-          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("cs.page.label")}>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t("cs.page.label")}>
             {PAGE_TYPES.map((k) => {
               const on = p.opts.page === k;
               return (
                 <button key={k} type="button" role="radio" aria-checked={on} onClick={() => p.setOpts({ ...p.opts, page: k })}
-                  className={`inline-flex min-h-10 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors duration-150 disabled:opacity-50 ${on
-                    ? "border-accent bg-accent-soft font-semibold text-accent-text" : "border-line bg-surface font-medium text-body hover:border-line-strong hover:text-ink"}`}>
+                  className={`inline-flex min-h-10 items-center gap-1.5 rounded-md border px-2.5 text-sm transition-colors duration-150 disabled:opacity-50 ${on
+                    ? "border-accent bg-accent-soft font-semibold text-accent-text shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_12%,transparent)]" : "cs-control font-medium text-body hover:text-ink"}`}>
                   {on && <Check className="size-4" aria-hidden="true" />}{t(`cs.page.${k}`)}
                 </button>
               );
@@ -94,15 +100,15 @@ export function InputPanel(p: Props) {
           <p className="text-xs text-muted">{t(`cs.page.${p.opts.page}.hint`)}</p>
         </fieldset>
 
-      <details className="group rounded-md border border-line">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-md px-4 text-sm font-medium text-ink hover:bg-subtle [&::-webkit-details-marker]:hidden">
+      <details className="cs-well group rounded-xl">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-4 text-sm font-medium text-ink transition-colors duration-150 hover:bg-[color-mix(in_srgb,var(--color-ink)_4%,transparent)] [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-2"><SlidersHorizontal className="size-4 text-muted" aria-hidden="true" />{t("cs.adv.title")}</span>
           <span className="flex items-center gap-2 text-xs font-normal text-muted">
             {off ? t("cs.adv.someOff", { n: off }) : t("cs.adv.allOn")}
             <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
           </span>
         </summary>
-        <div className="space-y-2 border-t border-line px-4 py-3">
+        <div className="cs-hair space-y-2 border-t px-4 py-3">
           {TOGGLES.map((k) => (
             <Toggle key={k} checked={p.opts[k]} disabled={p.running} onChange={(v) => p.setOpts({ ...p.opts, [k]: v })}
               label={t(`cs.adv.${k}`)} description={t(`cs.adv.${k}.hint`)} />
@@ -126,12 +132,12 @@ export function InputPanel(p: Props) {
       </details>
       </Panel>
 
-      <div className={`mt-auto space-y-3 border-t border-line bg-surface px-5 py-4 sm:px-6 ${sticky ? "sticky bottom-0 z-20" : ""}`}
+      <div className={`cs-hair mt-auto space-y-3 rounded-b-[var(--radius-lg)] border-t px-5 py-4 sm:px-6 ${sticky ? "sticky bottom-0 z-20 bg-[var(--glass-2)] backdrop-blur-xl" : ""}`}
         style={sticky ? { paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))" } : undefined}>
-        <div role="radiogroup" aria-label={t("cs.mode.label")} className="grid grid-cols-2 gap-1 rounded-md bg-[color-mix(in_srgb,var(--color-ink)_6%,transparent)] p-1">
+        <div role="radiogroup" aria-label={t("cs.mode.label")} className="cs-well grid grid-cols-2 gap-1 rounded-[0.875rem] p-1">
           {(["auto", "review"] as const).map((m) => (
             <button key={m} type="button" role="radio" aria-checked={p.mode === m} disabled={p.running} onClick={() => p.setMode(m)}
-              className={`min-h-10 rounded-sm px-2 text-sm font-medium transition-colors duration-150 ${p.mode === m ? "bg-surface font-semibold text-ink shadow-[0_1px_3px_rgb(37_40_51/0.12)]" : "text-muted hover:text-ink"}`}>
+              className={`min-h-10 rounded-[0.625rem] px-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-200 ${p.mode === m ? "bg-[var(--control-hover)] font-semibold text-ink shadow-[var(--control-shadow),0_1px_4px_rgb(37_40_51/0.12)]" : "text-muted hover:text-ink"}`}>
               {t(m === "auto" ? "cs.mode.auto" : "cs.mode.review")}
             </button>
           ))}

@@ -35,7 +35,7 @@ export function ResultView(p: Props) {
   return (
     <div className="space-y-4">
       {/* ---- verdict: uncertainty first, never hidden ---- */}
-      <section aria-labelledby="cs-verdict-h" className={`rounded-lg border p-4 ${s.flagged ? "border-flag-line bg-flag-bg" : "border-ok-line bg-ok-bg"}`}>
+      <section aria-labelledby="cs-verdict-h" className={`rounded-xl border p-4 shadow-[var(--glass-ring),var(--shadow-glass)] sm:px-5 ${s.flagged ? "border-flag-line bg-flag-bg" : "border-ok-line bg-ok-bg"}`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
             <h2 id="cs-verdict-h" className={`flex items-center gap-2 text-base font-semibold ${s.flagged ? "text-flag-fg" : "text-ok-fg"}`}>
@@ -70,6 +70,7 @@ export function ResultView(p: Props) {
 
       {/* ---- the text ---- */}
       <Panel
+        solid
         title={t("cs.transcript.title")}
         actions={
           <>
@@ -82,7 +83,7 @@ export function ResultView(p: Props) {
         }
         bodyClassName="space-y-3 p-5 sm:p-6"
       >
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line text-sm sm:grid-cols-4">
           <Stat label={t("cs.stat.words")} value={String(s.words)} />
           <Stat label={t("cs.stat.unverified")} value={String(s.flagged)} tone={s.flagged ? "flag" : "ok"} />
           <Stat label={t("cs.stat.agreement")} value={pct(s.agreement)} hint={t("cs.stat.agreement.hint")} />
@@ -116,9 +117,9 @@ export function ResultView(p: Props) {
 
 function Stat({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: Tone }) {
   return (
-    <div className="min-w-0" title={hint}>
+    <div className="min-w-0 bg-subtle px-4 py-3" title={hint}>
       <dt className="text-xs text-muted">{label}</dt>
-      <dd className={`text-base font-semibold tabular-nums ${tone === "flag" ? "text-flag-fg" : tone === "ok" ? "text-ok-fg" : "text-ink"}`}>{value}</dd>
+      <dd className={`mt-0.5 text-lg font-semibold tabular-nums ${tone === "flag" ? "text-flag-fg" : tone === "ok" ? "text-ok-fg" : "text-ink"}`}>{value}</dd>
     </div>
   );
 }
@@ -178,7 +179,7 @@ function Transcript({ words, onOpen, focusWord, showLikely }: {
     <div>
       <p id="cs-transcript-help" className="sr-only">{t("cs.transcript.help")}</p>
       <div role="group" dir="auto" aria-label={t("cs.transcript.title")} aria-describedby="cs-transcript-help"
-        className="transcript overflow-x-auto rounded-md border border-line bg-subtle px-3 py-2 text-ink">
+        className="transcript overflow-x-auto rounded-xl border border-line bg-subtle px-4 py-3 text-ink">
         {lines.map((line, li) => (
           <p key={li} className="break-words">
             {line.map(({ w, i }) => {
@@ -332,8 +333,8 @@ function Readings({ readings, errors }: { readings: Record<string, string>; erro
   const { t } = useT();
   const failed = Object.entries(errors).filter(([k]) => k !== "baseline");
   return (
-    <details className="group rounded-lg border border-line bg-surface shadow-[var(--shadow-card)]">
-      <summary className="flex min-h-12 cursor-pointer list-none flex-wrap items-center justify-between gap-2 rounded-lg px-4 text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden">
+    <details className="cs-glass group rounded-xl">
+      <summary className="flex min-h-12 cursor-pointer list-none flex-wrap items-center justify-between gap-2 rounded-xl px-5 text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden">
         <h2 className="text-sm font-semibold">{t("cs.readings.title")}</h2>
         <span className="text-xs font-normal text-muted">
           {t("cs.readings.count", { ok: Object.keys(readings).length, failed: failed.length })}

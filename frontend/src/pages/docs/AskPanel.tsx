@@ -138,14 +138,14 @@ export function AskPanel({ status, limitMb, onNoDocs }: { status: DocsStatus; li
       </Panel>
 
       {current || answers.length ? (
-        <section aria-labelledby={`${ids}-ah`} className="space-y-3 border-t border-line bg-subtle/60 p-5 sm:p-6">
+        <section aria-labelledby={`${ids}-ah`} className="cs-hair space-y-3 border-t bg-[color-mix(in_srgb,var(--color-ink)_2.5%,transparent)] p-5 sm:p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <h2 id={`${ids}-ah`} className="text-sm font-semibold text-ink">{t("docs.answers.title")}</h2>
             <p className="text-xs text-muted">{t("docs.answers.note")}</p>
           </div>
 
           {current && (
-            <article aria-labelledby={`${ids}-cq`} aria-busy={pending || undefined} className="min-w-0 rounded-lg border border-line bg-surface">
+            <article aria-labelledby={`${ids}-cq`} aria-busy={pending || undefined} className="cs-solid min-w-0 rounded-xl">
               <header className="space-y-1 border-b border-line px-4 py-3">
                 <p className="text-xs text-muted">{t("docs.answer.asked")}</p>
                 <h3 id={`${ids}-cq`} className="wrap-break-word text-base font-semibold text-ink">{current.question}</h3>
@@ -178,11 +178,11 @@ export function AskPanel({ status, limitMb, onNoDocs }: { status: DocsStatus; li
           )}
         </section>
       ) : status === "loading" ? null : status === "ready" || status === "unknown" ? (
-        <div className="border-t border-line p-5 sm:p-6"><EmptyState icon={<MessageSquareText className="size-5" />} title={t("docs.noAnswers.title")}>
+        <div className="cs-hair border-t p-5 sm:p-6"><EmptyState icon={<MessageSquareText className="size-5" />} title={t("docs.noAnswers.title")}>
           {t("docs.noAnswers.body")}
         </EmptyState></div>
       ) : (
-        <div className="border-t border-line p-5 sm:p-6"><EmptyState icon={<FileQuestion className="size-5" />} title={t("docs.empty.title")}>
+        <div className="cs-hair border-t p-5 sm:p-6"><EmptyState icon={<FileQuestion className="size-5" />} title={t("docs.empty.title")}>
           <ol role="list" className="space-y-3 text-start">
             {(["docs.empty.step1", "docs.empty.step2", "docs.empty.step3"] as const).map((k, i) => (
               <li key={k} className="flex items-start gap-3">

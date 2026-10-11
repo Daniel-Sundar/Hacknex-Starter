@@ -55,18 +55,18 @@ export function HistoryList({ entries, currentId, compact, onOpen, onDelete }: L
               const current = e.id === currentId;
               const when = g.key === "cs.history.earlier" ? day.format(e.ts) : time.format(e.ts);
               const thumb = e.thumb
-                ? <img src={e.thumb} alt="" className={`${compact ? "size-10" : "size-12"} shrink-0 rounded border border-line object-cover`} />
-                : <span aria-hidden="true" className={`grid ${compact ? "size-10" : "size-12"} shrink-0 place-items-center rounded border border-line bg-subtle`}><FileText className="size-5 text-muted" /></span>;
+                ? <img src={e.thumb} alt="" className={`${compact ? "size-10" : "size-12"} shrink-0 rounded-lg border border-line bg-white object-cover shadow-[0_1px_2px_rgb(0_0_0/0.08)]`} />
+                : <span aria-hidden="true" className={`grid ${compact ? "size-10" : "size-12"} shrink-0 place-items-center rounded-lg border border-line bg-subtle`}><FileText className="size-5 text-muted" /></span>;
 
               if (compact) {
                 return (
-                  <li key={e.id} className={`group flex items-center gap-1 rounded-md ${current ? "bg-accent-soft" : "hover:bg-subtle"}`}>
+                  <li key={e.id} className={`group flex items-center gap-1 rounded-md transition-colors duration-150 ${current ? "bg-[var(--control-hover)] shadow-[var(--control-shadow),0_1px_4px_rgb(37_40_51/0.1)]" : "hover:bg-[var(--control)]"}`}>
                     <button type="button" onClick={() => onOpen(e)} aria-current={current ? "true" : undefined}
                       aria-label={t("cs.history.openNamed", { name: e.name })}
                       className="flex min-w-0 flex-1 items-center gap-2 rounded-md p-2 text-start">
                       {thumb}
                       <span className="min-w-0 flex-1">
-                        <span className={`block truncate text-sm font-medium ${current ? "text-accent-text" : "text-ink"}`}>{e.name}</span>
+                        <span title={e.name} className={`block truncate text-sm font-medium ${current ? "text-accent-text" : "text-ink"}`}>{e.name}</span>
                         <span className="flex min-w-0 items-center gap-2 text-xs text-muted">
                           <time dateTime={new Date(e.ts).toISOString()} title={date(e.ts)} className="shrink-0 whitespace-nowrap">{when}</time>
                           {s.flagged
@@ -133,8 +133,8 @@ export function HistorySidebar({ count, status, onHide, onManage, children }: {
 }) {
   const { t } = useT();
   return (
-    <aside aria-labelledby="cs-history-side" className="flex min-h-[28rem] min-w-0 flex-1 flex-col bg-subtle/60">
-      <div className="cs-pane-head flex items-center gap-1 border-b border-line ps-5 pe-2">
+    <aside aria-labelledby="cs-history-side" className="flex min-h-[28rem] min-w-0 flex-1 flex-col">
+      <div className="cs-pane-head cs-hair flex items-center gap-1 border-b ps-4 pe-2">
         <h2 id="cs-history-side" className="cs-pane-title me-auto">{t("cs.history.title")} <span className="font-normal text-muted">{count}</span></h2>
         <IconButton size="sm" label={t("cs.history.manage")} icon={<Maximize2 className="size-4" />} onClick={onManage} />
         <IconButton size="sm" label={t("cs.history.hide")} icon={<PanelLeftClose className="size-4" />} onClick={onHide} />

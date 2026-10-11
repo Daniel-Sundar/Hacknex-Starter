@@ -7,6 +7,7 @@ export default {
   "legal.back": "Back to ClearScript",
   "legal.print": "Print",
   "legal.nav": "Legal",
+  "legal.toc": "On this page",
   "legal.footer.privacy": "Privacy policy",
   "legal.footer.terms": "Terms of use",
   "legal.contact": "[Contact email to be added by the ClearScript team]",

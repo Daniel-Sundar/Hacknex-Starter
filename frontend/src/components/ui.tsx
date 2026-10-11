@@ -15,11 +15,11 @@ import { describeError } from "../lib/errors";
 type Variant = "primary" | "secondary" | "ghost" | "quiet" | "danger";
 type Size = "sm" | "md" | "lg";
 const VARIANT: Record<Variant, string> = {
-  primary: "border-transparent bg-accent text-accent-fg hover:bg-accent-hover",
-  secondary: "border-line bg-surface text-ink hover:bg-subtle",
-  ghost: "border-transparent bg-transparent text-accent-text hover:bg-accent-soft", // tertiary
-  quiet: "border-transparent bg-transparent text-body hover:bg-subtle hover:text-ink", // icon buttons, toolbars
-  danger: "border-danger-line bg-surface text-danger-fg hover:bg-danger-bg",
+  primary: "cs-primary border-transparent font-semibold text-accent-fg", // indigo with a soft top light (index.css)
+  secondary: "cs-control text-ink", // the interactive glass surface
+  ghost: "border-transparent bg-transparent text-accent-text hover:bg-accent-soft active:opacity-80", // tertiary
+  quiet: "border-transparent bg-transparent text-body hover:bg-[color-mix(in_srgb,var(--color-ink)_7%,transparent)] hover:text-ink active:opacity-80", // icon buttons, toolbars
+  danger: "border-danger-line bg-surface text-danger-fg hover:bg-danger-bg active:opacity-80",
 };
 const SIZE: Record<Size, string> = {
   sm: "min-h-8 gap-1 px-3 text-xs",
@@ -41,7 +41,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {...rest}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-medium transition-[background-color,color,opacity] duration-150 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT[variant]} ${SIZE[size]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-medium transition-[background-color,color,opacity] duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT[variant]} ${SIZE[size]} ${className}`}
     >
       {loading ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : icon}
       {children}
@@ -64,7 +64,7 @@ export const IconButton = forwardRef<HTMLButtonElement, Omit<ButtonProps, "child
 // ---------- Inputs ----------
 
 export const inputCls =
-  "min-h-10 w-full rounded-md border border-line-strong bg-surface px-3 text-sm text-ink placeholder:text-muted disabled:opacity-50";
+  "min-h-10 w-full rounded-md border border-line-strong bg-surface px-3 text-sm text-ink transition-[border-color,box-shadow] duration-150 placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] disabled:opacity-50";
 
 export function Input({ label, hint, error, className = "", id, trailing, ...rest }: InputHTMLAttributes<HTMLInputElement> & {
   label: ReactNode; hint?: ReactNode; error?: string | null; trailing?: ReactNode; // e.g. a show-password button
@@ -148,9 +148,9 @@ export function DropZone({ accept, multiple, onFiles, title, hint, icon, disable
         const files = Array.from(e.dataTransfer.files ?? []);
         if (files.length) onFiles(multiple ? files : files.slice(0, 1));
       }}
-      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center lg:py-8 [@media(max-height:50rem)]:py-5 transition-colors duration-150 ${over ? "border-accent bg-accent-soft" : "border-drop-line bg-drop hover:border-accent"} ${disabled ? "cursor-not-allowed opacity-50" : ""} ${className}`}
+      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center lg:py-8 [@media(max-height:50rem)]:py-5 transition-[border-color,background-color,box-shadow] duration-200 ${over ? "border-accent bg-accent-soft shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-accent)_18%,transparent)]" : "border-drop-line bg-drop shadow-[inset_0_1px_0_rgb(255_255_255/0.5)] hover:border-accent"} ${disabled ? "cursor-not-allowed opacity-50" : ""} ${className}`}
     >
-      {icon && <span aria-hidden="true" className="grid size-11 place-items-center rounded-full bg-surface text-accent-text shadow-[var(--shadow-card)]">{icon}</span>}
+      {icon && <span aria-hidden="true" className="grid size-12 place-items-center rounded-2xl bg-surface text-accent-text shadow-[var(--glass-ring),var(--shadow-glass)]">{icon}</span>}
       <span className="text-base font-semibold text-ink">{title}</span>
       {hint && <span id={hintId} className="text-xs text-muted">{hint}</span>}
       {children}
@@ -173,18 +173,18 @@ export function DropZone({ accept, multiple, onFiles, title, hint, icon, disable
 
 // ---------- Panel / Badge / Progress ----------
 
-/** A titled group. On its own it floats as a white card; `flat` makes it a pane inside a Workbench
- *  (no border, radius or shadow of its own: the workbench draws one frame and hairline dividers). */
-export function Panel({ title, actions, children, className = "", bodyClassName = "p-5 sm:p-6", level = 2, id, flat = false }: {
-  title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string; level?: 2 | 3; id?: string; flat?: boolean;
+/** A titled group. On its own it is a primary glass panel; `solid` makes it opaque for text-heavy content
+ *  (the transcription); `flat` makes it a pane inside a Workbench tray, which draws the surface. */
+export function Panel({ title, actions, children, className = "", bodyClassName = "p-5 sm:p-6", level = 2, id, flat = false, solid = false }: {
+  title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string; level?: 2 | 3; id?: string; flat?: boolean; solid?: boolean;
 }) {
   const auto = useId();
   const headingId = id ?? auto;
   const H = level === 2 ? "h2" : "h3";
   return (
-    <section aria-labelledby={title ? headingId : undefined} className={`min-w-0 ${flat ? "" : "rounded-lg border border-line bg-surface shadow-[var(--shadow-card)]"} ${className}`}>
+    <section aria-labelledby={title ? headingId : undefined} className={`min-w-0 ${flat ? "" : `rounded-xl ${solid ? "cs-solid" : "cs-glass"}`} ${className}`}>
       {(title || actions) && (
-        <header className="cs-pane-head flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 sm:px-6">
+        <header className="cs-pane-head flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-2.5 sm:px-6">
           {title && <H id={headingId} className="cs-pane-title">{title}</H>}
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </header>
@@ -194,15 +194,20 @@ export function Panel({ title, actions, children, className = "", bodyClassName 
   );
 }
 
-/** One floating window holding several panes side by side (hairline dividers between them), instead of a
- *  row of separate cards. Columns come from `cols` (Tailwind grid classes per breakpoint). */
+/** A glass tray holding the panes of one task side by side. Supporting panes sit directly on the tray; the
+ *  primary pane is a raised sheet (`<Sheet>`). Columns come from `cols` (Tailwind grid classes per breakpoint). */
 export function Workbench({ cols, className = "", children, label }: { cols: string; className?: string; children: ReactNode; label?: string }) {
   return (
     <div role={label ? "group" : undefined} aria-label={label}
-      className={`cs-workbench grid min-w-0 overflow-clip rounded-xl border border-line bg-surface shadow-[var(--shadow-card)] ${cols} ${className}`}>
+      className={`cs-glass grid min-w-0 gap-1.5 rounded-[1.5rem] p-1.5 ${cols} ${className}`}>
       {children}
     </div>
   );
+}
+
+/** The raised sheet inside a Workbench: the main task, on the most opaque glass so forms read cleanly. */
+export function Sheet({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`cs-sheet cs-glass-elevated min-w-0 ${className}`}>{children}</div>;
 }
 
 export type Tone = "neutral" | "flag" | "danger" | "info" | "ok" | "accent";
@@ -244,8 +249,8 @@ export function EmptyState({ icon, title, children, action, className = "" }: {
   icon?: ReactNode; title: ReactNode; children?: ReactNode; action?: ReactNode; className?: string;
 }) {
   return (
-    <div className={`flex flex-col items-center gap-3 rounded-lg bg-subtle px-6 py-10 text-center ${className}`}>
-      {icon && <span aria-hidden="true" className="grid size-10 place-items-center rounded-full bg-surface text-muted">{icon}</span>}
+    <div className={`cs-well flex flex-col items-center gap-3 rounded-xl px-6 py-10 text-center ${className}`}>
+      {icon && <span aria-hidden="true" className="grid size-10 place-items-center rounded-xl bg-surface text-muted shadow-[var(--glass-ring),var(--shadow-glass)]">{icon}</span>}
       <p className="text-base font-semibold text-ink">{title}</p>
       {children && <div className="max-w-prose text-sm text-muted">{children}</div>}
       {action}
@@ -326,15 +331,15 @@ export function Dialog({ open, onClose, title, description, children, footer, wi
     >
       {open && (
         <div className="flex max-h-[inherit] flex-col">
-          <header className="flex items-start justify-between gap-4 border-b border-line px-4 py-3">
+          <header className="cs-hair flex items-start justify-between gap-4 border-b px-5 py-3">
             <div className="min-w-0 pt-2">
               <h2 id={`${id}-t`} className="text-base font-semibold text-ink">{title}</h2>
               {description && <p id={`${id}-d`} className="text-xs text-muted">{description}</p>}
             </div>
             <IconButton label={t("common.close")} icon={<X className="size-4" />} onClick={onClose} />
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{children}</div>
-          {footer && <footer className="flex flex-wrap justify-end gap-2 border-t border-line px-4 py-3">{footer}</footer>}
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+          {footer && <footer className="cs-hair flex flex-wrap justify-end gap-2 border-t px-5 py-3">{footer}</footer>}
         </div>
       )}
       <div ref={toastHost} />
@@ -411,7 +416,7 @@ function Toast({ item, onDone }: { item: ToastItem; onDone: (id: number) => void
     <div
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}
-      className={`pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-lg border bg-surface py-2 ps-4 pe-2 text-sm text-ink shadow-[var(--shadow-pop)] ${item.tone === "neutral" ? "border-line" : TONE[item.tone]}`}
+      className={`pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl border py-2 ps-4 pe-2 text-sm text-ink shadow-[var(--shadow-glass-lg)] ${item.tone === "neutral" ? "cs-toast" : TONE[item.tone]}`}
     >
       <span className="min-w-0 flex-1">{item.message}</span>
       <IconButton size="sm" label={t("common.dismiss")} icon={<X className="size-4" />} onClick={() => onDone(item.id)} />

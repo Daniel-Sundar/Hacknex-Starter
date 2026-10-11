@@ -117,13 +117,14 @@ function Shell() {
           {t("shell.skip")}
         </a>
 
-        {/* Desktop (lg): a fixed indigo sidebar. Phones and tablets: the same element is a compact top bar whose
-            navigation and controls fold into a menu, so the page gets the screen. */}
-        <header className="cs-bar sticky top-0 z-30 lg:fixed lg:inset-y-0 lg:start-0 lg:w-60"
+        {/* Desktop (lg): a floating indigo rail. Phones and tablets: the same element is a compact bar of indigo glass
+            whose navigation and controls drop down as a drawer over a dimmed page. */}
+        {menuOpen && <div aria-hidden="true" className="cs-scrim fixed inset-0 z-20 bg-[rgb(24_25_48/0.32)] backdrop-blur-[3px] lg:hidden" onClick={() => setMenuOpen(false)} />}
+        <header className="cs-bar sticky top-0 z-30 lg:fixed lg:inset-y-3 lg:start-3 lg:w-60"
           style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="flex flex-wrap items-center gap-2 px-4 py-2 sm:px-6 lg:h-full lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-6 lg:px-4 lg:py-6">
             <a href="#/clearscript" className="flex min-h-10 items-center gap-2 rounded-md lg:px-2" aria-label={t("shell.home")}>
-              <span aria-hidden="true" className="grid size-7 place-items-center rounded-sm bg-white text-[#5856d6] lg:size-8"><ScanText className="size-4" /></span>
+              <span aria-hidden="true" className="grid size-8 place-items-center rounded-[0.625rem] bg-white text-[#5856d6] shadow-[inset_0_-1px_0_rgb(0_0_0/0.08),0_2px_8px_rgb(20_18_80/0.35)]"><ScanText className="size-4" /></span>
               <span className="cs-wordmark text-base text-side-fg lg:text-lg">ClearScript</span>
             </a>
             <IconButton
@@ -134,7 +135,7 @@ function Shell() {
               icon={menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
               onClick={() => setMenuOpen((v) => !v)}
             />
-            <div id="cs-menu" className={`${menuOpen ? "flex" : "hidden"} w-full flex-col gap-3 pb-3 lg:flex lg:flex-1 lg:gap-6 lg:pb-0`}>
+            <div id="cs-menu" className={`${menuOpen ? "flex" : "hidden"} cs-drawer absolute inset-x-3 top-full mt-2 flex-col gap-3 rounded-2xl p-3 lg:static lg:mt-0 lg:flex lg:flex-1 lg:gap-6 lg:rounded-none lg:p-0`}>
               <nav aria-label={t("shell.nav")}>
                 <ul className="flex flex-col gap-1">
                   {TABS.map((x) => (
@@ -143,7 +144,7 @@ function Shell() {
                         href={`#/${x.id}`}
                         aria-current={!legal && tab === x.id ? "page" : undefined}
                         onClick={() => setMenuOpen(false)}
-                        className={`flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-150 ${!legal && tab === x.id ? "bg-side-active font-semibold text-side-fg" : "text-side-muted hover:bg-side-hover hover:text-side-fg"}`}
+                        className={`flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-150 ${!legal && tab === x.id ? "cs-nav-active font-semibold text-side-fg" : "text-side-muted hover:bg-side-hover hover:text-side-fg"}`}
                       >
                         <x.icon className="size-4" aria-hidden="true" /> {t(x.label)}
                       </a>
@@ -168,11 +169,11 @@ function Shell() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col lg:ps-60">
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-8">
+        <div className="flex flex-1 flex-col lg:ps-[15.75rem]">
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[85rem] flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-8">
           {legal && (
             <section aria-labelledby="h-legal">
-              <h1 id="h-legal" tabIndex={-1} className="cs-title mx-auto mb-6 max-w-prose outline-none">
+              <h1 id="h-legal" tabIndex={-1} className="cs-title mx-auto mb-6 max-w-[62rem] outline-none">
                 {t(legal === "privacy" ? "legal.privacy.title" : "legal.terms.title")}
               </h1>
               <Legal page={legal} />
@@ -199,8 +200,8 @@ function Shell() {
           ))}
         </main>
 
-        <footer className="border-t border-line">
-          <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6 lg:px-8" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
+        <footer className="cs-hair border-t">
+          <div className="mx-auto flex max-w-[85rem] flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6 lg:px-8" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
             <p className="max-w-prose">{t("shell.footer")}</p>
             <nav aria-label={t("legal.nav")} className="flex flex-wrap items-center gap-1">
               <a href="#/privacy" aria-current={legal === "privacy" ? "page" : undefined}

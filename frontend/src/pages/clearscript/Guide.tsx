@@ -18,7 +18,7 @@ export function Guide({ stage, name, readers }: { stage: 1 | 2 | 3; name: string
               <li key={n} className="relative flex gap-3 pb-5 last:pb-0" aria-current={now ? "step" : undefined}>
                 {n < 4 && <span aria-hidden="true" className={`absolute start-[0.8125rem] top-8 bottom-1 w-px ${done ? "bg-accent" : "bg-line"}`} />}
                 <span aria-hidden="true" className={`relative grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold ${
-                  done ? "bg-accent text-accent-fg" : now ? "bg-accent-soft text-accent-text ring-1 ring-accent" : "border border-line bg-surface text-muted"}`}>
+                  done ? "cs-primary text-accent-fg" : now ? "bg-accent-soft text-accent-text ring-1 ring-accent shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-accent)_12%,transparent)]" : "cs-control border text-muted"}`}>
                   {done ? <Check className="size-3.5" /> : n}
                 </span>
                 <span className="min-w-0 pt-0.5">
@@ -31,7 +31,7 @@ export function Guide({ stage, name, readers }: { stage: 1 | 2 | 3; name: string
         </ol>
 
         {stage === 2 && (
-          <div className="space-y-1 rounded-md bg-subtle p-3 text-sm" role="status">
+          <div className="space-y-1 rounded-xl border border-[color-mix(in_srgb,var(--color-accent)_24%,transparent)] bg-[color-mix(in_srgb,var(--color-accent)_7%,var(--control))] p-3.5 text-sm shadow-[var(--control-shadow)]" role="status">
             <p className="font-semibold text-ink">{t("cs.ready.title")}</p>
             <p className="break-words text-body">{t("cs.ready.body", { name })}</p>
             {readers && readers.length > 0 && (
@@ -41,7 +41,7 @@ export function Guide({ stage, name, readers }: { stage: 1 | 2 | 3; name: string
         )}
       </Panel>
 
-      <div className="mt-auto space-y-1.5 border-t border-line px-5 py-4 sm:px-6">
+      <div className="cs-hair mt-auto space-y-1.5 border-t px-5 py-4 sm:px-6">
         <p className="cs-label flex items-center gap-1.5"><ShieldCheck className="size-3.5" aria-hidden="true" />{t("cs.guide.privacyTitle")}</p>
         <p className="text-xs leading-relaxed text-muted">
           {t("cs.guide.privacy")}{" "}

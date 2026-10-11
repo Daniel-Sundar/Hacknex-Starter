@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { createPortal } from "react-dom";
 import { History, Keyboard, PanelLeftOpen } from "lucide-react";
 import { ApiError, postForm, postJSON, streamNDJSON } from "../lib/api";
-import { Button, Dialog, ErrorState, Workbench, useToast } from "../components/ui";
+import { Button, Dialog, ErrorState, Sheet, Workbench, useToast } from "../components/ui";
 import { useT } from "../i18n";
 import { useHealth } from "../lib/health";
 import { checkFile, thumbnail, type Kind } from "../lib/fileCheck";
@@ -454,24 +454,24 @@ export default function Handwriting({ active }: { active: boolean }) {
         )}
       </div>)}
 
-      {/* One workbench window instead of separate cards: History | Add a page (the primary task) | How it works.
-          Below 85rem the history pane folds into the History dialog; below xl the panes stack. Results get
-          the full width underneath (a transcription needs room), and come first on phones. */}
+      {/* One glass tray: History | Add a page (the primary task, a raised sheet) | How it works. History and How it
+          works sit on the tray itself, one level down. Below 85rem the history pane folds into the History dialog;
+          below xl the panes stack. Results get the full width underneath, and come first on phones. */}
       <div className="flex flex-col gap-6">
       <Workbench
         label={t("cs.input.title")}
         cols={showSide
-          ? "xl:grid-cols-[minmax(0,32rem)_minmax(18rem,1fr)] min-[85rem]:grid-cols-[minmax(15rem,17rem)_minmax(28rem,34rem)_minmax(20rem,1fr)]"
-          : "xl:grid-cols-[minmax(0,34rem)_minmax(20rem,1fr)]"}
+          ? "xl:grid-cols-[minmax(29rem,34rem)_minmax(20rem,1fr)] min-[85rem]:grid-cols-[minmax(14.5rem,16rem)_minmax(29rem,34rem)_minmax(20rem,1fr)]"
+          : "xl:grid-cols-[minmax(29rem,34rem)_minmax(20rem,1fr)]"}
       >
         {showSide && (
-          <div className="hidden min-w-0 flex-col border-e border-line min-[85rem]:flex">
+          <div className="hidden min-w-0 flex-col min-[85rem]:flex">
             <HistorySidebar count={history.length} status={historyStatus} onHide={() => dock(false)} onManage={() => setHistoryOpen(true)}>
               <HistoryList compact entries={history} currentId={shown?.entryId ?? null} onOpen={openEntry} onDelete={(id) => removeEntries([id])} />
             </HistorySidebar>
           </div>
         )}
-        <div className="min-w-0">
+        <Sheet>
           <InputPanel
             file={file} name={name} preview={preview} kind={kind} problem={problem} isSample={!!shown?.sample}
             onFiles={pick} onCamera={() => setCamera(true)} onSample={loadSample} onRemove={removeFile}
@@ -479,8 +479,8 @@ export default function Handwriting({ active }: { active: boolean }) {
             running={running} hasResult={!!shown && !shown.sample && !shown.fromHistory} onDigitize={digitize}
             onStop={() => abort.current?.abort()} maxMb={maxMb}
           />
-        </div>
-        <div className="min-w-0 border-t border-line xl:border-t-0 xl:border-s">
+        </Sheet>
+        <div className="min-w-0">
           <Guide stage={shown ? 3 : file ? 2 : 1} name={name} readers={health.readers} />
         </div>
       </Workbench>
