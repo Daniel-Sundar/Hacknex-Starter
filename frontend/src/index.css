@@ -54,28 +54,31 @@
   --shadow-card: 0 4px 18px rgb(37 40 51 / 0.05);  /* floating white panels */
 }
 
-/* dark: graphite surfaces, same indigo; not an inversion */
+/* dark theme */
 :root:not([data-theme="light"]) {
-  --color-page: #14161c;
-  --color-surface: #1e2029;
-  --color-subtle: #272a35;
-  --color-line: #2f3240;
-  --color-line-strong: #6b7080;
-  --color-ink: #f2f3f7;
-  --color-body: #c8cbd3;
-  --color-muted: #9a9faa;          /* 6.1:1 on surface */
-  --color-disabled: #6b7080;
-  --color-accent: #5856d6;
-  --color-accent-hover: #6563e0;
+  /* Charcoal-lavender canvas, slightly lighter floating panels, nested surfaces one step up. Not an inversion. */
+  --color-page: #20212b;           /* global background, also behind the sidebar */
+  --color-surface: #2b2d3a;        /* floating panels and dialogs */
+  --color-subtle: #343646;         /* nested surfaces: drop zones, transcript box, segmented controls */
+  --color-line: #414355;           /* panel borders and dividers */
+  --color-line-strong: #7d8098;    /* control borders, 3.4:1 on panels */
+  --color-ink: #f2f2fa;            /* primary text, 12.3:1 on panels */
+  --color-body: #d4d5e3;           /* running text, 9.4:1 */
+  --color-muted: #a8aabc;          /* secondary text, 5.9:1 on panels, 5.2:1 on nested */
+  --color-disabled: #85889d;       /* muted / disabled only (3.9:1), never for text people must read */
+  /* Indigo, lifted for dark. Fills use #6664e3 because white on the brand #7775f2 is only 3.7:1;
+     #7775f2 / #8a88ff family shades carry text, icons and focus. */
+  --color-accent: #6664e3;         /* active nav, primary buttons: white text 4.7:1 */
+  --color-accent-hover: #5a58da;   /* white text 5.5:1 */
   --color-accent-fg: #ffffff;
-  --color-accent-text: #a8a7ff;    /* 7.5:1 on surface */
-  --color-accent-soft: #2a2950;
-  --color-flag-bg: #33260d;   --color-flag-fg: #f2c46b;   --color-flag-line: #9c7428;
-  --color-danger-bg: #3a1618; --color-danger-fg: #ff9e9e; --color-danger-line: #a0444a;
-  --color-info-bg: #16264a;   --color-info-fg: #9dbcff;   --color-info-line: #3f63b8;
-  --color-ok-bg: #12301f;     --color-ok-fg: #7ee0a8;     --color-ok-line: #2f8a5c;
-  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -8px rgb(0 0 0 / 0.6);
-  --shadow-card: 0 0 0 transparent;
+  --color-accent-text: #a9a8ff;    /* links, selected labels, focus ring: 5.1:1 on accent-soft, 7:1+ on panels */
+  --color-accent-soft: #363766;    /* selected chips and rows */
+  --color-flag-bg: #3a2f1b;   --color-flag-fg: #e8b45a;   --color-flag-line: #8a6a32;   /* warning, 6.9:1 */
+  --color-danger-bg: #3d2228; --color-danger-fg: #f0787d; --color-danger-line: #9a4a50;   /* error, 5.3:1 */
+  --color-info-bg: #1e2c45;   --color-info-fg: #82b4ff;   --color-info-line: #4a6aa0;   /* information, 6.6:1 */
+  --color-ok-bg: #1c3329;     --color-ok-fg: #4cc38a;     --color-ok-line: #2f7a57;   /* success, 6.1:1 */
+  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -8px rgb(0 0 0 / 0.45);
+  --shadow-card: 0 4px 18px rgb(0 0 0 / 0.16);
 }
 
 html { color-scheme: dark; }

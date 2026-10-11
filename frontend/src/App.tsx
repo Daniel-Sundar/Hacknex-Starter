@@ -82,6 +82,9 @@ function Shell() {
   useEffect(() => {
     if (light) document.documentElement.dataset.theme = "light";
     else delete document.documentElement.dataset.theme;
+    // Keep the browser chrome (mobile address bar) on the chosen theme's background, not just the OS one.
+    const bg = getComputedStyle(document.documentElement).getPropertyValue("--color-page").trim();
+    if (bg) document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => { m.content = bg; });
   }, [light]);
 
   const style = scriptFont ? ({ "--font-script": `"${scriptFont}", "Nirmala UI"` } as CSSProperties) : undefined;
