@@ -120,8 +120,6 @@ export default {
   "cs.run.doneFlags_one": "সম্পন্ন। {count}টি শব্দ যাচাই করা দরকার।",
   "cs.run.doneFlags_other": "সম্পন্ন। {count}টি শব্দ যাচাই করা দরকার।",
   "cs.run.doneClear": "সম্পন্ন। কোনো শব্দ চিহ্নিত হয়নি।",
-  "cs.loading.title": "সব মডেলের মত নেওয়া হচ্ছে…",
-  "cs.loading.hint": "প্রতিটি মডেল আলাদাভাবে পাতাটি পড়ে, তারপর শব্দ ধরে ধরে ভোট দেয়",
   "cs.progress.title": "অগ্রগতি",
   "cs.progress.elapsed": "{seconds} সে.",
   "cs.progress.noLive": "মডেলগুলোর জন্য অপেক্ষা করা হচ্ছে। এই সার্ভার সরাসরি অগ্রগতি দেখায় না।",

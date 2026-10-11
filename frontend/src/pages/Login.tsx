@@ -1,6 +1,7 @@
 // First page when Supabase sign-in is configured: a parchment sheet on the desk with Google and email sign-in.
 // "Continue without an account" keeps the old behaviour (history stays in this browser).
 import { useState } from "react";
+import { ScanText } from "lucide-react";
 import { SignInForm } from "../components/AccountMenu";
 import { useT } from "../i18n";
 import { useAuth } from "../lib/auth";
@@ -10,19 +11,24 @@ export function LoginPage() {
   const { continueAsGuest } = useAuth();
   const [mode, setMode] = useState<"in" | "up">("in");
   return (
-    <main className="grid min-h-dvh place-items-center px-4 py-10">
-      <div className="cs-sheet w-full max-w-md bg-surface px-6 py-8 shadow-pop sm:px-8">
-        <p className="cs-wordmark text-center text-sm text-accent-text">ClearScript</p>
-        <h1 className="cs-title mt-2 text-center text-ink">{t(mode === "in" ? "auth.signInTitle" : "auth.signUpTitle")}</h1>
-        <p className="mt-2 mb-6 text-center text-sm text-body">{t("auth.pageDesc")}</p>
-        <SignInForm mode={mode} setMode={setMode} />
-        <div className="mt-6 border-t border-line pt-4 text-center">
-          <button type="button" onClick={continueAsGuest}
-            className="min-h-10 rounded-md text-sm text-muted underline-offset-2 hover:text-body hover:underline">
-            {t("auth.guest")}
-          </button>
+    <main className="grid min-h-dvh place-items-center px-4 py-12">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center gap-3 text-center">
+          <span aria-hidden="true" className="grid size-12 place-items-center rounded-lg bg-accent text-accent-fg"><ScanText className="size-6" /></span>
+          <p className="cs-wordmark text-sm text-muted">ClearScript</p>
         </div>
-        <p className="mt-4 text-center text-xs text-muted">
+        <div className="rounded-xl border border-line bg-surface px-6 py-8 shadow-[var(--shadow-card)] sm:px-8">
+          <h1 className="cs-title text-center">{t(mode === "in" ? "auth.signInTitle" : "auth.signUpTitle")}</h1>
+          <p className="mt-2 mb-6 text-center text-sm text-body">{t("auth.pageDesc")}</p>
+          <SignInForm mode={mode} setMode={setMode} />
+          <div className="mt-6 border-t border-line pt-4 text-center">
+            <button type="button" onClick={continueAsGuest}
+              className="min-h-10 rounded-md text-sm text-muted underline-offset-2 hover:text-body hover:underline">
+              {t("auth.guest")}
+            </button>
+          </div>
+        </div>
+        <p className="mt-6 text-center text-xs text-muted">
           {t("auth.legalPrefix")}{" "}
           <a href="#/terms" className="font-medium text-accent-text underline underline-offset-2">{t("legal.footer.terms")}</a>
           {" · "}

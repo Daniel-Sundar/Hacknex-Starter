@@ -120,8 +120,6 @@ export default {
   "cs.run.doneFlags_one": "पूर्ण झाले. {count} शब्दाची पडताळणी आवश्यक आहे.",
   "cs.run.doneFlags_other": "पूर्ण झाले. {count} शब्दांची पडताळणी आवश्यक आहे.",
   "cs.run.doneClear": "पूर्ण झाले. एकही शब्द चिन्हांकित झाला नाही.",
-  "cs.loading.title": "प्रत्येक मॉडेलला विचारत आहे…",
-  "cs.loading.hint": "प्रत्येक मॉडेल पान स्वतंत्रपणे वाचते, मग ते प्रत्येक शब्दावर मत देतात",
   "cs.progress.title": "प्रगती",
   "cs.progress.elapsed": "{seconds} से.",
   "cs.progress.noLive": "मॉडेलची वाट पाहत आहे. हा सर्व्हर थेट प्रगती कळवत नाही.",

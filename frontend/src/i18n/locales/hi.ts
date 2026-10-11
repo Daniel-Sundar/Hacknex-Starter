@@ -120,8 +120,6 @@ export default {
   "cs.run.doneFlags_one": "पूरा हुआ। {count} शब्द की जांच ज़रूरी है।",
   "cs.run.doneFlags_other": "पूरा हुआ। {count} शब्दों की जांच ज़रूरी है।",
   "cs.run.doneClear": "पूरा हुआ। कोई शब्द चिह्नित नहीं हुआ।",
-  "cs.loading.title": "हर मॉडल से पूछा जा रहा है…",
-  "cs.loading.hint": "हर मॉडल पेज को अलग से पढ़ता है, फिर सब मिलकर हर शब्द पर वोट करते हैं",
   "cs.progress.title": "प्रगति",
   "cs.progress.elapsed": "{seconds} सेकंड",
   "cs.progress.noLive": "मॉडलों का इंतज़ार है। यह सर्वर लाइव प्रगति नहीं बताता।",

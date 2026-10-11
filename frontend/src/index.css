@@ -1,69 +1,78 @@
 @import "tailwindcss";
 
-/* ClearScript design system: calm, clinical, high legibility.
-   Light is the default (<html data-theme="light">); no attribute = dark. Every text pair is >= 4.5:1 and every
-   control border >= 3:1 (WCAG 2.2 AA). The app's look is scoped to .cs-app, so the journal intro and the
-   pen loading card keep their own styling. Spacing uses only the 4/8/12/16/24/32 steps (Tailwind 1,2,3,4,6,8);
-   text uses four sizes: xs 12, sm 14, base 16, lg 20. */
+/* ClearScript design system: calm, neutral surfaces, one indigo accent, system type.
+   Theme: <html data-theme="light"> = light, no attribute = dark (theme-init.js follows the OS until the user picks).
+   Contrast (checked): text pairs >= 4.5:1, control borders >= 3:1 (WCAG 2.2 AA).
+   Spacing uses the 4/8/12/16/24/32 steps (Tailwind 1,2,3,4,6,8). Type: xs 12, sm 14, base 16, lg 20, xl 24. */
 @theme {
-  /* One sans family. Indic / Urdu glyphs fall through to the Noto face the language picker loads
-     (--font-script), then to the OS (Nirmala UI on Windows). */
-  --font-sans: "Inter", var(--font-script, "Nirmala UI"), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  /* The system face (SF Pro on Apple devices, Segoe UI on Windows). Indic / Urdu glyphs fall through to the
+     Noto face the language picker loads (--font-script), then to the OS (Nirmala UI on Windows). */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", "Segoe UI", Roboto,
+    var(--font-script, "Nirmala UI"), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
   --text-lg: 1.25rem;
   --text-lg--line-height: 1.75rem;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+
+  --radius-sm: 0.375rem;  /* 6: chips, small controls */
+  --radius-md: 0.625rem;  /* 10: buttons, inputs */
+  --radius-lg: 0.875rem;  /* 14: panels */
+  --radius-xl: 1.125rem;  /* 18: dialogs */
 
   /* surfaces */
-  --color-page: #f5f6f8;
+  --color-page: #f8f9fb;
   --color-surface: #ffffff;
-  --color-subtle: #eef0f3;
-  --color-line: #dde1e7;          /* dividers (decorative) */
-  --color-line-strong: #7f8998;   /* control borders, 3.4:1 on surface */
+  --color-subtle: #f1f2f5;
+  --color-line: #e5e7eb;          /* dividers (decorative) */
+  --color-line-strong: #808792;   /* control borders, 3.6:1 on surface */
 
   /* text */
-  --color-ink: #111827;
-  --color-body: #374151;
-  --color-muted: #5b6574;         /* 5.5:1 on page */
+  --color-ink: #17191d;
+  --color-body: #3a3f47;
+  --color-muted: #646b75;         /* 5.1:1 on page */
 
-  /* action */
-  --color-accent: #1d4ed8;        /* white text 6.7:1 */
-  --color-accent-hover: #1e40af;
+  /* action: one accent */
+  --color-accent: #5b5ce2;        /* white text 5.2:1 */
+  --color-accent-hover: #4f50d6;
   --color-accent-fg: #ffffff;
-  --color-accent-text: #1d4ed8;
-  --color-accent-soft: #e8efff;
-  --color-brand: var(--color-accent); /* old name, kept for the starter pages */
+  --color-accent-text: #4b4cd0;   /* links and active labels, 6.2:1 on page */
+  --color-accent-soft: #eeeefd;
+  --color-brand: var(--color-accent); /* old name */
 
   /* meaning: flag = needs verification, danger = look-alike drug / error, info = fixed by context,
-     ok = agreed or confirmed by a person */
-  --color-flag-bg: #fff4d6;   --color-flag-fg: #7a4300;   --color-flag-line: #b07400;
-  --color-danger-bg: #fdeceb; --color-danger-fg: #a3151b; --color-danger-line: #d9787c;
-  --color-info-bg: #eef1ff;   --color-info-fg: #2b3a99;   --color-info-line: #8f9fe0;
-  --color-ok-bg: #e6f5ec;     --color-ok-fg: #0f5f38;     --color-ok-line: #6fb58f;
+     ok = agreed or confirmed by a person. Never colour alone: each also has an icon or a word. */
+  --color-flag-bg: #fdf3e1;   --color-flag-fg: #8a5310;   --color-flag-line: #d39a45;
+  --color-danger-bg: #fdecec; --color-danger-fg: #b1343a; --color-danger-line: #e08a8e;
+  --color-info-bg: #eaf1fc;   --color-info-fg: #2b5fb3;   --color-info-line: #8eb0e6;
+  --color-ok-bg: #e7f5ed;     --color-ok-fg: #1d6b43;     --color-ok-line: #7cc29d;
 
-  --shadow-pop: 0 1px 2px rgb(17 24 39 / 0.08), 0 12px 32px -8px rgb(17 24 39 / 0.24);
+  --shadow-pop: 0 1px 2px rgb(23 25 29 / 0.06), 0 8px 24px -6px rgb(23 25 29 / 0.14);
+  --shadow-card: 0 1px 2px rgb(23 25 29 / 0.04);
 }
 
-/* dark */
+/* dark: comfortable graphite, not pure black */
 :root:not([data-theme="light"]) {
-  --color-page: #0e1116;
-  --color-surface: #151a21;
-  --color-subtle: #1b212a;
-  --color-line: #2a323d;
-  --color-line-strong: #5f6b7c;
-  --color-ink: #eef1f5;
-  --color-body: #c9d0da;
-  --color-muted: #9aa4b2;
-  --color-accent: #2f62d9;
-  --color-accent-hover: #3b6fe6;
+  --color-page: #0f1012;
+  --color-surface: #1a1b1f;
+  --color-subtle: #24262b;
+  --color-line: #2e3036;
+  --color-line-strong: #6b717c;
+  --color-ink: #f2f3f5;
+  --color-body: #c9ccd2;
+  --color-muted: #9aa0a9;
+  --color-accent: #5b5ce2;
+  --color-accent-hover: #6869ea;
   --color-accent-fg: #ffffff;
-  --color-accent-text: #8fb2ff;
-  --color-accent-soft: #1a2440;
-  --color-flag-bg: #33260a;   --color-flag-fg: #f5c451;   --color-flag-line: #a07a1c;
-  --color-danger-bg: #3a1416; --color-danger-fg: #ff9e9e; --color-danger-line: #a0444a;
-  --color-info-bg: #1c2350;   --color-info-fg: #aebcff;   --color-info-line: #5566c0;
-  --color-ok-bg: #10301f;     --color-ok-fg: #86dcae;     --color-ok-line: #2f8a5c;
+  --color-accent-text: #a5a6ff;
+  --color-accent-soft: #24244a;
+  --color-flag-bg: #33260d;   --color-flag-fg: #f2c46b;   --color-flag-line: #9c7428;
+  --color-danger-bg: #3a1618; --color-danger-fg: #ff9e9e; --color-danger-line: #a0444a;
+  --color-info-bg: #172540;   --color-info-fg: #a9c4ff;   --color-info-line: #4d6aa8;
+  --color-ok-bg: #12301f;     --color-ok-fg: #7ee0a8;     --color-ok-line: #2f8a5c;
   --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -8px rgb(0 0 0 / 0.6);
+  --shadow-card: 0 0 0 transparent;
 }
 
 html { color-scheme: dark; }
@@ -85,11 +94,18 @@ body {
   background: var(--color-page);
   color: var(--color-ink);
   /* declared here, not via --font-sans: the language picker sets --font-script on this element */
-  font-family: "Inter", var(--font-script, "Nirmala UI"), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", "Segoe UI", Roboto,
+    var(--font-script, "Nirmala UI"), "Helvetica Neue", Arial, sans-serif;
   font-size: 0.875rem;
   line-height: 1.5;
-  font-feature-settings: "cv11";
+  letter-spacing: -0.003em;
 }
+/* Page and section titles: weight, not size, carries the hierarchy. */
+.cs-app .cs-title { font-size: 1.5rem; line-height: 2rem; font-weight: 600; letter-spacing: -0.015em; color: var(--color-ink); }
+.cs-app .cs-wordmark { font-weight: 600; letter-spacing: -0.01em; }
+/* Frosted top bar, as on iOS; plain surface when transparency is reduced or unsupported. */
+.cs-app .cs-bar { background: color-mix(in srgb, var(--color-surface) 82%, transparent); backdrop-filter: saturate(180%) blur(16px); }
+@media (prefers-reduced-transparency: reduce) { .cs-app .cs-bar { background: var(--color-surface); backdrop-filter: none; } }
 .cs-app :focus-visible {
   outline: 2px solid var(--color-accent-text);
   outline-offset: 2px;
@@ -102,7 +118,7 @@ body {
 
 /* Transcribed text: tabular, slashed zero, l with a tail, so 0/O and l/1 read apart */
 @utility transcript {
-  font-feature-settings: "tnum", "zero", "cv05", "cv08";
+  font-feature-settings: "tnum", "zero";
   font-size: 1rem;
   line-height: 2.25rem;
 }
@@ -112,26 +128,26 @@ body {
   margin: auto;
   padding: 0;
   border: 1px solid var(--color-line);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   background: var(--color-surface);
   color: var(--color-ink);
   box-shadow: var(--shadow-pop);
   width: min(100% - 2rem, var(--dialog-w, 32rem));
   max-height: min(100dvh - 2rem, 48rem);
 }
-.cs-dialog::backdrop { background: rgb(9 12 17 / 0.5); }
+.cs-dialog::backdrop { background: rgb(15 16 18 / 0.4); backdrop-filter: blur(2px); }
 @media (max-width: 639px) {
   .cs-dialog {
     margin: auto 0 0;
     width: 100%;
     max-width: 100%;
-    border-radius: 0.75rem 0.75rem 0 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     max-height: 90dvh;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .cs-dialog[open] { animation: cs-rise 160ms ease-out; }
+  .cs-dialog[open] { animation: cs-rise 180ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 }
 @keyframes cs-rise { from { opacity: 0; transform: translateY(8px); } }
 

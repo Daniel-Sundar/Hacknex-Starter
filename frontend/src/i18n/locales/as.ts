@@ -120,8 +120,6 @@ export default {
   "cs.run.doneFlags_one": "সম্পূৰ্ণ। {count}টা শব্দ পৰীক্ষা কৰিব লাগিব।",
   "cs.run.doneFlags_other": "সম্পূৰ্ণ। {count}টা শব্দ পৰীক্ষা কৰিব লাগিব।",
   "cs.run.doneClear": "সম্পূৰ্ণ। কোনো শব্দ চিহ্নিত কৰা হোৱা নাই।",
-  "cs.loading.title": "প্ৰতিটো মডেলক সুধি আছে…",
-  "cs.loading.hint": "প্ৰতিটো মডেলে পৃষ্ঠাখন নিজে নিজে পঢ়ে, তাৰ পিছত শব্দে শব্দে ভোট দিয়ে",
   "cs.progress.title": "অগ্ৰগতি",
   "cs.progress.elapsed": "{seconds} ছেকেণ্ড",
   "cs.progress.noLive": "মডেলবোৰৰ বাবে অপেক্ষা কৰি আছে। এই ছাৰ্ভাৰে লাইভ অগ্ৰগতি নজনায়।",

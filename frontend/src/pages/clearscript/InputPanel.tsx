@@ -66,7 +66,7 @@ export function InputPanel(p: Props) {
               title={t("cs.input.drop")}
               hint={t("cs.input.dropHint", { mb: p.maxMb })}
             >
-              <span aria-hidden="true" className="mt-2 inline-flex min-h-10 items-center rounded-md border border-line-strong bg-surface px-4 text-sm font-medium text-ink">
+              <span aria-hidden="true" className="mt-2 inline-flex min-h-10 items-center rounded-md border border-line bg-surface shadow-[var(--shadow-card)] px-4 text-sm font-medium text-ink">
                 {t("cs.input.choose")}
               </span>
             </DropZone>
@@ -84,7 +84,7 @@ export function InputPanel(p: Props) {
               return (
                 <button key={k} type="button" role="radio" aria-checked={on} onClick={() => p.setOpts({ ...p.opts, page: k })}
                   className={`min-h-9 rounded-md border px-3 text-xs font-medium transition-colors disabled:opacity-50 ${on
-                    ? "border-accent bg-accent-soft text-accent-text" : "border-line-strong bg-surface text-body hover:bg-subtle hover:text-ink"}`}>
+                    ? "border-transparent bg-accent-soft font-semibold text-accent-text" : "border-line bg-surface text-body hover:bg-subtle hover:text-ink"}`}>
                   {t(`cs.page.${k}`)}
                 </button>
               );

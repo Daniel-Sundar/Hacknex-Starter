@@ -142,7 +142,7 @@ export function ExportDialog({ open, onClose, words, result, name, ts, rows, onC
           {formats.map((f) => (
             <li key={f.id}>
               <button type="button" onClick={f.run}
-                className="flex min-h-12 w-full items-center gap-3 rounded-md border border-line-strong bg-surface px-4 py-2 text-start hover:bg-subtle">
+                className="flex min-h-12 w-full items-center gap-3 rounded-md border border-line bg-surface px-4 py-2 text-start hover:bg-subtle">
                 <f.icon className="size-5 shrink-0 text-muted" aria-hidden="true" />
                 <span className="min-w-0">
                   <span className="block text-sm font-medium text-ink">{t(`cs.export.${f.id}`)}</span>
@@ -153,7 +153,7 @@ export function ExportDialog({ open, onClose, words, result, name, ts, rows, onC
           ))}
           <li>
             <button type="button" onClick={onCopy}
-              className="flex min-h-12 w-full items-center gap-3 rounded-md border border-line-strong bg-surface px-4 py-2 text-start hover:bg-subtle">
+              className="flex min-h-12 w-full items-center gap-3 rounded-md border border-line bg-surface px-4 py-2 text-start hover:bg-subtle">
               <ClipboardCopy className="size-5 shrink-0 text-muted" aria-hidden="true" />
               <span className="min-w-0">
                 <span className="block text-sm font-medium text-ink">{t("cs.export.copy")}</span>

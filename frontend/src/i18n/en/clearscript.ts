@@ -63,8 +63,8 @@ export default {
   "cs.run.doneClear": "Done. No words were flagged.",
 
   // loading card (keeps its original wording)
-  "cs.loading.title": "Consulting every model…",
-  "cs.loading.hint": "Each model reads the page on its own, then they vote word by word",
+  "cs.loading.title": "Reading the page",
+  "cs.loading.hint": "Each model reads the page on its own. Their readings are then compared word by word.",
 
   // progress
   "cs.progress.title": "Progress",

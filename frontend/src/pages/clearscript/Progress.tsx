@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Circle, Loader2, MinusCircle, Square, XCircle } from "lucide-react";
-import { LegacyLoadingCard } from "../../components/LegacyLoadingCard";
 import { Button, Progress } from "../../components/ui";
 import { useT, type MessageKey } from "../../i18n";
 import { modelLabel, STAGE_ORDER, type Reader, type Run, type StageId, type StageState } from "../../lib/progress";
 
-/** While a page is being read: the pen card (unchanged) and, under it, the real stages as the backend reports them. */
+/** While a page is being read: a short status line and, under it, the real stages as the backend reports them. */
 export function ProcessingView({ run, startedAt, headingRef, onStop }: {
   run: Run; startedAt: number; headingRef?: React.Ref<HTMLHeadingElement>; onStop: () => void;
 }) {
@@ -19,7 +18,13 @@ export function ProcessingView({ run, startedAt, headingRef, onStop }: {
 
   return (
     <div className="space-y-4">
-      <LegacyLoadingCard title={t("cs.loading.title")} hint={t("cs.loading.hint")} />
+      <div role="status" className="flex items-center gap-3 px-1">
+        <Loader2 className="size-5 shrink-0 animate-spin text-accent-text" aria-hidden="true" />
+        <div className="min-w-0">
+          <p className="text-base font-semibold text-ink">{t("cs.loading.title")}</p>
+          <p className="text-sm text-muted">{t("cs.loading.hint")}</p>
+        </div>
+      </div>
       <section aria-labelledby="cs-progress-h" className="rounded-lg border border-line bg-surface">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
           <h2 id="cs-progress-h" ref={headingRef} tabIndex={-1} className="text-sm font-semibold text-ink outline-none">{t("cs.progress.title")}</h2>

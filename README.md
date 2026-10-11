@@ -39,7 +39,7 @@ ClearScript turns that disagreement into a confidence signal you can trust. On o
 | 🔐 **Your history, everywhere** | Sign in with Google or email (Supabase) to keep your pages and corrections across devices, or continue without an account. |
 | 🌏 **Made for India** | Interface in English and 12 Indian languages. 97 common generics and 116 Indian brand names (Dolo, Augmentin, Telma…) in the safety checks. |
 
-Also included: live progress from the server, a side-by-side comparison with a single model, a structured medicines table, export to TXT / Markdown / JSON (uncertain words stay marked `[[word?]]`, never exported as fact), a Docs Q&A tab with cited answers, light and dark themes, and full keyboard and screen-reader support.
+Also included: live progress from the server, a side-by-side comparison with a single model, a structured medicines table, export to TXT / Markdown / JSON (uncertain words stay marked `[[word?]]`, never exported as fact), a Docs Q&A tab with cited answers, light and dark themes that follow your device, and full keyboard and screen-reader support.
 
 ## How it works
 
@@ -155,7 +155,7 @@ backend/
   eval.py · tune.py · augment.py · supabase.sql
 frontend/src/
   pages/          Handwriting (+ clearscript/), Docs (+ docs/), Login
-  components/     shared UI, intro animation, account menu
+  components/     shared UI (design tokens in index.css), account menu
   lib/            API client, auth, history, exporters
   i18n/           English source and 12 Indian languages
 render.yaml       one-click Render deploy

@@ -120,8 +120,6 @@ export default {
   "cs.run.doneFlags_one": "ସମାପ୍ତ। {count}ଟି ଶବ୍ଦ ଯାଞ୍ଚ କରିବା ଦରକାର।",
   "cs.run.doneFlags_other": "ସମାପ୍ତ। {count}ଟି ଶବ୍ଦ ଯାଞ୍ଚ କରିବା ଦରକାର।",
   "cs.run.doneClear": "ସମାପ୍ତ। କୌଣସି ଶବ୍ଦ ଚିହ୍ନିତ ହୋଇନାହିଁ।",
-  "cs.loading.title": "ପ୍ରତ୍ୟେକ ମଡେଲକୁ ପଚରାଯାଉଛି…",
-  "cs.loading.hint": "ପ୍ରତ୍ୟେକ ମଡେଲ୍ ଅଲଗାଭାବେ ପୃଷ୍ଠାଟି ପଢ଼େ, ତାପରେ ସେମାନେ ଶବ୍ଦ ପରେ ଶବ୍ଦ ଭୋଟ୍ ଦିଅନ୍ତି",
   "cs.progress.title": "ପ୍ରଗତି",
   "cs.progress.elapsed": "{seconds} ସେ.",
   "cs.progress.noLive": "ମଡେଲଗୁଡ଼ିକ ପାଇଁ ଅପେକ୍ଷା କରାଯାଉଛି। ଏହି ସର୍ଭର ଲାଇଭ୍ ପ୍ରଗତି ଜଣାଏ ନାହିଁ।",

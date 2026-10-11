@@ -12,12 +12,13 @@ import { describeError } from "../lib/errors";
 
 // ---------- Button ----------
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "quiet" | "danger";
 type Size = "sm" | "md" | "lg";
 const VARIANT: Record<Variant, string> = {
   primary: "border-transparent bg-accent text-accent-fg hover:bg-accent-hover",
-  secondary: "border-line-strong bg-surface text-ink hover:bg-subtle",
-  ghost: "border-transparent bg-transparent text-body hover:bg-subtle hover:text-ink",
+  secondary: "border-line bg-surface text-ink shadow-[var(--shadow-card)] hover:bg-subtle",
+  ghost: "border-transparent bg-transparent text-accent-text hover:bg-accent-soft", // tertiary
+  quiet: "border-transparent bg-transparent text-body hover:bg-subtle hover:text-ink", // icon buttons, toolbars
   danger: "border-danger-line bg-surface text-danger-fg hover:bg-danger-bg",
 };
 const SIZE: Record<Size, string> = {
@@ -40,7 +41,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {...rest}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT[variant]} ${SIZE[size]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-medium transition-[background-color,color,opacity] duration-150 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT[variant]} ${SIZE[size]} ${className}`}
     >
       {loading ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : icon}
       {children}
@@ -50,7 +51,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 
 /** Square icon-only button; `label` is its accessible name and tooltip. */
 export const IconButton = forwardRef<HTMLButtonElement, Omit<ButtonProps, "children"> & { label: string; icon: ReactNode }>(
-  function IconButton({ label, icon, size = "md", variant = "ghost", className = "", ...rest }, ref) {
+  function IconButton({ label, icon, size = "md", variant = "quiet", className = "", ...rest }, ref) {
     const box = size === "sm" ? "size-8" : size === "lg" ? "size-12" : "size-10";
     return (
       <Button ref={ref} aria-label={label} title={label} variant={variant} {...rest} className={`${box} !gap-0 !px-0 ${className}`}>
@@ -147,7 +148,7 @@ export function DropZone({ accept, multiple, onFiles, title, hint, icon, disable
         const files = Array.from(e.dataTransfer.files ?? []);
         if (files.length) onFiles(multiple ? files : files.slice(0, 1));
       }}
-      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors duration-150 ${over ? "border-accent bg-accent-soft" : "border-line-strong bg-surface hover:border-accent hover:bg-subtle"} ${disabled ? "cursor-not-allowed opacity-50" : ""} ${className}`}
+      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center transition-colors duration-150 ${over ? "border-accent bg-accent-soft" : "border-line-strong bg-subtle hover:border-accent"} ${disabled ? "cursor-not-allowed opacity-50" : ""} ${className}`}
     >
       {icon && <span aria-hidden="true" className="grid size-10 place-items-center rounded-full bg-accent-soft text-accent-text">{icon}</span>}
       <span className="text-base font-semibold text-ink">{title}</span>
@@ -179,10 +180,10 @@ export function Panel({ title, actions, children, className = "", bodyClassName 
   const headingId = id ?? auto;
   const H = level === 2 ? "h2" : "h3";
   return (
-    <section aria-labelledby={title ? headingId : undefined} className={`min-w-0 rounded-lg border border-line bg-surface ${className}`}>
+    <section aria-labelledby={title ? headingId : undefined} className={`min-w-0 rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] ${className}`}>
       {(title || actions) && (
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
-          {title && <H id={headingId} className="text-sm font-semibold text-ink">{title}</H>}
+          {title && <H id={headingId} className="text-base font-semibold text-ink">{title}</H>}
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </header>
       )}
@@ -230,8 +231,8 @@ export function EmptyState({ icon, title, children, action, className = "" }: {
   icon?: ReactNode; title: ReactNode; children?: ReactNode; action?: ReactNode; className?: string;
 }) {
   return (
-    <div className={`flex flex-col items-center gap-3 rounded-lg border border-dashed border-line-strong px-6 py-8 text-center ${className}`}>
-      {icon && <span aria-hidden="true" className="grid size-10 place-items-center rounded-full bg-subtle text-muted">{icon}</span>}
+    <div className={`flex flex-col items-center gap-3 rounded-lg bg-subtle px-6 py-10 text-center ${className}`}>
+      {icon && <span aria-hidden="true" className="grid size-10 place-items-center rounded-full bg-surface text-muted">{icon}</span>}
       <p className="text-base font-semibold text-ink">{title}</p>
       {children && <div className="max-w-prose text-sm text-muted">{children}</div>}
       {action}

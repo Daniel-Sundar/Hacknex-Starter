@@ -1,8 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
-import { FileQuestion, Languages, Loader2, Moon, ScanText, ShieldCheck, Sun } from "lucide-react";
+import { FileQuestion, Languages, Loader2, Moon, ScanText, Sun } from "lucide-react";
 import { Legal, type LegalPage } from "./pages/Legal";
 import Handwriting from "./pages/Handwriting";
-import { JournalIntro } from "./components/JournalIntro";
 import { IconButton, ToastProvider } from "./components/ui";
 import { I18nProvider, LOCALES, useT, type LocaleCode, type MessageKey } from "./i18n";
 import { HealthProvider, useHealth } from "./lib/health";
@@ -25,18 +24,14 @@ const tabFromHash = (): TabId => TABS.find((t) => t.id === hashId())?.id ?? TABS
 const legalFromHash = (): LegalPage | null => (hashId() === "privacy" || hashId() === "terms" ? hashId() as LegalPage : null);
 
 export default function App() {
-  // The intro renders outside the app shell, so the shell's styles never reach it.
   return (
-    <>
-      <JournalIntro />
-      <I18nProvider>
-        <HealthProvider>
-          <AuthProvider>
-            <Shell />
-          </AuthProvider>
-        </HealthProvider>
-      </I18nProvider>
-    </>
+    <I18nProvider>
+      <HealthProvider>
+        <AuthProvider>
+          <Shell />
+        </AuthProvider>
+      </HealthProvider>
+    </I18nProvider>
   );
 }
 
@@ -79,10 +74,14 @@ function Shell() {
     shownTab.current = tab;
   }, [tab, t, legal]);
 
+  // The theme follows the OS (theme-init.js) until the person presses the toggle; then their choice is kept.
+  const toggleTheme = () => setLight((v) => {
+    try { localStorage.setItem("cs-theme", v ? "dark" : "light"); } catch { /* storage blocked: choice lasts this visit */ }
+    return !v;
+  });
   useEffect(() => {
     if (light) document.documentElement.dataset.theme = "light";
     else delete document.documentElement.dataset.theme;
-    try { localStorage.setItem("cs-theme", light ? "light" : "dark"); } catch { /* storage blocked: theme just won't persist */ }
   }, [light]);
 
   const style = scriptFont ? ({ "--font-script": `"${scriptFont}", "Nirmala UI"` } as CSSProperties) : undefined;
@@ -107,20 +106,20 @@ function Shell() {
           {t("shell.skip")}
         </a>
 
-        <header className="cs-desk-bar sticky top-0 z-30 border-b border-line bg-surface" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:gap-x-6 sm:px-6">
+        <header className="cs-bar sticky top-0 z-30 border-b border-line" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 sm:gap-x-8 sm:px-6">
             <a href="#/clearscript" className="flex min-h-10 items-center gap-2 rounded-md" aria-label={t("shell.home")}>
-              <span aria-hidden="true" className="grid size-8 place-items-center rounded-md bg-accent text-accent-fg"><ScanText className="size-4" /></span>
-              <span className="cs-wordmark text-base font-semibold tracking-tight text-ink">ClearScript</span>
+              <span aria-hidden="true" className="grid size-7 place-items-center rounded-sm bg-accent text-accent-fg"><ScanText className="size-4" /></span>
+              <span className="cs-wordmark text-base text-ink">ClearScript</span>
             </a>
             <nav aria-label={t("shell.nav")} className="order-last w-full sm:order-none sm:w-auto">
-              <ul className="flex gap-1">
+              <ul className="flex gap-1 rounded-md bg-subtle p-1 sm:bg-transparent sm:p-0">
                 {TABS.map((x) => (
                   <li key={x.id} className="flex-1 sm:flex-none">
                     <a
                       href={`#/${x.id}`}
                       aria-current={!legal && tab === x.id ? "page" : undefined}
-                      className={`flex min-h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium transition-colors ${!legal && tab === x.id ? "bg-accent-soft text-accent-text" : "text-body hover:bg-subtle hover:text-ink"}`}
+                      className={`flex min-h-10 items-center justify-center gap-2 rounded-sm px-3 text-sm font-medium transition-colors duration-150 ${!legal && tab === x.id ? "bg-surface text-ink shadow-[var(--shadow-card)] sm:bg-accent-soft sm:text-accent-text sm:shadow-none" : "text-muted hover:text-ink sm:hover:bg-subtle"}`}
                     >
                       <x.icon className="size-4" aria-hidden="true" /> {t(x.label)}
                     </a>
@@ -134,17 +133,17 @@ function Shell() {
               <IconButton
                 label={light ? t("shell.theme.toDark") : t("shell.theme.toLight")}
                 icon={light ? <Moon className="size-4" /> : <Sun className="size-4" />}
-                onClick={() => setLight((v) => !v)}
+                onClick={toggleTheme}
               />
               <AccountMenu />
             </div>
           </div>
         </header>
 
-        <main id="main" tabIndex={-1} className="cs-sheet mx-auto w-full max-w-7xl flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8">
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 outline-none sm:px-6 sm:py-12">
           {legal && (
             <section aria-labelledby="h-legal">
-              <h1 id="h-legal" tabIndex={-1} className="cs-title mx-auto mb-4 max-w-prose text-lg font-semibold text-ink outline-none">
+              <h1 id="h-legal" tabIndex={-1} className="cs-title mx-auto mb-6 max-w-prose outline-none">
                 {t(legal === "privacy" ? "legal.privacy.title" : "legal.terms.title")}
               </h1>
               <Legal page={legal} />
@@ -153,11 +152,11 @@ function Shell() {
           {/* Visited tabs stay mounted so switching keeps their state. */}
           {TABS.map((x) => (
             <section key={x.id} hidden={!!legal || x.id !== tab} aria-labelledby={`h-${x.id}`}>
-              <div className="mb-6 space-y-1">
-                <h1 id={`h-${x.id}`} tabIndex={-1} ref={(el) => { headings.current[x.id] = el; }} className="cs-title text-lg font-semibold text-ink outline-none">
+              <div className="mb-8 space-y-2">
+                <h1 id={`h-${x.id}`} tabIndex={-1} ref={(el) => { headings.current[x.id] = el; }} className="cs-title outline-none">
                   {t(x.title)}
                 </h1>
-                <p className="max-w-prose text-sm text-muted">{t(x.blurb)}</p>
+                <p className="max-w-prose text-base text-muted">{t(x.blurb)}</p>
               </div>
               {visited.has(x.id) && (x.id === "clearscript" ? <Handwriting active={tab === "clearscript"} /> : (
                 <Suspense fallback={<p className="flex items-center gap-2 text-sm text-muted"><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("common.loading")}</p>}>
@@ -168,16 +167,16 @@ function Shell() {
           ))}
         </main>
 
-        <footer className="cs-desk-bar border-t border-line">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-muted sm:px-6">
+        <footer className="border-t border-line">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
             <p className="max-w-prose">{t("shell.footer")}</p>
             <nav aria-label={t("legal.nav")} className="flex flex-wrap items-center gap-1">
               <a href="#/privacy" aria-current={legal === "privacy" ? "page" : undefined}
-                className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 font-medium text-accent-text underline-offset-2 hover:underline">
-                <ShieldCheck className="size-4" aria-hidden="true" /> {t("legal.footer.privacy")}
+                className="inline-flex min-h-10 items-center rounded-md px-2 font-medium text-body underline-offset-2 hover:text-ink hover:underline">
+                {t("legal.footer.privacy")}
               </a>
               <a href="#/terms" aria-current={legal === "terms" ? "page" : undefined}
-                className="inline-flex min-h-10 items-center rounded-md px-2 font-medium text-accent-text underline-offset-2 hover:underline">
+                className="inline-flex min-h-10 items-center rounded-md px-2 font-medium text-body underline-offset-2 hover:text-ink hover:underline">
                 {t("legal.footer.terms")}
               </a>
             </nav>
@@ -205,7 +204,7 @@ function ServerStatus() {
 function LanguagePicker() {
   const { t, locale, setLocale } = useT();
   return (
-    <label className="flex min-h-10 items-center gap-1 rounded-md border border-line-strong bg-surface ps-2 text-sm text-ink" title={t("shell.language.draft")}>
+    <label className="flex min-h-10 items-center gap-1 rounded-md ps-2 text-sm text-body hover:bg-subtle" title={t("shell.language.draft")}>
       <Languages className="size-4 shrink-0 text-muted" aria-hidden="true" />
       <span className="sr-only">{t("shell.language")}</span>
       <select

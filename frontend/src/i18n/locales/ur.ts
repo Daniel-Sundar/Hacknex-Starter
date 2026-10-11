@@ -120,8 +120,6 @@ export default {
   "cs.run.doneFlags_one": "مکمل۔ {count} لفظ کی تصدیق ضروری ہے۔",
   "cs.run.doneFlags_other": "مکمل۔ {count} الفاظ کی تصدیق ضروری ہے۔",
   "cs.run.doneClear": "مکمل۔ کسی لفظ پر نشان نہیں لگا۔",
-  "cs.loading.title": "ہر ماڈل سے پڑھوایا جا رہا ہے…",
-  "cs.loading.hint": "ہر ماڈل صفحہ الگ سے پڑھتا ہے، پھر سب لفظ بہ لفظ ووٹ دیتے ہیں",
   "cs.progress.title": "پیش رفت",
   "cs.progress.elapsed": "{seconds} سیکنڈ",
   "cs.progress.noLive": "ماڈلز کا انتظار ہے۔ یہ سرور لائیو پیش رفت نہیں بتاتا۔",

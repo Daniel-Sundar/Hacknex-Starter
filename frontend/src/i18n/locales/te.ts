@@ -120,8 +120,6 @@ export default {
   "cs.run.doneFlags_one": "పూర్తయింది. {count} పదానికి ధృవీకరణ అవసరం.",
   "cs.run.doneFlags_other": "పూర్తయింది. {count} పదాలకు ధృవీకరణ అవసరం.",
   "cs.run.doneClear": "పూర్తయింది. ఏ పదాలూ ఫ్లాగ్ చేయబడలేదు.",
-  "cs.loading.title": "ప్రతి మోడల్‌ను సంప్రదిస్తోంది…",
-  "cs.loading.hint": "ప్రతి మోడల్ పేజీని విడిగా చదువుతుంది, ఆ తర్వాత అవి పదం పదంగా ఓటు వేస్తాయి",
   "cs.progress.title": "పురోగతి",
   "cs.progress.elapsed": "{seconds} సె",
   "cs.progress.noLive": "మోడల్స్ కోసం వేచి ఉంది. ఈ సర్వర్ ప్రత్యక్ష పురోగతిని చూపించదు.",

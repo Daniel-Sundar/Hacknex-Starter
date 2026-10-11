@@ -120,8 +120,6 @@ export default {
   "cs.run.doneFlags_one": "ਪੂਰਾ ਹੋਇਆ। {count} ਸ਼ਬਦ ਦੀ ਜਾਂਚ ਦੀ ਲੋੜ ਹੈ।",
   "cs.run.doneFlags_other": "ਪੂਰਾ ਹੋਇਆ। {count} ਸ਼ਬਦਾਂ ਦੀ ਜਾਂਚ ਦੀ ਲੋੜ ਹੈ।",
   "cs.run.doneClear": "ਪੂਰਾ ਹੋਇਆ। ਕੋਈ ਸ਼ਬਦ ਫ਼ਲੈਗ ਨਹੀਂ ਹੋਇਆ।",
-  "cs.loading.title": "ਹਰ ਮਾਡਲ ਤੋਂ ਪੁੱਛਿਆ ਜਾ ਰਿਹਾ ਹੈ…",
-  "cs.loading.hint": "ਹਰ ਮਾਡਲ ਪੰਨੇ ਨੂੰ ਵੱਖਰੇ ਤੌਰ ਉੱਤੇ ਪੜ੍ਹਦਾ ਹੈ, ਫਿਰ ਉਹ ਹਰ ਸ਼ਬਦ ਉੱਤੇ ਵੋਟ ਪਾਉਂਦੇ ਹਨ",
   "cs.progress.title": "ਪ੍ਰਗਤੀ",
   "cs.progress.elapsed": "{seconds} ਸਕਿੰਟ",
   "cs.progress.noLive": "ਮਾਡਲਾਂ ਦੀ ਉਡੀਕ ਹੋ ਰਹੀ ਹੈ। ਇਹ ਸਰਵਰ ਲਾਈਵ ਪ੍ਰਗਤੀ ਨਹੀਂ ਦੱਸਦਾ।",

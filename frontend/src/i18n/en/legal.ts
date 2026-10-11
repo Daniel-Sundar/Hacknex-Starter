@@ -32,7 +32,7 @@ export default {
 
   "legal.privacy.s4.title": "Who else processes it",
   "legal.privacy.s4.p1": "AI model providers read your pages and documents: Google (Gemini), Groq and OpenRouter (which passes requests to the model provider it routes to). Their own terms and data policies apply to what they receive.",
-  "legal.privacy.s4.p2": "Supabase hosts sign-in, history, the reading cache and writer profiles. Render hosts the website and server. Google Fonts serves the typefaces, so your browser contacts Google when the page loads. If you use Google sign-in, Google handles that step.",
+  "legal.privacy.s4.p2": "Supabase hosts sign-in, history, the reading cache and writer profiles. Render hosts the website and server. The app uses your device's own fonts; only if you pick an Indian-language interface does Google Fonts serve a matching typeface, so your browser then contacts Google. If you use Google sign-in, Google handles that step.",
 
   "legal.privacy.s5.title": "Cookies and browser storage",
   "legal.privacy.s5.p1": "ClearScript sets no tracking or advertising cookies and uses no analytics. It keeps a few things in your browser's local storage: your theme, language and reading mode, your signed-out history, your sign-in session, and a random browser id that keeps your Docs Q&A documents and writer profiles separate from other people's. Clearing your browser data removes them.",

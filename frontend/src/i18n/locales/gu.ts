@@ -120,8 +120,6 @@ export default {
   "cs.run.doneFlags_one": "પૂર્ણ. {count} શબ્દની ચકાસણી જરૂરી છે.",
   "cs.run.doneFlags_other": "પૂર્ણ. {count} શબ્દોની ચકાસણી જરૂરી છે.",
   "cs.run.doneClear": "પૂર્ણ. કોઈ શબ્દ ચિહ્નિત થયો નથી.",
-  "cs.loading.title": "દરેક મોડેલને પૂછી રહ્યા છીએ…",
-  "cs.loading.hint": "દરેક મોડેલ પાનું અલગથી વાંચે છે, પછી તેઓ શબ્દે-શબ્દે મત આપે છે",
   "cs.progress.title": "પ્રગતિ",
   "cs.progress.elapsed": "{seconds} સેકન્ડ",
   "cs.progress.noLive": "મોડેલની રાહ જોઈ રહ્યા છીએ. આ સર્વર લાઇવ પ્રગતિ બતાવતું નથી.",
