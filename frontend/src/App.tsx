@@ -149,7 +149,7 @@ function Shell() {
         </header>
 
         <div className="flex flex-1 flex-col lg:ps-64">
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-8">
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-8 xl:px-10">
           {legal && (
             <section aria-labelledby="h-legal">
               <h1 id="h-legal" tabIndex={-1} className="cs-title mx-auto mb-6 max-w-prose outline-none">
@@ -180,7 +180,7 @@ function Shell() {
         </main>
 
         <footer className="border-t border-line">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6 lg:px-8" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
+          <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6 lg:px-8 xl:px-10" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
             <p className="max-w-prose">{t("shell.footer")}</p>
             <nav aria-label={t("legal.nav")} className="flex flex-wrap items-center gap-1">
               <a href="#/privacy" aria-current={legal === "privacy" ? "page" : undefined}

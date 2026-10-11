@@ -133,12 +133,12 @@ export function HistorySidebar({ count, status, onHide, onManage, children }: {
   const { t } = useT();
   return (
     <aside aria-labelledby="cs-history-side" className="sticky top-8 flex max-h-[calc(100dvh-4rem)] flex-col rounded-lg border border-line bg-surface shadow-[var(--shadow-card)]">
-      <div className="flex min-h-14 items-center gap-1 border-b border-line ps-4 pe-2">
-        <h2 id="cs-history-side" className="me-auto text-sm font-semibold text-ink">{t("cs.history.title")} <span className="font-normal text-muted">({count})</span></h2>
+      <div className="flex min-h-16 items-center gap-1 border-b border-line ps-5 pe-3">
+        <h2 id="cs-history-side" className="me-auto text-lg font-semibold text-ink">{t("cs.history.title")} <span className="text-sm font-normal text-muted">({count})</span></h2>
         <IconButton size="sm" label={t("cs.history.manage")} icon={<Maximize2 className="size-4" />} onClick={onManage} />
         <IconButton size="sm" label={t("cs.history.hide")} icon={<PanelLeftClose className="size-4" />} onClick={onHide} />
       </div>
-      <div className="space-y-3 overflow-y-auto p-3">
+      <div className="space-y-3 overflow-y-auto p-4">
         {status}
         {children}
       </div>

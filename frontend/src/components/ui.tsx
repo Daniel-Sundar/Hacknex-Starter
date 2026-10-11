@@ -173,7 +173,7 @@ export function DropZone({ accept, multiple, onFiles, title, hint, icon, disable
 
 // ---------- Panel / Badge / Progress ----------
 
-export function Panel({ title, actions, children, className = "", bodyClassName = "p-4 sm:p-5", level = 2, id }: {
+export function Panel({ title, actions, children, className = "", bodyClassName = "p-5 sm:p-6", level = 2, id }: {
   title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string; level?: 2 | 3; id?: string;
 }) {
   const auto = useId();
@@ -182,8 +182,8 @@ export function Panel({ title, actions, children, className = "", bodyClassName 
   return (
     <section aria-labelledby={title ? headingId : undefined} className={`min-w-0 rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] ${className}`}>
       {(title || actions) && (
-        <header className="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3 sm:px-5">
-          {title && <H id={headingId} className="text-base font-semibold text-ink">{title}</H>}
+        <header className="flex min-h-16 flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-4 sm:px-6">
+          {title && <H id={headingId} className="text-lg font-semibold text-ink">{title}</H>}
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </header>
       )}

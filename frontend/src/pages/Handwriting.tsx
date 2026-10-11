@@ -453,7 +453,7 @@ export default function Handwriting({ active }: { active: boolean }) {
         )}
       </div>)}
 
-      <div className={showSide ? "grid items-start gap-6 min-[90rem]:grid-cols-[14rem_minmax(0,1fr)]" : ""}>
+      <div className={showSide ? "grid items-start gap-6 min-[90rem]:grid-cols-[15rem_minmax(0,1fr)]" : ""}>
       {showSide && (
         <HistorySidebar count={history.length} status={historyStatus} onHide={() => dock(false)} onManage={() => setHistoryOpen(true)}>
           <HistoryList compact entries={history} currentId={shown?.entryId ?? null} onOpen={openEntry} onDelete={(id) => removeEntries([id])} />

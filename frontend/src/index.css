@@ -127,8 +127,11 @@ body {
   line-height: 1.5;
   letter-spacing: -0.003em;
 }
-/* Page and section titles: weight, not size, carries the hierarchy. */
+/* Page and section titles: weight, not size, carries the hierarchy. 24px on phones, 30px from sm (640px) up. */
 .cs-app .cs-title { font-size: 1.5rem; line-height: 2rem; font-weight: 600; letter-spacing: -0.015em; color: var(--color-ink); }
+@media (min-width: 640px) {
+  .cs-app .cs-title { font-size: 1.875rem; line-height: 2.25rem; }
+}
 .cs-app .cs-wordmark { font-weight: 600; letter-spacing: -0.01em; }
 /* Sidebar on desktop, top bar on phones: one indigo surface. Native dropdown lists keep normal colours. */
 .cs-app .cs-bar { background: var(--color-side); color: var(--color-side-fg); }
