@@ -15,7 +15,7 @@ import { describeError } from "../lib/errors";
 type Variant = "primary" | "secondary" | "ghost" | "quiet" | "danger";
 type Size = "sm" | "md" | "lg";
 const VARIANT: Record<Variant, string> = {
-  primary: "cs-primary border-transparent font-semibold text-accent-fg", // indigo with a soft top light (index.css)
+  primary: "cs-primary border-transparent font-semibold text-accent-fg", // forest green with a soft top light (index.css)
   secondary: "cs-control text-ink", // the interactive glass surface
   ghost: "border-transparent bg-transparent text-accent-text hover:bg-accent-soft active:opacity-80", // tertiary
   quiet: "border-transparent bg-transparent text-body hover:bg-[color-mix(in_srgb,var(--color-ink)_7%,transparent)] hover:text-ink active:opacity-80", // icon buttons, toolbars

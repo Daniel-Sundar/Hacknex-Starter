@@ -18,7 +18,7 @@ export function ProcessingView({ run, startedAt, headingRef, onStop }: {
 
   return (
     <div className="space-y-4">
-      <div role="status" className="flex items-center gap-3 px-1">
+      <div role="status" className="cs-on-canvas flex items-center gap-3 px-1">
         <Loader2 className="size-5 shrink-0 animate-spin text-accent-text" aria-hidden="true" />
         <div className="min-w-0">
           <p className="text-base font-semibold text-ink">{t("cs.loading.title")}</p>

@@ -117,14 +117,14 @@ function Shell() {
           {t("shell.skip")}
         </a>
 
-        {/* Desktop (lg): a floating indigo rail. Phones and tablets: the same element is a compact bar of indigo glass
+        {/* Desktop (lg): a floating forest-green rail. Phones and tablets: the same element is a compact bar of green glass
             whose navigation and controls drop down as a drawer over a dimmed page. */}
         {menuOpen && <div aria-hidden="true" className="cs-scrim fixed inset-0 z-20 bg-[rgb(24_25_48/0.32)] backdrop-blur-[3px] lg:hidden" onClick={() => setMenuOpen(false)} />}
         <header className="cs-bar sticky top-0 z-30 lg:fixed lg:inset-y-3 lg:start-3 lg:w-60"
           style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="flex flex-wrap items-center gap-2 px-4 py-2 sm:px-6 lg:h-full lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-6 lg:px-4 lg:py-6">
             <a href="#/clearscript" className="flex min-h-10 items-center gap-2 rounded-md lg:px-2" aria-label={t("shell.home")}>
-              <span aria-hidden="true" className="grid size-8 place-items-center rounded-[0.625rem] bg-white text-[#5856d6] shadow-[inset_0_-1px_0_rgb(0_0_0/0.08),0_2px_8px_rgb(20_18_80/0.35)]"><ScanText className="size-4" /></span>
+              <span aria-hidden="true" className="grid size-8 place-items-center rounded-[0.625rem] bg-white text-[var(--color-side)] shadow-[inset_0_-1px_0_rgb(0_0_0/0.08),0_2px_8px_rgb(8_14_9/0.35)]"><ScanText className="size-4" /></span>
               <span className="cs-wordmark text-base text-side-fg lg:text-lg">ClearScript</span>
             </a>
             <IconButton
@@ -173,7 +173,7 @@ function Shell() {
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[85rem] flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-8">
           {legal && (
             <section aria-labelledby="h-legal">
-              <h1 id="h-legal" tabIndex={-1} className="cs-title mx-auto mb-6 max-w-[62rem] outline-none">
+              <h1 id="h-legal" tabIndex={-1} className="cs-on-canvas cs-title mx-auto mb-6 max-w-[62rem] outline-none">
                 {t(legal === "privacy" ? "legal.privacy.title" : "legal.terms.title")}
               </h1>
               <Legal page={legal} />
@@ -182,7 +182,7 @@ function Shell() {
           {/* Visited tabs stay mounted so switching keeps their state. */}
           {TABS.map((x) => (
             <section key={x.id} hidden={!!legal || x.id !== tab} aria-labelledby={`h-${x.id}`}>
-              <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+              <div className="cs-on-canvas mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
                 <div className="min-w-0 max-w-prose space-y-1">
                   <h1 id={`h-${x.id}`} tabIndex={-1} ref={(el) => { headings.current[x.id] = el; }} className="cs-title outline-none">
                     {t(x.title)}
@@ -192,7 +192,7 @@ function Shell() {
                 {x.id === "clearscript" && <div id="cs-page-tools" className="flex shrink-0" />}
               </div>
               {visited.has(x.id) && (x.id === "clearscript" ? <Handwriting active={tab === "clearscript"} /> : (
-                <Suspense fallback={<p className="flex items-center gap-2 text-sm text-muted"><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("common.loading")}</p>}>
+                <Suspense fallback={<p className="cs-on-canvas flex items-center gap-2 text-sm text-muted"><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("common.loading")}</p>}>
                   <Docs />
                 </Suspense>
               ))}
@@ -200,7 +200,7 @@ function Shell() {
           ))}
         </main>
 
-        <footer className="cs-hair border-t">
+        <footer className="cs-on-canvas border-t border-white/15">
           <div className="mx-auto flex max-w-[85rem] flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6 lg:px-8" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
             <p className="max-w-prose">{t("shell.footer")}</p>
             <nav aria-label={t("legal.nav")} className="flex flex-wrap items-center gap-1">
@@ -225,7 +225,7 @@ function ServerStatus() {
   const { t } = useT();
   const h = useHealth();
   const label = t(`shell.status.${h.state}`);
-  // Light dots with a white ring so they read on the indigo bar; the label carries the meaning too.
+  // Light dots with a white ring so they read on the green bar; the label carries the meaning too.
   const dot = h.state === "online" ? "bg-[#4cc38a]" : h.state === "offline" ? "bg-[#f0787d]" : "bg-side-muted";
   return (
     <span role="status" title={h.provider ? `${label}. ${t("shell.status.detail", { provider: h.provider })}` : label}

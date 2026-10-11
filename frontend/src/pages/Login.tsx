@@ -13,7 +13,7 @@ export function LoginPage() {
   return (
     <main className="grid min-h-dvh place-items-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center gap-3 text-center">
+        <div className="cs-on-canvas mb-8 flex flex-col items-center gap-3 text-center">
           <span aria-hidden="true" className="cs-primary grid size-12 place-items-center rounded-2xl text-accent-fg"><ScanText className="size-6" /></span>
           <p className="cs-wordmark text-sm text-muted">ClearScript</p>
         </div>
@@ -28,7 +28,7 @@ export function LoginPage() {
             </button>
           </div>
         </div>
-        <p className="mt-6 text-center text-xs text-muted">
+        <p className="cs-on-canvas mt-6 text-center text-xs text-muted">
           {t("auth.legalPrefix")}{" "}
           <a href="#/terms" className="font-medium text-accent-text underline underline-offset-2">{t("legal.footer.terms")}</a>
           {" · "}

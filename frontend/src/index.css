@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ClearScript design system: lavender-gray canvas (60), graphite text and glass structure (30), indigo actions (10).
+/* ClearScript design system: deep sage canvas (60), warm ivory glass panels and graphite-green text (30), forest-green actions (10).
    Surfaces are a small glass system (see "glass surfaces" below): primary, elevated, subtle, solid and control.
    Theme: <html data-theme="light"> = light, no attribute = dark (theme-init.js follows the OS until the user picks).
    Contrast (checked): text pairs >= 4.5:1, control borders >= 3:1 (WCAG 2.2 AA).
@@ -22,86 +22,84 @@
   --radius-lg: 1rem;      /* 16: floating panels */
   --radius-xl: 1.25rem;   /* 20: dialogs */
 
-  /* 60: Soft White canvas. 30: Graphite text and structure. 10: Indigo for actions and selection only. */
-  --color-page: #edeef5;          /* lavender-gray canvas, the 60; one flat colour behind everything */
-  --color-surface: #ffffff;
-  --color-subtle: #f7f8fa;        /* nested neutral surface inside panels */
-  --color-line: #e3e4ec;          /* panel borders and dividers (decorative) */
-  --color-line-strong: #8a8f98;   /* control borders and disabled text, 3.3:1 on surface */
+  /* 60: deep sage canvas. 30: warm ivory panels and graphite-green text. 10: forest green for actions,
+     navigation and selection only. Text placed straight on the canvas uses .cs-on-canvas (light ink). */
+  --color-page: #687564;          /* deep sage canvas, the 60; darker than every panel */
+  --color-surface: #f3f0e7;       /* warm ivory: panel base and opaque content sheets */
+  --color-subtle: #e9e7dc;        /* supporting surface inside panels (stat tiles, transcript box) */
+  --color-line: #d8d4c6;          /* dividers on ivory (decorative) */
+  --color-line-strong: #7f8676;   /* control borders, 3.3:1 on ivory */
 
-  /* text: graphite, the 30 */
-  --color-ink: #252833;           /* 12.7:1 on page */
-  --color-body: #3d414d;
-  --color-muted: #646b75;         /* 4.65:1 on page, 5.3:1 on surface */
-  --color-disabled: #858b98;       /* muted: placeholders, disabled (3.4:1, not for text people must read) */
+  /* text: graphite green, the 30 */
+  --color-ink: #292f29;           /* 12:1 on ivory */
+  --color-body: #3f453e;
+  --color-muted: #60665c;         /* secondary text: 5.2:1 on ivory, 4.7:1 on the most translucent panel */
+  --color-disabled: #777d72;      /* muted: placeholders and disabled only (3.7:1, not for text people must read) */
 
-  /* action: indigo, the 10. White on #5856d6 is 5.7:1. */
-  --color-accent: #5856d6;
-  --color-accent-hover: #4442b8;   /* deep indigo */
-  --color-accent-deep: #4442b8;
+  /* action: forest green, the 10. White on #344b39 is 9.5:1. */
+  --color-accent: #344b39;
+  --color-accent-hover: #283b2d;
+  --color-accent-deep: #283b2d;
   --color-accent-fg: #ffffff;
-  --color-accent-text: #4b49c8;   /* links and active labels, 5.9:1 on page */
-  --color-accent-soft: #f0efff;   /* soft indigo tint: selected chips, 6.1:1 with accent text */
+  --color-accent-text: #344b39;   /* links and active labels, 8.3:1 on ivory */
+  --color-accent-soft: #dce5d7;   /* soft selected surface, 7.3:1 with accent text */
   --color-brand: var(--color-accent); /* old name */
 
-  /* meaning only (success, warning, error, information), never decoration. Text shades are darkened from the
-     given #238653 / #a96812 / #c43d42 / #2563eb so they pass 4.5:1 on their tinted backgrounds. Never colour alone:
-     each also has an icon or a word. */
-  --color-flag-bg: #fdf3e1;   --color-flag-fg: #8f570c;   --color-flag-line: #a96812;
-  --color-danger-bg: #fcecec; --color-danger-fg: #b3363b; --color-danger-line: #c43d42;
-  --color-info-bg: #eaf1fd;   --color-info-fg: #1d4fc4;   --color-info-line: #2563eb;
-  --color-ok-bg: #e8f5ee;     --color-ok-fg: #1e7a4b;     --color-ok-line: #238653;
+  /* meaning only (success, warning, error, information), never decoration. Text shades pass 4.5:1 on their
+     tinted backgrounds. Never colour alone: each also has an icon or a word. */
+  --color-flag-bg: #fbf0d9;   --color-flag-fg: #8a530b;   --color-flag-line: #a96812;
+  --color-danger-bg: #f9e7e4; --color-danger-fg: #ad3236; --color-danger-line: #c43d42;
+  --color-info-bg: #e5eef8;   --color-info-fg: #1d4fa8;   --color-info-line: #3f6fb6;
+  --color-ok-bg: #e3efe3;     --color-ok-fg: #1e6b40;     --color-ok-line: #2f7a4f;
 
-  --shadow-pop: 0 1px 2px rgb(37 40 51 / 0.06), 0 8px 24px -6px rgb(37 40 51 / 0.14);
-  --shadow-card: 0 6px 24px rgb(37 40 51 / 0.06);  /* floating white panels */
+  --shadow-pop: 0 1px 2px rgb(20 28 20 / 0.12), 0 8px 24px -6px rgb(20 28 20 / 0.28);
+  --shadow-card: 0 6px 24px rgb(20 28 20 / 0.18);
 
-  /* Sidebar (top bar on phones): one continuous indigo surface. */
-  --color-side: #5856d6;
-  --color-side-fg: #ffffff;        /* 5.7:1 */
-  --color-side-muted: #efeeff;     /* 4.8:1 on the rail */
-  --color-side-hover: rgb(255 255 255 / 0.1);
-  --color-side-active: rgb(255 255 255 / 0.11); /* a glass lozenge on the indigo rail; white text 4.6:1 on it */
-  --color-side-line: rgb(255 255 255 / 0.18);
+  /* Sidebar (top bar on phones): forest green. */
+  --color-side: #344b39;
+  --color-side-fg: #ffffff;        /* 9.5:1 */
+  --color-side-muted: #dce5d7;     /* 7.3:1 */
+  --color-side-hover: rgb(255 255 255 / 0.08);
+  --color-side-active: rgb(255 255 255 / 0.12); /* white text 6.9:1 on it */
+  --color-side-line: rgb(255 255 255 / 0.16);
 
-  /* Upload areas: lavender tint with a restrained indigo dashed edge, distinct from the white panel. */
-  --color-drop: #f4f3ff;
-  --color-drop-line: #9d9be8;
+  /* Upload areas: pale sage with a muted green dashed edge, distinct from the ivory panel. */
+  --color-drop: #e6eadd;
+  --color-drop-line: #7f9478;
 }
 
-/* dark theme */
+/* dark theme: its own palette, not the light colours reused. Deep forest-charcoal canvas, panels one step
+   lighter (darker canvas, lighter panels, as in light mode), sage-green accents lifted for contrast. */
 :root:not([data-theme="light"]) {
-  /* Charcoal-lavender canvas, slightly lighter floating panels, nested surfaces one step up. Not an inversion. */
-  --color-page: #20212b;           /* global background, also behind the sidebar */
-  --color-surface: #2b2d3a;        /* floating panels and dialogs */
-  --color-subtle: #343646;         /* nested surfaces: drop zones, transcript box, segmented controls */
-  --color-line: #414355;           /* panel borders and dividers */
-  --color-line-strong: #7d8098;    /* control borders, 3.4:1 on panels */
-  --color-ink: #f2f2fa;            /* primary text, 12.3:1 on panels */
-  --color-body: #d4d5e3;           /* running text, 9.4:1 */
-  --color-muted: #a8aabc;          /* secondary text, 5.9:1 on panels, 5.2:1 on nested */
-  --color-disabled: #85889d;       /* muted / disabled only (3.9:1), never for text people must read */
-  /* Indigo, lifted for dark. Fills use #6664e3 because white on the brand #7775f2 is only 3.7:1;
-     #7775f2 / #8a88ff family shades carry text, icons and focus. */
-  --color-accent: #6664e3;         /* active nav, primary buttons: white text 4.7:1 */
-  --color-accent-hover: #5a58da;   /* white text 5.5:1 */
+  --color-page: #161b17;
+  --color-surface: #262e27;        /* opaque content sheets */
+  --color-subtle: #2f3830;         /* nested surfaces */
+  --color-line: #3b463c;
+  --color-line-strong: #808a7c;    /* control borders, 3.3:1 on panels */
+  --color-ink: #eef0e8;            /* 12.6:1 on panels */
+  --color-body: #d3d8cc;
+  --color-muted: #a9b0a2;          /* secondary text, 6.5:1 on panels */
+  --color-disabled: #878e81;       /* placeholders and disabled only */
+  --color-accent: #3f6b4a;         /* primary buttons, active controls: white text 6.2:1 */
+  --color-accent-hover: #477a54;   /* white text 5.2:1 */
   --color-accent-fg: #ffffff;
-  --color-accent-text: #a9a8ff;    /* links, selected labels, focus ring: 5.1:1 on accent-soft, 7:1+ on panels */
-  --color-accent-soft: #363766;    /* selected chips and rows */
-  --color-accent-deep: #4846b0;
+  --color-accent-text: #a8c8a0;    /* links, selected labels, focus ring: 7.9:1 on panels, 5.7:1 on accent-soft */
+  --color-accent-soft: #2f4434;
+  --color-accent-deep: #2f4434;
   --color-flag-bg: #3a2f1b;   --color-flag-fg: #e8b45a;   --color-flag-line: #8a6a32;   /* warning, 6.9:1 */
   --color-danger-bg: #3d2228; --color-danger-fg: #f0787d; --color-danger-line: #9a4a50;   /* error, 5.3:1 */
-  --color-info-bg: #1e2c45;   --color-info-fg: #82b4ff;   --color-info-line: #4a6aa0;   /* information, 6.6:1 */
-  --color-ok-bg: #1c3329;     --color-ok-fg: #4cc38a;     --color-ok-line: #2f7a57;   /* success, 6.1:1 */
-  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -8px rgb(0 0 0 / 0.45);
-  --shadow-card: 0 4px 18px rgb(0 0 0 / 0.16);
-  --color-side: #34338a;           /* deep indigo: same identity, no glare at night */
-  --color-side-fg: #ffffff;        /* 10.6:1 */
-  --color-side-muted: #d9d8ff;     /* 7.7:1 */
+  --color-info-bg: #1e2c3d;   --color-info-fg: #8ab8f0;   --color-info-line: #4a6a90;   /* information */
+  --color-ok-bg: #1c3326;     --color-ok-fg: #6fcf8f;     --color-ok-line: #2f7a4f;   /* success */
+  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -8px rgb(0 0 0 / 0.5);
+  --shadow-card: 0 4px 18px rgb(0 0 0 / 0.3);
+  --color-side: #1f2b22;           /* deep forest rail */
+  --color-side-fg: #ffffff;
+  --color-side-muted: #c9d6c4;
   --color-side-hover: rgb(255 255 255 / 0.07);
-  --color-side-active: rgb(255 255 255 / 0.13);
-  --color-side-line: rgb(255 255 255 / 0.14);
-  --color-drop: #32335a;
-  --color-drop-line: #7775f2;      /* the dark accent, as a dashed edge */
+  --color-side-active: rgb(255 255 255 / 0.11);
+  --color-side-line: rgb(255 255 255 / 0.12);
+  --color-drop: #263127;
+  --color-drop-line: #6f8f6a;
 }
 
 
@@ -115,58 +113,59 @@
    Text never sits on less than ~68% white (light) or ~78% charcoal (dark), so contrast is checked against the
    composited colour. Blur sits on contained panels only, never on the whole page, previews or text. */
 :root {
-  --glass-1: rgb(255 255 255 / 0.66);
-  --glass-2: rgb(255 255 255 / 0.86);
-  --glass-3: rgb(255 255 255 / 0.5);
-  --glass-edge: rgb(110 112 150 / 0.18);          /* the fine outer edge */
-  --glass-ring: inset 0 1px 0 rgb(255 255 255 / 0.9), inset 0 0 0 1px rgb(255 255 255 / 0.45); /* inner light edge */
-  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.5), rgb(255 255 255 / 0) 120px); /* directional top light */
-  --glass-blur: blur(18px) saturate(140%);
-  --shadow-glass: 0 1px 2px rgb(42 43 79 / 0.04), 0 8px 28px rgb(42 43 79 / 0.08);
-  --shadow-glass-lg: 0 2px 6px rgb(42 43 79 / 0.05), 0 16px 44px rgb(42 43 79 / 0.12);
-  --control: rgb(255 255 255 / 0.72);
-  --control-hover: rgb(255 255 255 / 0.96);
-  --control-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(42 43 79 / 0.06);
-  --btn-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 55%);
-  --btn-glow: 0 1px 2px rgb(68 66 184 / 0.3), 0 6px 16px -6px rgb(88 86 214 / 0.55);
-  --rail: linear-gradient(172deg, #5856d6 0%, #504ece 45%, #4442b8 100%);
-  --rail-shadow: 0 18px 40px -16px rgb(68 66 184 / 0.55), 0 2px 6px rgb(42 43 79 / 0.08);
-  --rail-glass: linear-gradient(172deg, rgb(88 86 214 / 0.94), rgb(76 74 196 / 0.95));
-  /* Two faint pools of brand light on the canvas so the glass has something to refract; the canvas stays #edeef5. */
-  --canvas-wash:
-    radial-gradient(52rem 34rem at 92% -8%, rgb(88 86 214 / 0.11), transparent 70%),
-    radial-gradient(44rem 32rem at 12% 104%, rgb(118 140 236 / 0.1), transparent 70%);
+  /* Warm ivory glass. Opacity stays high (92-97%) because secondary text must keep 4.5:1 over the sage
+     canvas showing through; the measured composite is what the contrast notes refer to. */
+  --glass-1: rgb(243 240 231 / 0.95);
+  --glass-2: rgb(246 244 237 / 0.97);
+  --glass-3: rgb(243 240 231 / 0.9);
+  --glass-edge: rgb(41 47 41 / 0.12);             /* fine hairline on ivory */
+  --glass-ring: inset 0 1px 0 rgb(255 255 255 / 0.75), inset 0 0 0 1px rgb(255 255 255 / 0.3); /* inner light edge */
+  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.32), rgb(255 255 255 / 0) 120px); /* directional top light */
+  --glass-blur: blur(18px) saturate(130%);
+  --shadow-glass: 0 1px 2px rgb(20 28 20 / 0.12), 0 10px 30px rgb(20 28 20 / 0.2);
+  --shadow-glass-lg: 0 2px 6px rgb(20 28 20 / 0.14), 0 18px 44px rgb(20 28 20 / 0.28);
+  --control: rgb(255 255 255 / 0.5);
+  --control-hover: rgb(255 255 255 / 0.88);
+  --control-shadow: inset 0 1px 0 rgb(255 255 255 / 0.8), 0 1px 2px rgb(20 28 20 / 0.08);
+  --btn-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0) 55%);
+  --btn-glow: 0 1px 2px rgb(20 32 22 / 0.3), 0 6px 16px -6px rgb(20 32 22 / 0.45);
+  --rail: #344b39;
+  --rail-shadow: 0 18px 40px -16px rgb(14 22 15 / 0.6), 0 2px 6px rgb(14 22 15 / 0.15);
+  --rail-glass: rgb(52 75 57 / 0.95);
+  --canvas-wash: none;  /* the canvas is one flat sage; depth comes from the panels */
+  --on-canvas: #ffffff;           /* text placed straight on the sage canvas: 4.9:1 */
+  --on-canvas-muted: #fbf9f1;     /* 4.6:1 */
 }
 :root:not([data-theme="light"]) {
-  --glass-1: rgb(43 45 58 / 0.78);
-  --glass-2: rgb(52 54 70 / 0.9);
-  --glass-3: rgb(255 255 255 / 0.035);
-  --glass-edge: rgb(185 187 220 / 0.16);
-  --glass-ring: inset 0 1px 0 rgb(255 255 255 / 0.07);
-  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0) 120px);
-  --glass-blur: blur(20px) saturate(125%);
-  --shadow-glass: 0 1px 2px rgb(0 0 0 / 0.2), 0 10px 30px rgb(0 0 0 / 0.26);
-  --shadow-glass-lg: 0 2px 6px rgb(0 0 0 / 0.25), 0 18px 48px rgb(0 0 0 / 0.42);
+  --glass-1: rgb(38 46 39 / 0.86);
+  --glass-2: rgb(46 55 47 / 0.95);
+  --glass-3: rgb(38 46 39 / 0.8);
+  --glass-edge: rgb(214 226 206 / 0.12);
+  --glass-ring: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0) 120px);
+  --glass-blur: blur(20px) saturate(120%);
+  --shadow-glass: 0 1px 2px rgb(0 0 0 / 0.25), 0 10px 30px rgb(0 0 0 / 0.35);
+  --shadow-glass-lg: 0 2px 6px rgb(0 0 0 / 0.3), 0 18px 48px rgb(0 0 0 / 0.5);
   --control: rgb(255 255 255 / 0.05);
   --control-hover: rgb(255 255 255 / 0.1);
   --control-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
   --btn-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0) 55%);
-  --btn-glow: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 18px -6px rgb(119 117 242 / 0.5);
-  --rail: linear-gradient(170deg, #3d3b9a 0%, #34338a 40%, #282770 100%);
-  --rail-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.6);
-  --rail-glass: linear-gradient(170deg, rgb(58 56 150 / 0.9), rgb(44 43 118 / 0.93));
-  --canvas-wash:
-    radial-gradient(52rem 34rem at 92% -8%, rgb(119 117 242 / 0.14), transparent 70%),
-    radial-gradient(44rem 32rem at 12% 104%, rgb(90 110 220 / 0.09), transparent 70%);
+  --btn-glow: 0 1px 2px rgb(0 0 0 / 0.35), 0 6px 18px -6px rgb(0 0 0 / 0.6);
+  --rail: #1f2b22;
+  --rail-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.7);
+  --rail-glass: rgb(31 43 34 / 0.94);
+  --canvas-wash: none;
+  --on-canvas: var(--color-ink);
+  --on-canvas-muted: var(--color-muted);
 }
 /* No backdrop blur (older browsers), or the user asked for less transparency: the same surfaces, opaque. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root { --glass-1: rgb(255 255 255 / 0.92); --glass-2: #fff; --glass-3: rgb(255 255 255 / 0.7); }
-  :root:not([data-theme="light"]) { --glass-1: #2b2d3a; --glass-2: #343646; --glass-3: rgb(255 255 255 / 0.04); }
+  :root { --glass-1: #f3f0e7; --glass-2: #f6f4ed; --glass-3: #f3f0e7; }
+  :root:not([data-theme="light"]) { --glass-1: #262e27; --glass-2: #2e372f; --glass-3: #262e27; }
 }
 @media (prefers-reduced-transparency: reduce) {
-  :root { --glass-1: #fbfbfe; --glass-2: #fff; --glass-3: #f7f8fa; --canvas-wash: none; }
-  :root:not([data-theme="light"]) { --glass-1: #2b2d3a; --glass-2: #343646; --glass-3: #303241; --canvas-wash: none; }
+  :root { --glass-1: #f3f0e7; --glass-2: #f6f4ed; --glass-3: #f3f0e7; }
+  :root:not([data-theme="light"]) { --glass-1: #262e27; --glass-2: #2e372f; --glass-3: #262e27; }
   .cs-app .cs-glass, .cs-app .cs-glass-elevated, .cs-app .cs-glass-subtle, .cs-dialog { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 }
 
@@ -185,7 +184,7 @@
 }
 .cs-app .cs-control:hover:not(:disabled) { background: var(--control-hover); }
 .cs-app .cs-control:active:not(:disabled) { transform: translateY(0.5px); box-shadow: none; }
-/* Primary action: indigo with a soft top light and a restrained coloured shadow; pressing settles it. */
+/* Primary action: forest green with a soft top light and a restrained coloured shadow; pressing settles it. */
 .cs-app .cs-primary {
   background: var(--btn-sheen), var(--color-accent); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22), var(--btn-glow);
   transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
@@ -227,6 +226,9 @@ body {
   line-height: 1.5;
   letter-spacing: -0.003em;
 }
+/* Text placed straight on the canvas (page titles and intros, page tools, footer, status lines): light ink,
+   because graphite on the sage canvas would be 2.8:1. In dark mode these resolve to the normal ink. */
+.cs-app .cs-on-canvas { --color-ink: var(--on-canvas); --color-body: var(--on-canvas); --color-muted: var(--on-canvas-muted); --color-accent-text: var(--on-canvas); color: var(--color-ink); }
 /* The brand light behind the glass: one fixed layer, painted once (no scroll repaints, no images). */
 .cs-app::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--canvas-wash); }
 /* Page and section titles: weight, not size, carries the hierarchy. 24px on phones, 30px from sm (640px) up. */
@@ -240,20 +242,20 @@ body {
 /* Uppercase micro-labels for pane sub-sections (Page type, Mode, Privacy). */
 .cs-app .cs-label { font-size: 0.75rem; line-height: 1rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-muted); }
 .cs-app .cs-wordmark { font-weight: 600; letter-spacing: -0.01em; }
-/* Sidebar on desktop, top bar on phones: one indigo surface. Native dropdown lists keep normal colours. */
+/* Sidebar on desktop, top bar on phones: one forest-green surface. Native dropdown lists keep normal colours. */
 .cs-app .cs-bar { background: var(--rail); color: var(--color-side-fg); }
 @media (min-width: 1024px) {
   /* Desktop: the rail floats inside the canvas with a light inner edge, rather than a slab glued to the window. */
   .cs-app .cs-bar { border-radius: 1.25rem; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22), inset 0 0 0 1px rgb(255 255 255 / 0.08), var(--rail-shadow); }
 }
 @media (max-width: 1023px) {
-  /* Phones and tablets: a sticky bar of indigo glass, so content scrolling underneath stays faintly visible. */
-  .cs-app .cs-bar { box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.1), 0 8px 24px -14px rgb(42 43 79 / 0.45); }
+  /* Phones and tablets: a sticky bar of forest-green glass, so content scrolling underneath stays faintly visible. */
+  .cs-app .cs-bar { box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.1), 0 8px 24px -14px rgb(14 22 15 / 0.45); }
   @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .cs-app .cs-bar { background: var(--rail-glass); -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%); }
   }
 }
-.cs-app .cs-nav-active { background: var(--color-side-active); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), inset 0 0 0 1px rgb(255 255 255 / 0.1), 0 4px 12px -6px rgb(20 18 80 / 0.45); }
+.cs-app .cs-nav-active { background: var(--color-side-active); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), inset 0 0 0 1px rgb(255 255 255 / 0.1), 0 4px 12px -6px rgb(8 14 9 / 0.5); }
 /* Phone navigation drawer: drops from the bar over a dimmed page. */
 @media (max-width: 1023px) {
   .cs-app .cs-drawer { background: var(--rail); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), var(--shadow-glass-lg); }

@@ -137,7 +137,7 @@ export function InputPanel(p: Props) {
         <div role="radiogroup" aria-label={t("cs.mode.label")} className="cs-well grid grid-cols-2 gap-1 rounded-[0.875rem] p-1">
           {(["auto", "review"] as const).map((m) => (
             <button key={m} type="button" role="radio" aria-checked={p.mode === m} disabled={p.running} onClick={() => p.setMode(m)}
-              className={`min-h-10 rounded-[0.625rem] px-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-200 ${p.mode === m ? "bg-[var(--control-hover)] font-semibold text-ink shadow-[var(--control-shadow),0_1px_4px_rgb(37_40_51/0.12)]" : "text-muted hover:text-ink"}`}>
+              className={`min-h-10 rounded-[0.625rem] px-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-200 ${p.mode === m ? "bg-[var(--control-hover)] font-semibold text-ink shadow-[var(--control-shadow),0_1px_4px_rgb(20_28_20/0.12)]" : "text-muted hover:text-ink"}`}>
               {t(m === "auto" ? "cs.mode.auto" : "cs.mode.review")}
             </button>
           ))}

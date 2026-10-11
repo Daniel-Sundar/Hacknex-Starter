@@ -60,7 +60,7 @@ export function HistoryList({ entries, currentId, compact, onOpen, onDelete }: L
 
               if (compact) {
                 return (
-                  <li key={e.id} className={`group flex items-center gap-1 rounded-md transition-colors duration-150 ${current ? "bg-[var(--control-hover)] shadow-[var(--control-shadow),0_1px_4px_rgb(37_40_51/0.1)]" : "hover:bg-[var(--control)]"}`}>
+                  <li key={e.id} className={`group flex items-center gap-1 rounded-md transition-colors duration-150 ${current ? "bg-[var(--control-hover)] shadow-[var(--control-shadow),0_1px_4px_rgb(20_28_20/0.1)]" : "hover:bg-[var(--control)]"}`}>
                     <button type="button" onClick={() => onOpen(e)} aria-current={current ? "true" : undefined}
                       aria-label={t("cs.history.openNamed", { name: e.name })}
                       className="flex min-w-0 flex-1 items-center gap-2 rounded-md p-2 text-start">
