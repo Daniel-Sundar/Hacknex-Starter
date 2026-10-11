@@ -110,21 +110,21 @@ function Shell() {
         </a>
 
         {/* Phones and tablets: a top bar with a segmented control. Desktop (lg): the same element becomes a left sidebar. */}
-        <header className="cs-bar sticky top-0 z-30 border-b border-line lg:fixed lg:inset-y-0 lg:start-0 lg:w-64 lg:border-b-0"
+        <header className="cs-bar sticky top-0 z-30 lg:fixed lg:inset-y-0 lg:start-0 lg:w-64"
           style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-2 sm:gap-x-8 sm:px-6 lg:h-full lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-y-6 lg:px-4 lg:py-6">
             <a href="#/clearscript" className="flex min-h-10 items-center gap-2 rounded-md lg:px-2" aria-label={t("shell.home")}>
-              <span aria-hidden="true" className="grid size-7 place-items-center rounded-sm bg-accent lg:size-8 text-accent-fg"><ScanText className="size-4" /></span>
-              <span className="cs-wordmark text-base text-ink lg:text-lg">ClearScript</span>
+              <span aria-hidden="true" className="grid size-7 place-items-center rounded-sm bg-white text-[#5856d6] lg:size-8"><ScanText className="size-4" /></span>
+              <span className="cs-wordmark text-base text-side-fg lg:text-lg">ClearScript</span>
             </a>
             <nav aria-label={t("shell.nav")} className="order-last w-full sm:order-none sm:w-auto lg:w-full">
-              <ul className="flex gap-1 rounded-md bg-subtle p-1 sm:bg-transparent sm:p-0 lg:flex-col">
+              <ul className="flex gap-1 rounded-md bg-side-hover p-1 sm:bg-transparent sm:p-0 lg:flex-col">
                 {TABS.map((x) => (
                   <li key={x.id} className="flex-1 sm:flex-none">
                     <a
                       href={`#/${x.id}`}
                       aria-current={!legal && tab === x.id ? "page" : undefined}
-                      className={`flex min-h-10 items-center justify-center gap-3 rounded-sm px-3 text-sm font-medium transition-colors duration-150 lg:min-h-11 lg:justify-start lg:rounded-md ${!legal && tab === x.id ? "bg-surface text-ink shadow-[var(--shadow-card)] sm:bg-accent sm:text-accent-fg sm:shadow-none" : "text-body hover:text-ink sm:hover:bg-subtle"}`}
+                      className={`flex min-h-10 items-center justify-center gap-3 rounded-sm px-3 text-sm font-medium transition-colors duration-150 lg:min-h-11 lg:justify-start lg:rounded-md ${!legal && tab === x.id ? "bg-side-active font-semibold text-side-fg" : "text-side-muted hover:bg-side-hover hover:text-side-fg"}`}
                     >
                       <x.icon className="size-4" aria-hidden="true" /> {t(x.label)}
                     </a>
@@ -132,11 +132,12 @@ function Shell() {
                 ))}
               </ul>
             </nav>
-            <div className="ms-auto flex items-center gap-1 sm:gap-2 lg:ms-0 lg:mt-auto lg:flex-col lg:items-stretch lg:gap-1 lg:border-t lg:border-line lg:pt-4">
+            <div className="ms-auto flex items-center gap-1 sm:gap-2 lg:ms-0 lg:mt-auto lg:flex-col lg:items-stretch lg:gap-1 lg:border-t lg:border-side-line lg:pt-4">
               <ServerStatus />
               <LanguagePicker />
               <div className="flex items-center gap-1 sm:gap-2 lg:justify-between">
                 <IconButton
+                  className="!text-side-fg hover:!bg-side-hover"
                   label={light ? t("shell.theme.toDark") : t("shell.theme.toLight")}
                   icon={light ? <Moon className="size-4" /> : <Sun className="size-4" />}
                   onClick={toggleTheme}
@@ -200,11 +201,12 @@ function ServerStatus() {
   const { t } = useT();
   const h = useHealth();
   const label = t(`shell.status.${h.state}`);
-  const dot = h.state === "online" ? "bg-ok-fg" : h.state === "offline" ? "bg-danger-fg" : "bg-muted";
+  // Light dots with a white ring so they read on the indigo bar; the label carries the meaning too.
+  const dot = h.state === "online" ? "bg-[#4cc38a]" : h.state === "offline" ? "bg-[#f0787d]" : "bg-side-muted";
   return (
     <span role="status" title={h.provider ? `${label}. ${t("shell.status.detail", { provider: h.provider })}` : label}
-      className="flex min-h-10 items-center gap-2 rounded-md px-2 text-xs text-body">
-      <span aria-hidden="true" className={`size-2 rounded-full ${dot}`} />
+      className="flex min-h-10 items-center gap-2 rounded-md px-2 text-xs text-side-muted">
+      <span aria-hidden="true" className={`size-2 rounded-full ring-2 ring-white/60 ${dot}`} />
       <span className="max-sm:sr-only">{label}</span>
     </span>
   );
@@ -213,13 +215,13 @@ function ServerStatus() {
 function LanguagePicker() {
   const { t, locale, setLocale } = useT();
   return (
-    <label className="flex min-h-10 items-center gap-1 rounded-md ps-2 text-sm text-body hover:bg-subtle" title={t("shell.language.draft")}>
-      <Languages className="size-4 shrink-0 text-muted" aria-hidden="true" />
+    <label className="flex min-h-10 items-center gap-1 rounded-md ps-2 text-sm text-side-fg hover:bg-side-hover" title={t("shell.language.draft")}>
+      <Languages className="size-4 shrink-0 text-side-muted" aria-hidden="true" />
       <span className="sr-only">{t("shell.language")}</span>
       <select
         value={locale}
         onChange={(e) => setLocale(e.target.value as LocaleCode)}
-        className="min-h-10 max-w-24 cursor-pointer appearance-none bg-transparent pe-2 text-sm text-ink outline-none sm:max-w-none"
+        className="min-h-10 max-w-24 cursor-pointer appearance-none bg-transparent pe-2 text-sm text-side-fg outline-none sm:max-w-none"
       >
         {LOCALES.map((l) => (
           <option key={l.code} value={l.code} lang={l.code}>{l.code === "en" ? l.native : `${l.native} (${l.english})`}</option>

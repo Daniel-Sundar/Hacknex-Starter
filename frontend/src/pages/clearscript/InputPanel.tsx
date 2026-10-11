@@ -66,7 +66,7 @@ export function InputPanel(p: Props) {
               title={t("cs.input.drop")}
               hint={t("cs.input.dropHint", { mb: p.maxMb })}
             >
-              <span aria-hidden="true" className="mt-2 inline-flex min-h-10 items-center rounded-md border border-line bg-surface shadow-[var(--shadow-card)] px-4 text-sm font-medium text-ink">
+              <span aria-hidden="true" className="mt-2 inline-flex min-h-10 items-center rounded-md bg-accent px-4 text-sm font-medium text-accent-fg">
                 {t("cs.input.choose")}
               </span>
             </DropZone>

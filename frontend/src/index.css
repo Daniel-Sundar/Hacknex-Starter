@@ -18,7 +18,7 @@
 
   --radius-sm: 0.5rem;    /* 8: chips, small controls */
   --radius-md: 0.75rem;   /* 12: buttons, inputs, nav items */
-  --radius-lg: 1rem;      /* 16: panels */
+  --radius-lg: 1.125rem;  /* 18: floating panels */
   --radius-xl: 1.25rem;   /* 20: dialogs */
 
   /* 60: Soft White canvas. 30: Graphite text and structure. 10: Indigo for actions and selection only. */
@@ -51,7 +51,19 @@
   --color-ok-bg: #e8f5ee;     --color-ok-fg: #1e7a4b;     --color-ok-line: #238653;
 
   --shadow-pop: 0 1px 2px rgb(37 40 51 / 0.06), 0 8px 24px -6px rgb(37 40 51 / 0.14);
-  --shadow-card: 0 4px 18px rgb(37 40 51 / 0.05);  /* floating white panels */
+  --shadow-card: 0 8px 28px rgb(37 40 51 / 0.07);  /* floating white panels */
+
+  /* Sidebar (top bar on phones): one continuous indigo surface. */
+  --color-side: #5856d6;
+  --color-side-fg: #ffffff;        /* 5.7:1 */
+  --color-side-muted: #e4e3ff;     /* 4.5:1 */
+  --color-side-hover: rgb(255 255 255 / 0.1);
+  --color-side-active: #6866de;    /* lighter indigo, white text 4.6:1 */
+  --color-side-line: rgb(255 255 255 / 0.22);
+
+  /* Upload areas: lavender tint with a restrained indigo dashed edge, distinct from the white panel. */
+  --color-drop: #f4f3ff;
+  --color-drop-line: #9d9be8;
 }
 
 /* dark theme */
@@ -79,9 +91,18 @@
   --color-ok-bg: #1c3329;     --color-ok-fg: #4cc38a;     --color-ok-line: #2f7a57;   /* success, 6.1:1 */
   --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -8px rgb(0 0 0 / 0.45);
   --shadow-card: 0 4px 18px rgb(0 0 0 / 0.16);
+  --color-side: #34338a;           /* deep indigo: same identity, no glare at night */
+  --color-side-fg: #ffffff;        /* 10.6:1 */
+  --color-side-muted: #d9d8ff;     /* 7.7:1 */
+  --color-side-hover: rgb(255 255 255 / 0.08);
+  --color-side-active: #4846b0;    /* white text 7.6:1 */
+  --color-side-line: rgb(255 255 255 / 0.16);
+  --color-drop: #32335a;
+  --color-drop-line: #7775f2;      /* the dark accent, as a dashed edge */
 }
 
-html { color-scheme: dark; }
+/* The canvas itself carries the page colour, so no edge, overscroll area or gap can show another colour. */
+html { color-scheme: dark; background: var(--color-page); }
 html[data-theme="light"] { color-scheme: light; }
 
 body {
@@ -109,11 +130,10 @@ body {
 /* Page and section titles: weight, not size, carries the hierarchy. */
 .cs-app .cs-title { font-size: 1.5rem; line-height: 2rem; font-weight: 600; letter-spacing: -0.015em; color: var(--color-ink); }
 .cs-app .cs-wordmark { font-weight: 600; letter-spacing: -0.01em; }
-/* Frosted top bar in the page colour, as on iOS; solid when transparency is reduced. */
-.cs-app .cs-bar { background: color-mix(in srgb, var(--color-page) 85%, transparent); backdrop-filter: saturate(180%) blur(16px); }
-@media (prefers-reduced-transparency: reduce) { .cs-app .cs-bar { background: var(--color-page); backdrop-filter: none; } }
-/* Desktop sidebar sits on the same canvas as the page: no separate strip. */
-@media (min-width: 64rem) { .cs-app .cs-bar { background: var(--color-page); backdrop-filter: none; } }
+/* Sidebar on desktop, top bar on phones: one indigo surface. Native dropdown lists keep normal colours. */
+.cs-app .cs-bar { background: var(--color-side); color: var(--color-side-fg); }
+.cs-app .cs-bar option { color: var(--color-ink); background: var(--color-surface); }
+.cs-app .cs-bar :focus-visible:not(.cs-dialog *) { outline-color: var(--color-side-fg); }
 .cs-app :focus-visible {
   outline: 2px solid var(--color-accent-text);
   outline-offset: 2px;
