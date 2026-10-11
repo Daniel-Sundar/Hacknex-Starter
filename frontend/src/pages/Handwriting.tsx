@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { History, Keyboard, PanelLeftOpen } from "lucide-react";
 import { ApiError, postForm, postJSON, streamNDJSON } from "../lib/api";
 import { Button, Dialog, ErrorState, useToast } from "../components/ui";
@@ -24,7 +25,7 @@ import { HistoryList, HistorySidebar, HistoryStatus } from "./clearscript/Histor
 const WRITER_KEY = "cs-writer";
 const readWriter = () => { try { return localStorage.getItem(WRITER_KEY) ?? ""; } catch { return ""; } };
 const DOCK_KEY = "cs-history-dock";
-const WIDE = "(min-width: 96rem)"; // the history column docks beside the page from Tailwind's 2xl up (the app sidebar takes 16rem)
+const WIDE = "(min-width: 90rem)"; // three columns (history, add a page, results) from 1440px; the app sidebar takes 16rem
 
 function useMedia(q: string) {
   const [match, setMatch] = useState(() => window.matchMedia(q).matches);
@@ -429,6 +430,10 @@ export default function Handwriting({ active }: { active: boolean }) {
   const reviewPos = review ? Math.max(1, review.total - queue.filter((i) => !review.skipped.includes(i)).length + 1) : 0;
   const canRerun = !!file && !!shown && !shown.sample && !shown.fromHistory;
 
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => setSlot(document.getElementById("cs-page-tools")), []);
+  const toolsSlot = (node: ReactNode) => (slot ? createPortal(node, slot) : node);
+
   const historyStatus = (
     <HistoryStatus account={user ? user.displayName || user.email || "" : null} canSignIn={canSignIn}
       localCount={uid ? localCount : 0} importing={importing} onImport={importLocal} />
@@ -436,7 +441,9 @@ export default function Handwriting({ active }: { active: boolean }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap justify-end gap-2">
+      {/* Page tools sit in the page header row (App renders the slot); inline until the slot is found. */}
+      {toolsSlot(
+      <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="quiet" icon={<Keyboard className="size-4" aria-hidden="true" />} onClick={() => setKeysOpen(true)}>{t("cs.keys.title")}</Button>
         {!showSide && (
           <Button size="sm" variant="quiet" icon={wide ? <PanelLeftOpen className="size-4" aria-hidden="true" /> : <History className="size-4" aria-hidden="true" />}
@@ -444,15 +451,15 @@ export default function Handwriting({ active }: { active: boolean }) {
             {t("cs.history.button", { n: history.length })}
           </Button>
         )}
-      </div>
+      </div>)}
 
-      <div className={showSide ? "grid items-start gap-6 2xl:grid-cols-[15rem_minmax(0,1fr)]" : ""}>
+      <div className={showSide ? "grid items-start gap-6 min-[90rem]:grid-cols-[14rem_minmax(0,1fr)]" : ""}>
       {showSide && (
         <HistorySidebar count={history.length} status={historyStatus} onHide={() => dock(false)} onManage={() => setHistoryOpen(true)}>
           <HistoryList compact entries={history} currentId={shown?.entryId ?? null} onOpen={openEntry} onDelete={(id) => removeEntries([id])} />
         </HistorySidebar>
       )}
-      <div className={`grid gap-6 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] ${showSide ? "" : "2xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]"}`}>
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(20rem,24rem)_minmax(0,1fr)]">
         <div className="min-w-0">
           <InputPanel
             file={file} name={name} preview={preview} kind={kind} problem={problem} isSample={!!shown?.sample}

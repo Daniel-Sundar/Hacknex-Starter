@@ -18,14 +18,14 @@ export function Guide({ ready, name, readers }: { ready: boolean; name: string; 
           </div>
         </Panel>
       ) : (
-        <Panel title={t("cs.guide.title")}>
-          <ol className="grid gap-3 sm:grid-cols-2">
+        <Panel title={t("cs.guide.title")} className="@container">
+          <ol className="grid gap-x-6 gap-y-4 @md:grid-cols-2">
             {([1, 2, 3, 4] as const).map((n) => (
               <li key={n} className="flex gap-3">
-                <span aria-hidden="true" className="grid size-6 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent-text">{n}</span>
+                <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent-text">{n}</span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-medium text-ink">{t(`cs.guide.step${n}`)}</span>
-                  <span className="block text-xs text-muted">{t(`cs.guide.step${n}.hint`)}</span>
+                  <span className="block text-sm font-semibold text-ink">{t(`cs.guide.step${n}`)}</span>
+                  <span className="mt-0.5 block text-sm leading-snug text-muted">{t(`cs.guide.step${n}.hint`)}</span>
                 </span>
               </li>
             ))}
@@ -33,7 +33,7 @@ export function Guide({ ready, name, readers }: { ready: boolean; name: string; 
         </Panel>
       )}
 
-      <p className="flex items-center gap-2 text-xs text-muted"><ScanText className="size-4" aria-hidden="true" />{t("cs.guide.privacy")}</p>
+      <p className="flex items-start gap-2 px-1 text-xs text-muted"><ScanText className="mt-px size-4 shrink-0" aria-hidden="true" />{t("cs.guide.privacy")}</p>
     </div>
   );
 }

@@ -149,7 +149,7 @@ function Shell() {
         </header>
 
         <div className="flex flex-1 flex-col lg:ps-64">
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 outline-none sm:px-6 sm:py-12 lg:px-10">
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-8">
           {legal && (
             <section aria-labelledby="h-legal">
               <h1 id="h-legal" tabIndex={-1} className="cs-title mx-auto mb-6 max-w-prose outline-none">
@@ -161,11 +161,14 @@ function Shell() {
           {/* Visited tabs stay mounted so switching keeps their state. */}
           {TABS.map((x) => (
             <section key={x.id} hidden={!!legal || x.id !== tab} aria-labelledby={`h-${x.id}`}>
-              <div className="mb-8 space-y-2">
-                <h1 id={`h-${x.id}`} tabIndex={-1} ref={(el) => { headings.current[x.id] = el; }} className="cs-title outline-none">
-                  {t(x.title)}
-                </h1>
-                <p className="max-w-prose text-base text-muted">{t(x.blurb)}</p>
+              <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+                <div className="min-w-0 max-w-prose space-y-1">
+                  <h1 id={`h-${x.id}`} tabIndex={-1} ref={(el) => { headings.current[x.id] = el; }} className="cs-title outline-none">
+                    {t(x.title)}
+                  </h1>
+                  <p className="text-sm text-muted sm:text-base">{t(x.blurb)}</p>
+                </div>
+                {x.id === "clearscript" && <div id="cs-page-tools" className="flex shrink-0" />}
               </div>
               {visited.has(x.id) && (x.id === "clearscript" ? <Handwriting active={tab === "clearscript"} /> : (
                 <Suspense fallback={<p className="flex items-center gap-2 text-sm text-muted"><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("common.loading")}</p>}>
@@ -177,7 +180,7 @@ function Shell() {
         </main>
 
         <footer className="border-t border-line">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6 lg:px-10" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6 lg:px-8" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
             <p className="max-w-prose">{t("shell.footer")}</p>
             <nav aria-label={t("legal.nav")} className="flex flex-wrap items-center gap-1">
               <a href="#/privacy" aria-current={legal === "privacy" ? "page" : undefined}

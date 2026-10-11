@@ -80,7 +80,7 @@ export function ResultView(p: Props) {
             {p.canRerun && <Button size="sm" variant="quiet" icon={<RotateCcw className="size-4" aria-hidden="true" />} onClick={p.onRerun}>{t("cs.rerun")}</Button>}
           </>
         }
-        bodyClassName="space-y-3 p-4"
+        bodyClassName="space-y-3 p-4 sm:p-5"
       >
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
           <Stat label={t("cs.stat.words")} value={String(s.words)} />
@@ -238,7 +238,7 @@ function RxTable({ rows, loading, error, onRetry }: { rows: RxRow[] | null; load
     <Panel
       title={<span className="flex items-center gap-2"><Pill className="size-4" aria-hidden="true" />{t("cs.rx.title")}</span>}
       actions={loading ? <span className="flex items-center gap-1 text-xs text-muted"><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("cs.rx.loading")}</span> : undefined}
-      bodyClassName="space-y-3 p-4"
+      bodyClassName="space-y-3 p-4 sm:p-5"
     >
       <p className="text-xs text-muted">{t("cs.rx.note")}</p>
       {!!error && <ErrorState error={error} onRetry={onRetry} />}

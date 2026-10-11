@@ -148,7 +148,7 @@ export function DropZone({ accept, multiple, onFiles, title, hint, icon, disable
         const files = Array.from(e.dataTransfer.files ?? []);
         if (files.length) onFiles(multiple ? files : files.slice(0, 1));
       }}
-      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center transition-colors duration-150 ${over ? "border-accent bg-accent-soft" : "border-drop-line bg-drop hover:border-accent"} ${disabled ? "cursor-not-allowed opacity-50" : ""} ${className}`}
+      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center lg:py-10 [@media(max-height:50rem)]:py-6 transition-colors duration-150 ${over ? "border-accent bg-accent-soft" : "border-drop-line bg-drop hover:border-accent"} ${disabled ? "cursor-not-allowed opacity-50" : ""} ${className}`}
     >
       {icon && <span aria-hidden="true" className="grid size-11 place-items-center rounded-full bg-surface text-accent-text shadow-[var(--shadow-card)]">{icon}</span>}
       <span className="text-base font-semibold text-ink">{title}</span>
@@ -173,7 +173,7 @@ export function DropZone({ accept, multiple, onFiles, title, hint, icon, disable
 
 // ---------- Panel / Badge / Progress ----------
 
-export function Panel({ title, actions, children, className = "", bodyClassName = "p-4", level = 2, id }: {
+export function Panel({ title, actions, children, className = "", bodyClassName = "p-4 sm:p-5", level = 2, id }: {
   title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string; level?: 2 | 3; id?: string;
 }) {
   const auto = useId();
@@ -182,7 +182,7 @@ export function Panel({ title, actions, children, className = "", bodyClassName 
   return (
     <section aria-labelledby={title ? headingId : undefined} className={`min-w-0 rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] ${className}`}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+        <header className="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3 sm:px-5">
           {title && <H id={headingId} className="text-base font-semibold text-ink">{title}</H>}
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </header>

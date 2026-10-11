@@ -18,7 +18,7 @@
 
   --radius-sm: 0.5rem;    /* 8: chips, small controls */
   --radius-md: 0.75rem;   /* 12: buttons, inputs, nav items */
-  --radius-lg: 1.125rem;  /* 18: floating panels */
+  --radius-lg: 1rem;      /* 16: floating panels */
   --radius-xl: 1.25rem;   /* 20: dialogs */
 
   /* 60: Soft White canvas. 30: Graphite text and structure. 10: Indigo for actions and selection only. */
@@ -51,7 +51,7 @@
   --color-ok-bg: #e8f5ee;     --color-ok-fg: #1e7a4b;     --color-ok-line: #238653;
 
   --shadow-pop: 0 1px 2px rgb(37 40 51 / 0.06), 0 8px 24px -6px rgb(37 40 51 / 0.14);
-  --shadow-card: 0 8px 28px rgb(37 40 51 / 0.07);  /* floating white panels */
+  --shadow-card: 0 6px 24px rgb(37 40 51 / 0.06);  /* floating white panels */
 
   /* Sidebar (top bar on phones): one continuous indigo surface. */
   --color-side: #5856d6;

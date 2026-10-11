@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Camera, ChevronDown, FileText, ImageUp, RefreshCw, ScanText, SlidersHorizontal, Square, Trash2 } from "lucide-react";
+import { Camera, Check, ChevronDown, FileText, ImageUp, RefreshCw, ScanText, SlidersHorizontal, Square, Trash2 } from "lucide-react";
 import { Button, DropZone, ErrorState, Input, Notice, Panel, Toggle } from "../../components/ui";
 import { useT } from "../../i18n";
 import { ApiError } from "../../lib/api";
@@ -22,11 +22,11 @@ export function InputPanel(p: Props) {
   const { t } = useT();
   const replace = useRef<HTMLInputElement>(null);
   const off = TOGGLES.filter((k) => !p.opts[k]).length;
-  const sticky = !!p.file && !p.hasResult; // on phones the main action stays in reach while scrolling
+  const sticky = !!p.file && !p.hasResult; // with a page chosen, the main action stays in reach while scrolling (short laptops too)
 
   return (
     <div className="space-y-4">
-      <Panel title={t("cs.input.title")} bodyClassName="space-y-4 p-4">
+      <Panel title={t("cs.input.title")} bodyClassName="space-y-5 p-4 sm:p-5">
         {p.isSample && !p.file && <Notice tone="info">{t("cs.input.sampleLoaded")}</Notice>}
 
         {p.file ? (
@@ -78,14 +78,14 @@ export function InputPanel(p: Props) {
 
         <fieldset className="space-y-2" disabled={p.running}>
           <legend className="text-sm font-medium text-ink">{t("cs.page.label")}</legend>
-          <div className="flex flex-wrap gap-1" role="radiogroup" aria-label={t("cs.page.label")}>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("cs.page.label")}>
             {PAGE_TYPES.map((k) => {
               const on = p.opts.page === k;
               return (
                 <button key={k} type="button" role="radio" aria-checked={on} onClick={() => p.setOpts({ ...p.opts, page: k })}
-                  className={`min-h-9 rounded-md border px-3 text-xs font-medium transition-colors disabled:opacity-50 ${on
-                    ? "border-transparent bg-accent-soft font-semibold text-accent-text" : "border-line bg-surface text-body hover:bg-subtle hover:text-ink"}`}>
-                  {t(`cs.page.${k}`)}
+                  className={`inline-flex min-h-10 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors duration-150 disabled:opacity-50 ${on
+                    ? "border-accent bg-accent-soft font-semibold text-accent-text" : "border-line bg-surface font-medium text-body hover:border-line-strong hover:text-ink"}`}>
+                  {on && <Check className="size-4" aria-hidden="true" />}{t(`cs.page.${k}`)}
                 </button>
               );
             })}
@@ -125,12 +125,12 @@ export function InputPanel(p: Props) {
         </div>
       </details>
 
-      <div className={`space-y-2 ${sticky ? "max-lg:sticky max-lg:bottom-0 max-lg:z-20 max-lg:-mx-4 max-lg:border-t max-lg:border-line max-lg:bg-surface max-lg:px-4 max-lg:py-3" : ""}`}
+      <div className={`space-y-2 ${sticky ? "sticky bottom-0 z-20 -mx-4 border-t border-line bg-page px-4 py-3 sm:-mx-6 sm:px-6 lg:mx-0 lg:border-t-0 lg:px-0" : ""}`}
         style={sticky ? { paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))" } : undefined}>
         <div role="radiogroup" aria-label={t("cs.mode.label")} className="grid grid-cols-2 gap-1 rounded-md border border-line bg-subtle p-1">
           {(["auto", "review"] as const).map((m) => (
             <button key={m} type="button" role="radio" aria-checked={p.mode === m} disabled={p.running} onClick={() => p.setMode(m)}
-              className={`min-h-10 rounded px-2 text-sm font-medium ${p.mode === m ? "bg-accent text-accent-fg" : "text-body hover:bg-surface"}`}>
+              className={`min-h-10 rounded-sm px-2 text-sm font-medium transition-colors duration-150 ${p.mode === m ? "bg-surface font-semibold text-ink shadow-[0_1px_3px_rgb(37_40_51/0.12)]" : "text-muted hover:text-ink"}`}>
               {t(m === "auto" ? "cs.mode.auto" : "cs.mode.review")}
             </button>
           ))}

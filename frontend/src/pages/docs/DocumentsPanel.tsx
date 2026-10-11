@@ -74,7 +74,7 @@ export function DocumentsPanel({ d }: { d: DocumentsState }) {
           {t("docs.files.removeAll")}
         </Button>
       )}
-      bodyClassName="space-y-4 p-4"
+      bodyClassName="space-y-4 p-4 sm:p-5"
     >
       <div ref={dropWrap}>
         <DropZone
