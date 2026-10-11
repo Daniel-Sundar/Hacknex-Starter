@@ -110,7 +110,7 @@ function Shell() {
         </a>
 
         {/* Phones and tablets: a top bar with a segmented control. Desktop (lg): the same element becomes a left sidebar. */}
-        <header className="cs-bar sticky top-0 z-30 lg:fixed lg:inset-y-0 lg:start-0 lg:w-64"
+        <header className="cs-bar sticky top-0 z-30 lg:fixed lg:inset-y-0 lg:start-0 lg:w-60"
           style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-2 sm:gap-x-8 sm:px-6 lg:h-full lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-y-6 lg:px-4 lg:py-6">
             <a href="#/clearscript" className="flex min-h-10 items-center gap-2 rounded-md lg:px-2" aria-label={t("shell.home")}>
@@ -148,8 +148,8 @@ function Shell() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col lg:ps-64">
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-8 xl:px-10">
+        <div className="flex flex-1 flex-col lg:ps-60">
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-8">
           {legal && (
             <section aria-labelledby="h-legal">
               <h1 id="h-legal" tabIndex={-1} className="cs-title mx-auto mb-6 max-w-prose outline-none">
@@ -180,7 +180,7 @@ function Shell() {
         </main>
 
         <footer className="border-t border-line">
-          <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6 lg:px-8 xl:px-10" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
+          <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6 lg:px-8" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
             <p className="max-w-prose">{t("shell.footer")}</p>
             <nav aria-label={t("legal.nav")} className="flex flex-wrap items-center gap-1">
               <a href="#/privacy" aria-current={legal === "privacy" ? "page" : undefined}

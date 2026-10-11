@@ -454,16 +454,16 @@ export default function Handwriting({ active }: { active: boolean }) {
         )}
       </div>)}
 
-      {/* Before anything is happening, Add a page is the one thing to do: it gets the width and How it
-          works sits underneath it, quiet. Once there's progress, an error or a result to review, that
-          takes the width instead and the input panel narrows to make room. */}
-      <div className={showSide ? "grid items-start gap-6 min-[90rem]:grid-cols-[17.5rem_minmax(0,1fr)]" : ""}>
+      {/* Three visible regions on a wide desktop: History (narrow), Add a page (the moderate-width primary
+          task), and How it works / the result (flexible). The input column never grows past 35rem, so it
+          stays the "add a page" workflow rather than swallowing the whole workspace. */}
+      <div className={showSide ? "grid items-start gap-6 min-[90rem]:grid-cols-[16rem_minmax(0,1fr)]" : ""}>
       {showSide && (
         <HistorySidebar count={history.length} status={historyStatus} onHide={() => dock(false)} onManage={() => setHistoryOpen(true)}>
           <HistoryList compact entries={history} currentId={shown?.entryId ?? null} onOpen={openEntry} onDelete={(id) => removeEntries([id])} />
         </HistorySidebar>
       )}
-      <div className={hasActivity ? "grid items-start gap-6 xl:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]" : "grid max-w-3xl gap-8"}>
+      <div className="grid items-start gap-6 xl:grid-cols-[30rem_minmax(20rem,1fr)]">
         <div className="min-w-0">
           <InputPanel
             file={file} name={name} preview={preview} kind={kind} problem={problem} isSample={!!shown?.sample}
@@ -472,12 +472,10 @@ export default function Handwriting({ active }: { active: boolean }) {
             running={running} hasResult={!!shown && !shown.sample && !shown.fromHistory} onDigitize={digitize}
             onStop={() => abort.current?.abort()} maxMb={maxMb}
           />
-          {!hasActivity && <Guide ready={!!file} name={name} readers={health.readers} className="mt-8" />}
         </div>
 
         {/* On phones the result (or progress) comes first; the input panel follows for the next page. */}
-        {hasActivity && (
-        <div ref={workspace} className="min-w-0 scroll-mt-20 lg:scroll-mt-8 max-xl:order-first" aria-busy={running || undefined}>
+        <div ref={workspace} className={`min-w-0 scroll-mt-20 lg:scroll-mt-8 ${hasActivity ? "max-xl:order-first" : ""}`} aria-busy={running || undefined}>
           {run ? (
             <ProcessingView run={run} startedAt={startedAt} headingRef={progressHeading} onStop={() => abort.current?.abort()} />
           ) : runError ? (
@@ -494,9 +492,10 @@ export default function Handwriting({ active }: { active: boolean }) {
               onRerun={() => (stats(shown.words, null).human ? setConfirmRerun(true) : digitize())}
               focusWord={focusWord}
             />
-          ) : null}
+          ) : (
+            <Guide ready={!!file} name={name} readers={health.readers} />
+          )}
         </div>
-        )}
       </div>
       </div>
 
