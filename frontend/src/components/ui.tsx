@@ -148,7 +148,7 @@ export function DropZone({ accept, multiple, onFiles, title, hint, icon, disable
         const files = Array.from(e.dataTransfer.files ?? []);
         if (files.length) onFiles(multiple ? files : files.slice(0, 1));
       }}
-      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center lg:py-10 [@media(max-height:50rem)]:py-6 transition-colors duration-150 ${over ? "border-accent bg-accent-soft" : "border-drop-line bg-drop hover:border-accent"} ${disabled ? "cursor-not-allowed opacity-50" : ""} ${className}`}
+      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center lg:py-8 [@media(max-height:50rem)]:py-5 transition-colors duration-150 ${over ? "border-accent bg-accent-soft" : "border-drop-line bg-drop hover:border-accent"} ${disabled ? "cursor-not-allowed opacity-50" : ""} ${className}`}
     >
       {icon && <span aria-hidden="true" className="grid size-11 place-items-center rounded-full bg-surface text-accent-text shadow-[var(--shadow-card)]">{icon}</span>}
       <span className="text-base font-semibold text-ink">{title}</span>

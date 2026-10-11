@@ -26,7 +26,7 @@ export function InputPanel(p: Props) {
 
   return (
     <div className="space-y-4">
-      <Panel title={t("cs.input.title")} bodyClassName="space-y-5 p-5 sm:p-6">
+      <Panel title={t("cs.input.title")} bodyClassName="space-y-4 p-5 sm:p-6">
         {p.isSample && !p.file && <Notice tone="info">{t("cs.input.sampleLoaded")}</Notice>}
 
         {p.file ? (
