@@ -144,3 +144,11 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Print: just the page content (a result, or the privacy / terms text), no app chrome. */
+@media print {
+  .cs-app header, .cs-app footer, .cs-app nav, .cs-app [role="status"], .cs-app .print\:hidden { display: none !important; }
+  .cs-app, .cs-app main { background: Canvas !important; color: CanvasText !important; }
+  .cs-app main { max-width: none; padding: 0; }
+  .cs-app a { color: inherit; text-decoration: underline; }
+}

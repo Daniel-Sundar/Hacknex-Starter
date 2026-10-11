@@ -75,16 +75,20 @@ def fake(monkeypatch, tmp_path):
         "role": "assistant", "content": "Twice a day [1].", "tool_calls": None})
     monkeypatch.setattr(main, "_jobs", 0)
     main._hits.clear()
-    rag.clear()
+    rag.STORE.clear()
     f = FakeReaders()
     monkeypatch.setattr(handwriting, "read_one", f)
     yield f
-    rag.clear()
+    rag.STORE.clear()
+
+
+CID = "test-client-0123456789abcdef"  # the random id a browser sends as X-Client-Id
+OWNER = "c:" + CID
 
 
 @pytest.fixture
 def client():
-    return TestClient(main.app)
+    return TestClient(main.app, headers={"X-Client-Id": CID})
 
 
 # ---------- test files ----------
@@ -162,7 +166,7 @@ def detail(r) -> dict:
 def test_health_lists_readers_and_limits(client, monkeypatch):
     monkeypatch.setenv("MAX_UPLOAD_MB", "12")
     r = client.get("/api/health").json()
-    assert r["ok"] is True and "provider" in r and r["docs"] == 0
+    assert r["ok"] is True and "provider" in r and "docs" not in r  # no cross-user counts in a public endpoint
     assert r["readers"] == ["fake:a", "fake:b", "fake:c"]
     assert r["limits"] == {"max_upload_mb": 12, "docs_max_upload_mb": 10}
 
@@ -500,7 +504,7 @@ def test_disconnect_releases_job_when_worker_ends(live_url, fake, monkeypatch):
     monkeypatch.setenv("HW_MAX_CONCURRENT", "1")
     fake.delay = {"a": 0.6, "b": 0.6, "c": 0.6}
     files = {"file": ("p.png", PNG, "image/png")}
-    with httpx.Client(timeout=10) as http:
+    with httpx.Client(timeout=10, headers={"X-Client-Id": CID}) as http:
         with http.stream("POST", f"{live_url}/api/handwriting/stream", files=files) as r:
             first = json.loads(next(r.iter_lines()))
             assert first["type"] == "plan"
@@ -593,10 +597,10 @@ def test_docs_docx_upload_and_page_citations(client):
     r = upload(client, "lease.docx", make_docx(["Lease agreement.", "The monthly rent is Rs. 12,000 payable by the 5th."]))
     assert r.status_code == 200 and r.json()["chunks"] >= 1
     assert "read_by" not in r.json()
-    hits = rag.search("What is the monthly rent?")
+    hits = rag.search("What is the monthly rent?", owner=OWNER)
     assert hits[0]["source"] == "lease.docx" and "12,000" in hits[0]["text"] and hits[0]["page"] is None
     assert upload(client, "dose.pdf", TEXT_PDF).status_code == 200
-    assert any(h["page"] == 1 for h in rag.search("dose", k=10) if h["source"] == "dose.pdf")
+    assert any(h["page"] == 1 for h in rag.search("dose", k=10, owner=OWNER) if h["source"] == "dose.pdf")
 
 
 def test_docs_photo_and_scanned_pdf_are_read_by_the_handwriting_pipeline(client, fake):
@@ -604,7 +608,7 @@ def test_docs_photo_and_scanned_pdf_are_read_by_the_handwriting_pipeline(client,
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["read_by"] == "handwriting" and body["chunks"] >= 1 and fake.calls >= 3
-    assert any("letter" in h["text"] for h in rag.search("letter"))
+    assert any("letter" in h["text"] for h in rag.search("letter", owner=OWNER))
     r = upload(client, "scan.pdf", make_pdf(jpeg=JPEG))  # no text layer: first page read like a photo
     assert r.status_code == 200 and r.json()["read_by"] == "handwriting" and r.json()["first_page_only"] is True
     r = upload(client, "nothing.pdf", EMPTY_PDF)  # neither text nor a scanned image
@@ -618,8 +622,8 @@ def test_docs_search_ranks_the_right_passage_first(client):
     upload(client, "a.txt", b"The warranty covers the motor for two years. " * 3)
     upload(client, "b.txt", b"A late fine of Rs. 500 applies when rent is paid after the due date. " * 3)
     upload(client, "c.txt", b"The garden must be kept clean by the tenant. " * 3)
-    assert rag.search("What fine applies for late rent?")[0]["source"] == "b.txt"
-    assert rag.search("how long is the motor warranty")[0]["source"] == "a.txt"
+    assert rag.search("What fine applies for late rent?", owner=OWNER)[0]["source"] == "b.txt"
+    assert rag.search("how long is the motor warranty", owner=OWNER)[0]["source"] == "a.txt"
 
 
 def test_docs_chunks_keep_sentences_whole():
@@ -734,7 +738,7 @@ def test_docs_search_keeps_indian_words_whole(client):
         assert len(rag._tokens(text)) == n, text
     upload(client, "ta.txt", "காய்ச்சலுக்கு மருந்து காலை மாலை சாப்பிடவும்.".encode())
     upload(client, "other.txt", b"The garden must be kept clean.")
-    assert rag.search("மருந்து எப்போது?")[0]["source"] == "ta.txt"
+    assert rag.search("மருந்து எப்போது?", owner=OWNER)[0]["source"] == "ta.txt"
 
 
 # ---------- non-Latin pages: never one reader, never a translation ----------

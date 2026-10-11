@@ -22,7 +22,7 @@ export default {
   "docs.files.remove": "Remove {name}",
   "docs.files.removed": "Removed {name}.",
   "docs.files.removeAll": "Remove all",
-  "docs.files.memoryNote": "Documents stay in server memory until you remove them or the server restarts.",
+  "docs.files.memoryNote": "Only you can see these documents. They stay in server memory until you remove them or the server restarts.",
   "docs.files.localNote": "This server can't list its documents, so only files added in this session are shown.",
 
   // Upload

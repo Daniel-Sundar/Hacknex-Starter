@@ -65,8 +65,8 @@ export const IconButton = forwardRef<HTMLButtonElement, Omit<ButtonProps, "child
 export const inputCls =
   "min-h-10 w-full rounded-md border border-line-strong bg-surface px-3 text-sm text-ink placeholder:text-muted disabled:opacity-50";
 
-export function Input({ label, hint, error, className = "", id, ...rest }: InputHTMLAttributes<HTMLInputElement> & {
-  label: ReactNode; hint?: ReactNode; error?: string | null;
+export function Input({ label, hint, error, className = "", id, trailing, ...rest }: InputHTMLAttributes<HTMLInputElement> & {
+  label: ReactNode; hint?: ReactNode; error?: string | null; trailing?: ReactNode; // e.g. a show-password button
 }) {
   const auto = useId();
   const inputId = id ?? auto;
@@ -74,7 +74,14 @@ export function Input({ label, hint, error, className = "", id, ...rest }: Input
   return (
     <div className={`space-y-1 ${className}`}>
       <label htmlFor={inputId} className="block text-sm font-medium text-ink">{label}</label>
-      <input id={inputId} aria-describedby={describe} aria-invalid={error ? true : undefined} className={inputCls} {...rest} />
+      {trailing ? (
+        <div className="relative">
+          <input id={inputId} aria-describedby={describe} aria-invalid={error ? true : undefined} className={`${inputCls} pe-11`} {...rest} />
+          <div className="absolute inset-y-0 end-0 flex items-center pe-1">{trailing}</div>
+        </div>
+      ) : (
+        <input id={inputId} aria-describedby={describe} aria-invalid={error ? true : undefined} className={inputCls} {...rest} />
+      )}
       {hint && <p id={`${inputId}-hint`} className="text-xs text-muted">{hint}</p>}
       {error && <p id={`${inputId}-err`} className="text-xs font-medium text-danger-fg">{error}</p>}
     </div>

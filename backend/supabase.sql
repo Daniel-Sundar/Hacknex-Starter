@@ -44,3 +44,18 @@ grant usage on schema public to service_role, authenticated;
 grant select, insert, update, delete on public.readings_cache, public.writer_words to service_role;
 grant usage, select on all sequences in schema public to service_role;
 grant select, insert, update, delete on public.history to authenticated;
+
+-- Hardening (added 2026-10-11; safe to run again). Least privilege: the browser roles get nothing on the
+-- server-only tables, and one account cannot fill the free database with oversized rows (the app itself
+-- refuses results over 2,000,000 characters).
+revoke all on public.readings_cache, public.writer_words from anon, authenticated;
+revoke all on public.history from anon;
+do $$ begin
+  alter table public.history add constraint history_payload_size check (length(payload::text) <= 2100000);
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter table public.history add constraint history_thumb_size check (thumb is null or length(thumb) <= 2100000);
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter table public.history add constraint history_name_size check (length(name) <= 300 and length(id) <= 100);
+exception when duplicate_object then null; end $$;

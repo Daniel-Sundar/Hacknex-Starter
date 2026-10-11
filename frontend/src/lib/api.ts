@@ -1,4 +1,34 @@
+import { supabase } from "./supabase";
+
 export const API = import.meta.env.VITE_API_URL ?? "";
+
+// Who is calling. The server keeps Docs Q&A documents and writer profiles per caller:
+// signed in, per account (the Supabase access token, checked by the server); signed out, per browser
+// (a random id kept in localStorage, never shown or shared).
+let memoryId = "";
+function clientId(): string {
+  try {
+    const saved = localStorage.getItem("cs-client-id");
+    if (saved && /^[A-Za-z0-9_-]{22,64}$/.test(saved)) return saved;
+  } catch { /* storage blocked: an id for this tab only */ }
+  if (!memoryId) {
+    const bytes = crypto.getRandomValues(new Uint8Array(18));
+    memoryId = btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  try { localStorage.setItem("cs-client-id", memoryId); } catch { /* private mode */ }
+  return memoryId;
+}
+
+async function identity(): Promise<Record<string, string>> {
+  const h: Record<string, string> = { "X-Client-Id": clientId() };
+  if (supabase) {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.access_token) h.Authorization = `Bearer ${data.session.access_token}`;
+    } catch { /* no session: fall back to the browser id */ }
+  }
+  return h;
+}
 
 /** A failed request. `code` comes from the backend's {"detail": {"code", "message"}} errors, or is one of
  *  network | timeout | aborted | http when the request never got a structured answer. */
@@ -38,7 +68,9 @@ export async function toApiError(r: Response): Promise<ApiError> {
 export async function request(path: string, init: RequestInit = {}): Promise<Response> {
   let r: Response;
   try {
-    r = await fetch(API + path, init);
+    const headers = new Headers(init.headers);
+    for (const [k, v] of Object.entries(await identity())) headers.set(k, v);
+    r = await fetch(API + path, { ...init, headers });
   } catch (e) {
     if (e instanceof ApiError) throw e; // aborted with an ApiError reason (e.g. a timeout)
     if (init.signal?.aborted) {

@@ -22,6 +22,12 @@ export function LoginPage() {
             {t("auth.guest")}
           </button>
         </div>
+        <p className="mt-4 text-center text-xs text-muted">
+          {t("auth.legalPrefix")}{" "}
+          <a href="#/terms" className="font-medium text-accent-text underline underline-offset-2">{t("legal.footer.terms")}</a>
+          {" · "}
+          <a href="#/privacy" className="font-medium text-accent-text underline underline-offset-2">{t("legal.footer.privacy")}</a>
+        </p>
       </div>
     </main>
   );

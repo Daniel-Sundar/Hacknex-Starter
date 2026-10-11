@@ -1,7 +1,7 @@
 // Header account control: "Sign in" when signed out (opens the sign-in dialog), the user's avatar when
 // signed in (opens a small account dialog with Sign out). Renders nothing when Supabase isn't configured.
 import { useState, type FormEvent } from "react";
-import { Cloud, Loader2, LogIn, LogOut } from "lucide-react";
+import { Cloud, Eye, EyeOff, Loader2, LogIn, LogOut } from "lucide-react";
 import { Button, Dialog, Input, Notice, useToast } from "./ui";
 import { useT, type MessageKey } from "../i18n";
 import { authCode, useAuth, type User } from "../lib/auth";
@@ -102,6 +102,7 @@ export function SignInForm({ mode, setMode, onDone }: { mode: "in" | "up"; setMo
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState<"google" | "email" | "reset" | null>(null);
   const [error, setError] = useState<MessageKey | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -157,7 +158,14 @@ export function SignInForm({ mode, setMode, onDone }: { mode: "in" | "up"; setMo
         <form onSubmit={submit} className="space-y-3" noValidate>
           {mode === "up" && <Input label={t("auth.name")} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />}
           <Input label={t("auth.email")} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Input label={t("auth.password")} type="password" required minLength={6}
+          <Input label={t("auth.password")} type={showPw ? "text" : "password"} required minLength={6}
+            trailing={
+              <button type="button" onClick={() => setShowPw((v) => !v)} aria-pressed={showPw}
+                aria-label={t(showPw ? "auth.password.hide" : "auth.password.show")} title={t(showPw ? "auth.password.hide" : "auth.password.show")}
+                className="grid size-9 place-items-center rounded-md text-muted hover:bg-subtle hover:text-ink">
+                {showPw ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
+              </button>
+            }
             autoComplete={mode === "in" ? "current-password" : "new-password"}
             hint={mode === "up" ? t("auth.passwordHint") : undefined}
             value={password} onChange={(e) => setPassword(e.target.value)} />

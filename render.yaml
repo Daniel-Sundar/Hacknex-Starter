@@ -37,6 +37,9 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
+      # Optional: the publishable key, used only to check sign-in tokens (falls back to the service key).
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
       # Text steps (context fix, medicines table): Groq first, as on the team laptops, so they do not use
       # the Gemini quota the readers need.
       - key: LLM_PROVIDER
@@ -74,3 +77,23 @@ services:
         sync: false
       - key: VITE_SUPABASE_PUBLISHABLE_KEY
         sync: false
+    # Security headers for the site. If the backend or Supabase URL changes, update connect-src too.
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://clearscript-hacknex-api.onrender.com https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(self), microphone=(), geolocation=(), payment=(), usb=()

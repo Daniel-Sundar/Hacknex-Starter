@@ -9,33 +9,89 @@ import asyncio  # noqa: E402
 import json  # noqa: E402
 import logging  # noqa: E402
 import math  # noqa: E402
+import re  # noqa: E402
 import threading  # noqa: E402
 import time  # noqa: E402
+import uuid  # noqa: E402
 from collections import deque  # noqa: E402
 from concurrent.futures import ThreadPoolExecutor  # noqa: E402
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import StreamingResponse  # noqa: E402
-from pydantic import BaseModel  # noqa: E402
+from pydantic import BaseModel, Field  # noqa: E402
 from starlette.concurrency import run_in_threadpool  # noqa: E402
 
-from . import handwriting, llm, rag, store  # noqa: E402
+from . import audit, handwriting, llm, rag, store  # noqa: E402
+from .identity import owner as owner_of, short  # noqa: E402
 
 log = logging.getLogger(__name__)
 
-app = FastAPI(title="HackNEX Starter API")
+# No interactive API docs on a public server (set API_DOCS=1 locally to get /docs back).
+_docs = os.getenv("API_DOCS") == "1"
+app = FastAPI(title="ClearScript API", docs_url="/docs" if _docs else None, redoc_url=None,
+              openapi_url="/openapi.json" if _docs else None)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "*").split(","),
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["Retry-After"],
+    allow_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()],
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type", "Authorization", "X-Client-Id", "X-Request-Id"],
+    expose_headers=["Retry-After", "X-Request-Id"],
 )
+
+# The API only ever answers JSON / NDJSON: lock everything else down.
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    "Cross-Origin-Resource-Policy": "cross-origin",
+}
+MAX_BODY = 30 * 1024 * 1024  # largest upload limit + multipart overhead; JSON bodies are far smaller
+_REQ_ID = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    from fastapi.responses import JSONResponse
+    try:
+        size = int(request.headers.get("content-length") or 0)
+    except ValueError:
+        size = 0
+    if size > MAX_BODY:
+        return JSONResponse({"detail": {"code": "too_large", "message": "The request is too large."}}, status_code=413,
+                            headers=SECURITY_HEADERS)
+    rid = request.headers.get("x-request-id", "")
+    request.state.request_id = rid if _REQ_ID.match(rid) else uuid.uuid4().hex
+    response = await call_next(request)
+    for k, v in SECURITY_HEADERS.items():
+        response.headers.setdefault(k, v)
+    if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    if request.url.path != "/api/health":
+        response.headers.setdefault("Cache-Control", "no-store")
+    response.headers["X-Request-Id"] = request.state.request_id
+    return response
 
 
 class TextRequest(BaseModel):
-    text: str
+    text: str = Field(max_length=4000)  # the friendly 1000-character check is in the endpoint
+
+
+# Provider errors go to the UI behind a "technical details" disclosure: strip anything that looks like a key.
+_SECRET = re.compile(r"(sk-[A-Za-z0-9_-]{8,}|AIza[0-9A-Za-z_-]{20,}|gsk_[A-Za-z0-9]{10,}|sb_(secret|publishable)_[A-Za-z0-9_-]+"
+                     r"|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+\.?[A-Za-z0-9_-]*|Bearer\s+\S+|key=[^&\s]+)")
+
+
+def _reason(e: Exception) -> str:
+    return _SECRET.sub("[redacted]", str(e))[:500]
+
+
+def _writer(owner: str, writer: str | None) -> str | None:
+    """Writer profiles belong to the caller: the same name used by two people is two profiles."""
+    w = (writer or "").strip()[:48]
+    return f"{short(owner)}-{w}" if w else None
 
 
 # ---------- errors, upload checks, rate limits ----------
@@ -135,6 +191,7 @@ def rate_limit(bucket: str):
             while q and q[0] <= now - window:
                 q.popleft()
             if len(q) >= count:
+                audit.event("rate_limited", request, outcome="denied", bucket=bucket)
                 wait_s = max(1, math.ceil(q[0] + window - now if q else window))
                 raise _err(429, "rate_limited", f"Too many requests. Try again in {wait_s} seconds.",
                            headers={"Retry-After": str(wait_s)}, retry_after=wait_s)
@@ -170,7 +227,7 @@ PIPELINE_FAILED = "Something went wrong while reading this page. Try again."
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "provider": llm.active_provider(), "docs": len(rag.STORE),
+    return {"ok": True, "provider": llm.active_provider(),
             "readers": handwriting.reader_names(), "database": store.status(),
             "limits": {"max_upload_mb": _num(_mb("MAX_UPLOAD_MB", 15)),
                        "docs_max_upload_mb": _num(_mb("DOCS_MAX_UPLOAD_MB", 10))}}
@@ -191,19 +248,21 @@ async def _read_by_hand(data: bytes) -> dict:
     except handwriting.InputError as e:
         raise _err(422, "bad_image", str(e))
     except RuntimeError as e:
-        raise _err(502, "all_models_failed", MODELS_FAILED, reason=str(e)[:500])
+        raise _err(502, "all_models_failed", MODELS_FAILED, reason=_reason(e))
     finally:
         _end_job()
 
 
 @app.post("/api/docs/upload", dependencies=[Depends(rate_limit("docs_upload"))])
-async def upload_doc(file: UploadFile = File(...)):
+async def upload_doc(request: Request, file: UploadFile = File(...), owner: str = Depends(owner_of)):
     name = (file.filename or "").replace("\\", "/").rsplit("/", 1)[-1].strip()
     lower = name.lower()
     if not lower.endswith(DOC_TYPES + PHOTO_TYPES):
         raise _err(415, "unsupported_type", "Upload a PDF, Word (DOCX), TXT, MD or CSV file, or a JPG, PNG or WEBP photo.")
     data = await _read_upload(file, _mb("DOCS_MAX_UPLOAD_MB", 10), "Split it or upload a smaller file.")
-    replaced = any(d["source"] == name for d in rag.list_docs())
+    if not name or len(name) > 200:
+        raise _err(422, "bad_name", "Rename the file to something shorter and upload it again.")
+    replaced = any(d["source"] == name for d in rag.list_docs(owner))
     extra = {}
 
     if lower.endswith(PHOTO_TYPES):
@@ -235,46 +294,51 @@ async def upload_doc(file: UploadFile = File(...)):
             extra = {"read_by": "handwriting", "unverified": r.get("to_check", r["flagged"]), "first_page_only": True}
     if not any(t.strip() for _, t in pages):
         raise _err(422, "no_text", "No text could be read from this file.")
-    n = await run_in_threadpool(rag.ingest, name, data, None, pages)  # same name: replaces the old chunks
-    return {"file": name, "chunks": n, "total_chunks": len(rag.STORE), "replaced": replaced, **extra}
+    try:  # same name: replaces the old chunks
+        n = await run_in_threadpool(rag.ingest, name, data, None, pages, owner)
+    except rag.TooMuch:
+        raise _err(413, "too_many_docs", "You have too many documents here. Remove some, then upload again.")
+    audit.event("docs.upload", request, actor=owner, chunks=n, replaced=replaced)
+    return {"file": name, "chunks": n, "total_chunks": rag.count(owner), "replaced": replaced, **extra}
 
 
 @app.get("/api/docs")
-def list_docs():
-    return {"docs": rag.list_docs(), "total_chunks": len(rag.STORE)}
+def list_docs(owner: str = Depends(owner_of)):
+    return {"docs": rag.list_docs(owner), "total_chunks": rag.count(owner)}
 
 
 @app.post("/api/docs/ask", dependencies=[Depends(rate_limit("docs_ask"))])
-def ask_docs(req: TextRequest):
+def ask_docs(req: TextRequest, owner: str = Depends(owner_of)):
     question = req.text.strip()
     if not question or len(question) > 1000:
         raise _err(422, "bad_question", "Type a question of up to 1000 characters.")
-    if not rag.STORE:
+    if not rag.count(owner):
         raise _err(409, "no_docs", "Upload a document first, then ask about it.")
     try:
-        out = rag.answer(question)
+        out = rag.answer(question, owner)
     except Exception as e:
         log.exception("docs ask failed")
         raise _err(502, "all_models_failed", "The AI model did not answer. Try again in a minute.",
-                   reason=str(e)[:500])
+                   reason=_reason(e))
     # Grounded = the answer cites at least one passage that was actually retrieved, not just "documents exist".
-    import re
     cited = sorted({int(n) for n in re.findall(r"\[(\d+)\]", out["answer"] or "") if 1 <= int(n) <= len(out["sources"])})
     return {**out, "cited": cited, "grounded": bool(cited)}
 
 
-@app.delete("/api/docs")
-def clear_docs():
-    rag.clear()
+@app.delete("/api/docs", dependencies=[Depends(rate_limit("hw_tools"))])
+def clear_docs(request: Request, owner: str = Depends(owner_of)):
+    rag.clear(owner)
+    audit.event("docs.clear", request, actor=owner)
     return {"ok": True}
 
 
-@app.delete("/api/docs/{source:path}")
-def delete_doc(source: str):
-    n = rag.remove(source)
+@app.delete("/api/docs/{source:path}", dependencies=[Depends(rate_limit("hw_tools"))])
+def delete_doc(source: str, request: Request, owner: str = Depends(owner_of)):
+    n = rag.remove(source, owner)
     if not n:
         raise _err(404, "not_found", "No document with that name. Refresh the list.")
-    return {"ok": True, "removed": n, "total_chunks": len(rag.STORE)}
+    audit.event("docs.delete", request, actor=owner, removed=n)
+    return {"ok": True, "removed": n, "total_chunks": rag.count(owner)}
 
 
 # ---------- Handwriting digitizer (HNX26EPS04) ----------
@@ -320,7 +384,7 @@ def run_digitize(data: bytes, clean: bool = True, vote: bool = True, context: bo
                 result["baseline"] = base.result()
             except Exception as e:
                 result["baseline"] = ""
-                result["errors"]["baseline"] = str(e)[:200]
+                result["errors"]["baseline"] = _reason(e)[:200]
     return result
 
 
@@ -331,20 +395,22 @@ async def handwriting_digitize(
     vote: bool = Form(True),
     context: bool = Form(True),
     baseline: bool = Form(False),
-    writer: str | None = Form(None),
-    page: str = Form("auto"),  # auto | note | form | prescription | legal (anything else falls back to auto)
+    writer: str | None = Form(None, max_length=48),
+    page: str = Form("auto", max_length=20),  # auto | note | form | prescription | legal (else: auto)
+    owner: str = Depends(owner_of),
 ):
     data = await _read_image(file)
+    writer = _writer(owner, writer)
     _start_job()
     try:  # model calls take a while; don't block other requests
         return await run_in_threadpool(run_digitize, data, clean, vote, context, baseline, writer, None, page)
     except handwriting.InputError as e:
         raise _err(422, "bad_image", str(e))
     except RuntimeError as e:
-        raise _err(502, "all_models_failed", MODELS_FAILED, reason=str(e)[:500])
+        raise _err(502, "all_models_failed", MODELS_FAILED, reason=_reason(e))
     except Exception as e:
         log.exception("digitize failed")
-        raise _err(500, "pipeline_error", PIPELINE_FAILED, reason=str(e)[:500])
+        raise _err(500, "pipeline_error", PIPELINE_FAILED, reason=_reason(e))
     finally:
         _end_job()
 
@@ -359,13 +425,15 @@ async def handwriting_stream(
     vote: bool = Form(True),
     context: bool = Form(True),
     baseline: bool = Form(False),
-    writer: str | None = Form(None),
-    page: str = Form("auto"),  # auto | note | form | prescription | legal (anything else falls back to auto)
+    writer: str | None = Form(None, max_length=48),
+    page: str = Form("auto", max_length=20),  # auto | note | form | prescription | legal (else: auto)
+    owner: str = Depends(owner_of),
 ):
     """Same job as /api/handwriting, as NDJSON progress events (one JSON object per line). Upload checks,
     rate limit and busy check answer with normal HTTP errors first. The last line is always
     {"type": "result", "result": <what /api/handwriting returns>} or {"type": "error", "code", "message"}."""
     data = await _read_image(file)
+    writer = _writer(owner, writer)
     _start_job()
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue()
@@ -385,10 +453,10 @@ async def handwriting_stream(
         except handwriting.InputError as e:
             final = {"type": "error", "code": "bad_image", "message": str(e)}
         except RuntimeError as e:
-            final = {"type": "error", "code": "all_models_failed", "message": MODELS_FAILED, "reason": str(e)[:500]}
+            final = {"type": "error", "code": "all_models_failed", "message": MODELS_FAILED, "reason": _reason(e)}
         except Exception as e:
             log.exception("digitize stream failed")
-            final = {"type": "error", "code": "pipeline_error", "message": PIPELINE_FAILED, "reason": str(e)[:500]}
+            final = {"type": "error", "code": "pipeline_error", "message": PIPELINE_FAILED, "reason": _reason(e)}
         finally:
             _end_job()  # the worker holds the job place, even if the client left
         send(final)
@@ -416,25 +484,26 @@ async def handwriting_stream(
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
-class AnswerRequest(BaseModel):
-    writer: str
-    original: str = ""
-    answer: str
+class AnswerRequest(BaseModel):  # only these fields are read; anything else in the body is ignored
+    writer: str = Field(max_length=48)
+    original: str = Field("", max_length=200)
+    answer: str = Field(max_length=200)
 
 
 @app.post("/api/handwriting/answer", dependencies=[Depends(rate_limit("hw_tools"))])
-def handwriting_answer(req: AnswerRequest):
+def handwriting_answer(req: AnswerRequest, request: Request, owner: str = Depends(owner_of)):
     """Review mode: the human answers a flagged word. Saved per writer; context_fix then offers it
     as a candidate on that writer's next pages (send the same `writer` form field)."""
     try:
-        n = handwriting.save_answer(req.writer, req.original, req.answer)
+        n = handwriting.save_answer(_writer(owner, req.writer) or "", req.original, req.answer)
     except ValueError as e:
         raise _err(400, "bad_request", str(e).capitalize() + ".")
+    audit.event("writer.answer", request, actor=owner)
     return {"ok": True, "words": n}
 
 
 class TableRequest(BaseModel):
-    marked: str  # the `marked` text from /api/handwriting ([[word?]] = flagged)
+    marked: str = Field(max_length=20000)  # the `marked` text from /api/handwriting ([[word?]] = flagged)
 
 
 @app.post("/api/handwriting/table", dependencies=[Depends(rate_limit("hw_tools"))])
@@ -444,7 +513,7 @@ def handwriting_table(req: TableRequest):
         return {"rows": handwriting.rx_table(req.marked)}
     except RuntimeError as e:
         raise _err(502, "all_models_failed", "The AI model did not answer. Try again in a minute.",
-                   reason=str(e)[:500])
+                   reason=_reason(e))
 
 
 @app.get("/api/handwriting/eval")
@@ -472,23 +541,23 @@ def handwriting_eval():
 
 
 class RecontextRequest(BaseModel):
-    words: list[dict]
-    writer: str | None = None
-    doc_type: str = "note"
+    words: list[dict] = Field(max_length=4000)
+    writer: str | None = Field(None, max_length=48)
+    doc_type: str = Field("note", max_length=20)
 
 
 @app.post("/api/handwriting/recontext", dependencies=[Depends(rate_limit("hw_tools"))])
-def handwriting_recontext(req: RecontextRequest):
+def handwriting_recontext(req: RecontextRequest, owner: str = Depends(owner_of)):
     """After a human answer: run the constrained context fix again with this writer's (now larger) word
     list, so other flagged copies of the same word can resolve. No vision calls. Words that are not
     flagged (including the human's answers, resolved_by "human") are never changed."""
     from . import rx_safety
     kind = req.doc_type if req.doc_type in ("prescription", "note") else "note"
     try:
-        words = handwriting.context_fix(req.words, handwriting.writer_words(req.writer), kind)
+        words = handwriting.context_fix(req.words, handwriting.writer_words(_writer(owner, req.writer)), kind)
         return {"words": rx_safety.lasa_flags(words) if kind == "prescription" else words}
     except ValueError as e:
         raise _err(400, "bad_request", str(e).capitalize() + ".")
     except RuntimeError as e:
         raise _err(502, "all_models_failed", "The AI model did not answer. Try again in a minute.",
-                   reason=str(e)[:500])
+                   reason=_reason(e))

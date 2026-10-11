@@ -174,7 +174,8 @@ From `backend/`:
 ## Privacy
 
 - Pages are sent to third-party AI providers (Google, Groq, OpenRouter) to be read. Use only data you are allowed to share.
-- The server keeps model readings as text, never the images. Signed-in history is protected by row-level security, so each user sees only their own pages.
+- The server keeps model readings as text, never the images. Signed-in history is protected by row-level security, so each user sees only their own pages. Docs Q&A documents and writer profiles are separate for each account (or each browser when signed out).
+- Full policy in the app at `#/privacy`, terms at `#/terms` (drafts, with placeholders still to fill). Security notes, backups and the deploy checklist: [`SECURITY.md`](SECURITY.md).
 - API keys never reach the browser.
 - Not yet: encryption at rest or health-data compliance. Don't use real patient data without consent.
 

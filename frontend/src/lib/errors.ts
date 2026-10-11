@@ -14,10 +14,10 @@ export type Problem = {
 const KNOWN = new Set([
   "network", "timeout", "aborted", "too_large", "unsupported_type", "heic_unsupported", "empty_file", "corrupt",
   "bad_image", "bad_file", "all_models_failed", "rate_limited", "busy", "no_docs", "no_text", "bad_question", "server",
-  "bad_request", "not_found",
+  "bad_request", "not_found", "signed_out", "too_many_docs", "no_client_id", "auth_unavailable",
 ]);
 // Retrying the same request can help with these; the others need a different file or input.
-const RETRYABLE = new Set(["network", "timeout", "aborted", "all_models_failed", "rate_limited", "busy", "server", "unknown", "pipeline_error"]);
+const RETRYABLE = new Set(["network", "timeout", "aborted", "all_models_failed", "rate_limited", "busy", "server", "unknown", "pipeline_error", "auth_unavailable", "no_client_id"]);
 
 /** Turn any thrown value into localized error copy: what happened, what to do, whether retry can help. */
 export function describeError(e: unknown, limits: { maxUploadMb?: number } = {}): Problem {

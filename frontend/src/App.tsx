@@ -1,12 +1,12 @@
 import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
 import { FileQuestion, Languages, Loader2, Moon, ScanText, ShieldCheck, Sun } from "lucide-react";
+import { Legal, type LegalPage } from "./pages/Legal";
 import Handwriting from "./pages/Handwriting";
 import { JournalIntro } from "./components/JournalIntro";
-import { Dialog, IconButton, ToastProvider } from "./components/ui";
+import { IconButton, ToastProvider } from "./components/ui";
 import { I18nProvider, LOCALES, useT, type LocaleCode, type MessageKey } from "./i18n";
 import { HealthProvider, useHealth } from "./lib/health";
 import { AuthProvider, useAuth } from "./lib/auth";
-import { supabaseEnabled } from "./lib/supabase";
 import { AccountMenu } from "./components/AccountMenu";
 import { LoginPage } from "./pages/Login";
 
@@ -19,10 +19,10 @@ const TABS = [
   { id: "docs", icon: FileQuestion, label: "shell.tab.docs", title: "shell.page.docs.title", blurb: "shell.page.docs.blurb" },
 ] as const satisfies readonly { id: string; label: MessageKey; title: MessageKey; blurb: MessageKey; icon: unknown }[];
 type TabId = (typeof TABS)[number]["id"];
-const tabFromHash = (): TabId => {
-  const id = window.location.hash.replace(/^#\/?/, "");
-  return TABS.find((t) => t.id === id)?.id ?? TABS[0].id;
-};
+const hashId = () => window.location.hash.replace(/^#\/?/, "");
+const tabFromHash = (): TabId => TABS.find((t) => t.id === hashId())?.id ?? TABS[0].id;
+// #/privacy and #/terms are full pages; the tabs stay mounted underneath so their state survives a visit.
+const legalFromHash = (): LegalPage | null => (hashId() === "privacy" || hashId() === "terms" ? hashId() as LegalPage : null);
 
 export default function App() {
   // The intro renders outside the app shell, so the shell's styles never reach it.
@@ -43,26 +43,41 @@ export default function App() {
 function Shell() {
   const { t, locale, dir, scriptFont } = useT();
   const [tab, setTab] = useState<TabId>(tabFromHash);
+  const [legal, setLegal] = useState<LegalPage | null>(legalFromHash);
   const [visited, setVisited] = useState<Set<TabId>>(() => new Set([tabFromHash()]));
   const [light, setLight] = useState(() => document.documentElement.dataset.theme === "light");
-  const [privacy, setPrivacy] = useState(false);
   const headings = useRef<Partial<Record<TabId, HTMLHeadingElement | null>>>({});
   const shownTab = useRef<TabId>(tab);
+  const firstLoad = useRef(true);
 
   useEffect(() => {
-    const onHash = () => setTab(tabFromHash());
+    const onHash = () => {
+      const page = legalFromHash();
+      setLegal(page);
+      if (!page) setTab(tabFromHash());
+      else window.scrollTo(0, 0);
+    };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
   useEffect(() => {
+    if (!legal) return;
+    document.title = `${t(legal === "privacy" ? "legal.privacy.title" : "legal.terms.title")} · ClearScript`;
+    if (!firstLoad.current) document.getElementById("h-legal")?.focus(); // like a tab switch; not on first load
+    return () => { shownTab.current = tab; };
+  }, [legal, t, tab]);
+  useEffect(() => { firstLoad.current = false; }, []);
+
+  useEffect(() => {
+    if (legal) return;
     setVisited((v) => (v.has(tab) ? v : new Set(v).add(tab)));
     const info = TABS.find((x) => x.id === tab)!;
     document.title = tab === "clearscript" ? "ClearScript" : `${t(info.label)} · ClearScript`;
     // On a tab switch (not on first load), move focus to the new page's heading so screen readers hear where they are.
     if (shownTab.current !== tab) headings.current[tab]?.focus();
     shownTab.current = tab;
-  }, [tab, t]);
+  }, [tab, t, legal]);
 
   useEffect(() => {
     if (light) document.documentElement.dataset.theme = "light";
@@ -74,7 +89,7 @@ function Shell() {
   const { enabled, ready, user, guest } = useAuth();
 
   // With Supabase configured, the login page comes first (until signed in, or "continue without an account").
-  if (enabled && (!ready || (!user && !guest))) {
+  if (enabled && (!ready || (!user && !guest)) && !legal) {
     return (
       <div className="cs-app flex flex-col" lang={locale} dir={dir} style={style}>
         <ToastProvider>
@@ -104,8 +119,8 @@ function Shell() {
                   <li key={x.id} className="flex-1 sm:flex-none">
                     <a
                       href={`#/${x.id}`}
-                      aria-current={tab === x.id ? "page" : undefined}
-                      className={`flex min-h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium transition-colors ${tab === x.id ? "bg-accent-soft text-accent-text" : "text-body hover:bg-subtle hover:text-ink"}`}
+                      aria-current={!legal && tab === x.id ? "page" : undefined}
+                      className={`flex min-h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium transition-colors ${!legal && tab === x.id ? "bg-accent-soft text-accent-text" : "text-body hover:bg-subtle hover:text-ink"}`}
                     >
                       <x.icon className="size-4" aria-hidden="true" /> {t(x.label)}
                     </a>
@@ -127,9 +142,17 @@ function Shell() {
         </header>
 
         <main id="main" tabIndex={-1} className="cs-sheet mx-auto w-full max-w-7xl flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8">
+          {legal && (
+            <section aria-labelledby="h-legal">
+              <h1 id="h-legal" tabIndex={-1} className="cs-title mx-auto mb-4 max-w-prose text-lg font-semibold text-ink outline-none">
+                {t(legal === "privacy" ? "legal.privacy.title" : "legal.terms.title")}
+              </h1>
+              <Legal page={legal} />
+            </section>
+          )}
           {/* Visited tabs stay mounted so switching keeps their state. */}
           {TABS.map((x) => (
-            <section key={x.id} hidden={x.id !== tab} aria-labelledby={`h-${x.id}`}>
+            <section key={x.id} hidden={!!legal || x.id !== tab} aria-labelledby={`h-${x.id}`}>
               <div className="mb-6 space-y-1">
                 <h1 id={`h-${x.id}`} tabIndex={-1} ref={(el) => { headings.current[x.id] = el; }} className="cs-title text-lg font-semibold text-ink outline-none">
                   {t(x.title)}
@@ -148,19 +171,18 @@ function Shell() {
         <footer className="cs-desk-bar border-t border-line">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-muted sm:px-6">
             <p className="max-w-prose">{t("shell.footer")}</p>
-            <button type="button" onClick={() => setPrivacy(true)} className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 font-medium text-accent-text underline-offset-2 hover:underline">
-              <ShieldCheck className="size-4" aria-hidden="true" /> {t("shell.privacy")}
-            </button>
+            <nav aria-label={t("legal.nav")} className="flex flex-wrap items-center gap-1">
+              <a href="#/privacy" aria-current={legal === "privacy" ? "page" : undefined}
+                className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 font-medium text-accent-text underline-offset-2 hover:underline">
+                <ShieldCheck className="size-4" aria-hidden="true" /> {t("legal.footer.privacy")}
+              </a>
+              <a href="#/terms" aria-current={legal === "terms" ? "page" : undefined}
+                className="inline-flex min-h-10 items-center rounded-md px-2 font-medium text-accent-text underline-offset-2 hover:underline">
+                {t("legal.footer.terms")}
+              </a>
+            </nav>
           </div>
         </footer>
-
-        <Dialog open={privacy} onClose={() => setPrivacy(false)} title={t("shell.privacy.title")}>
-          <ul className="list-disc space-y-2 ps-4 text-sm text-body">
-            {(["models", "images", "writer", "history", "account", "docs", "medical"] as const)
-              .filter((k) => k !== "account" || supabaseEnabled)
-              .map((k) => <li key={k}>{t(`shell.privacy.${k}`)}</li>)}
-          </ul>
-        </Dialog>
       </ToastProvider>
     </div>
   );
