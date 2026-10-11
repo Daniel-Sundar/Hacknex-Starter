@@ -90,7 +90,7 @@ export function AnswerCard({ entry, open, onToggle, collapsible }: {
           <h3 id={qId} className="wrap-break-word text-base font-semibold text-ink">{entry.question}</h3>
         </div>
         {collapsible && (
-          <Button variant="ghost" aria-expanded={open} aria-controls={bodyId} onClick={onToggle}>
+          <Button variant="quiet" aria-expanded={open} aria-controls={bodyId} onClick={onToggle}>
             {open ? t("docs.answer.hide") : t("docs.answer.show")}
           </Button>
         )}
@@ -141,7 +141,7 @@ export function AnswerCard({ entry, open, onToggle, collapsible }: {
                           {s.text}
                         </blockquote>
                         {long && (
-                          <Button variant="ghost" aria-expanded={isOpen} aria-controls={exId} className="-ms-4"
+                          <Button variant="quiet" aria-expanded={isOpen} aria-controls={exId} className="-ms-4"
                             onClick={() => setExpanded((x) => { const y = new Set(x); if (y.has(n)) y.delete(n); else y.add(n); return y; })}>
                             {isOpen ? t("docs.sources.less") : t("docs.sources.more")}
                           </Button>

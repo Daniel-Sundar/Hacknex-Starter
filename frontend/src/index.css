@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ClearScript design system: palette #DE3535 red, #7AC3E6 sky, #DBC7D7 mauve, #2E2E23 charcoal; flat colour, no gradients, system type.
+/* ClearScript design system: 60-30-10: Soft White #F7F8FA canvas, Graphite #252833 structure, Indigo #5856D6 accent; flat colour, no gradients.
    Theme: <html data-theme="light"> = light, no attribute = dark (theme-init.js follows the OS until the user picks).
    Contrast (checked): text pairs >= 4.5:1, control borders >= 3:1 (WCAG 2.2 AA).
    Spacing uses the 4/8/12/16/24/32 steps (Tailwind 1,2,3,4,6,8). Type: xs 12, sm 14, base 16, lg 20, xl 24. */
@@ -16,62 +16,63 @@
   --text-xl: 1.5rem;
   --text-xl--line-height: 2rem;
 
-  --radius-sm: 0.375rem;  /* 6: chips, small controls */
-  --radius-md: 0.625rem;  /* 10: buttons, inputs */
-  --radius-lg: 0.875rem;  /* 14: panels */
-  --radius-xl: 1.125rem;  /* 18: dialogs */
+  --radius-sm: 0.5rem;    /* 8: chips, small controls */
+  --radius-md: 0.75rem;   /* 12: buttons, inputs, nav items */
+  --radius-lg: 1rem;      /* 16: panels */
+  --radius-xl: 1.25rem;   /* 20: dialogs */
 
-  /* surfaces: warm off-white with a hint of the mauve */
-  --color-page: #faf8f7;
+  /* 60: Soft White canvas. 30: Graphite text and structure. 10: Indigo for actions and selection only. */
+  --color-page: #f7f8fa;          /* soft white, the 60 */
   --color-surface: #ffffff;
-  --color-subtle: #f3eef1;
-  --color-line: #e7e0e4;          /* dividers (decorative) */
-  --color-line-strong: #8a857b;   /* control borders, 3.7:1 on surface */
+  --color-subtle: #eef0f4;        /* muted surface */
+  --color-line: #e5e7eb;          /* dividers (decorative) */
+  --color-line-strong: #8a8f98;   /* control borders and disabled text, 3.3:1 on surface */
 
-  /* text: the palette's charcoal */
-  --color-ink: #2e2e23;           /* 13:1 on page */
-  --color-body: #46463b;
-  --color-muted: #67675b;         /* 5.4:1 on page */
+  /* text: graphite, the 30 */
+  --color-ink: #252833;           /* 13.8:1 on page */
+  --color-body: #3d414d;
+  --color-muted: #646b75;         /* 5.1:1 on page, 4.7:1 on muted surface */
+  --color-disabled: #8a8f98;
 
-  /* action: palette red. White on #de3535 is 4.5:1 (AA). */
-  --color-accent: #de3535;
-  --color-accent-hover: #c42b2b;
+  /* action: indigo, the 10. White on #5856d6 is 5.7:1. */
+  --color-accent: #5856d6;
+  --color-accent-hover: #4b49c8;
   --color-accent-fg: #ffffff;
-  --color-accent-text: #b42828;   /* links and active labels, 6.1:1 on page */
-  --color-accent-soft: #efe4ec;   /* palette mauve, lightened; selected tabs and chips */
+  --color-accent-text: #4b49c8;   /* links and active labels, 6.4:1 on page */
+  --color-accent-soft: #eeeefc;   /* selected chips, 5.9:1 with accent text */
   --color-brand: var(--color-accent); /* old name */
-  --color-mauve: #dbc7d7;
-  --color-sky: #7ac3e6;
 
-  /* meaning: flag = needs verification, danger = look-alike drug / error, info = fixed by context,
-     ok = agreed or confirmed by a person. Never colour alone: each also has an icon or a word. */
-  --color-flag-bg: #fdf3e1;   --color-flag-fg: #8a5310;   --color-flag-line: #d39a45;
-  --color-danger-bg: #fcebeb; --color-danger-fg: #a82424; --color-danger-line: #e38383;
-  --color-info-bg: #e4f2fa;   --color-info-fg: #1f5e7d;   --color-info-line: #7ac3e6;
-  --color-ok-bg: #e7f5ed;     --color-ok-fg: #1d6b43;     --color-ok-line: #7cc29d;
+  /* meaning only (success, warning, error, information), never decoration. Text shades are darkened from the
+     given #238653 / #a96812 / #c43d42 / #2563eb so they pass 4.5:1 on their tinted backgrounds. Never colour alone:
+     each also has an icon or a word. */
+  --color-flag-bg: #fdf3e1;   --color-flag-fg: #8f570c;   --color-flag-line: #a96812;
+  --color-danger-bg: #fcecec; --color-danger-fg: #b3363b; --color-danger-line: #c43d42;
+  --color-info-bg: #eaf1fd;   --color-info-fg: #1d4fc4;   --color-info-line: #2563eb;
+  --color-ok-bg: #e8f5ee;     --color-ok-fg: #1e7a4b;     --color-ok-line: #238653;
 
-  --shadow-pop: 0 1px 2px rgb(46 46 35 / 0.06), 0 8px 24px -6px rgb(46 46 35 / 0.14);
-  --shadow-card: 0 1px 2px rgb(46 46 35 / 0.04);
+  --shadow-pop: 0 1px 2px rgb(37 40 51 / 0.06), 0 8px 24px -6px rgb(37 40 51 / 0.14);
+  --shadow-card: 0 1px 2px rgb(37 40 51 / 0.04);
 }
 
-/* dark: built on the palette charcoal */
+/* dark: graphite surfaces, same indigo; not an inversion */
 :root:not([data-theme="light"]) {
-  --color-page: #1c1c15;
-  --color-surface: #2e2e23;       /* palette charcoal */
-  --color-subtle: #38382c;
-  --color-line: #45453a;
-  --color-line-strong: #7d7b6c;
-  --color-ink: #f4f1ec;
-  --color-body: #d5d1c8;
-  --color-muted: #a9a497;
-  --color-accent: #de3535;
-  --color-accent-hover: #e84a4a;
+  --color-page: #14161c;
+  --color-surface: #1e2029;
+  --color-subtle: #272a35;
+  --color-line: #2f3240;
+  --color-line-strong: #6b7080;
+  --color-ink: #f2f3f7;
+  --color-body: #c8cbd3;
+  --color-muted: #9a9faa;          /* 6.1:1 on surface */
+  --color-disabled: #6b7080;
+  --color-accent: #5856d6;
+  --color-accent-hover: #6563e0;
   --color-accent-fg: #ffffff;
-  --color-accent-text: #f08c8c;
-  --color-accent-soft: #43363f;
+  --color-accent-text: #a8a7ff;    /* 7.5:1 on surface */
+  --color-accent-soft: #2a2950;
   --color-flag-bg: #33260d;   --color-flag-fg: #f2c46b;   --color-flag-line: #9c7428;
   --color-danger-bg: #3a1618; --color-danger-fg: #ff9e9e; --color-danger-line: #a0444a;
-  --color-info-bg: #1e3540;   --color-info-fg: #7ac3e6;   --color-info-line: #3f7a96;
+  --color-info-bg: #16264a;   --color-info-fg: #9dbcff;   --color-info-line: #3f63b8;
   --color-ok-bg: #12301f;     --color-ok-fg: #7ee0a8;     --color-ok-line: #2f8a5c;
   --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -8px rgb(0 0 0 / 0.6);
   --shadow-card: 0 0 0 transparent;
@@ -108,6 +109,7 @@ body {
 /* Frosted top bar, as on iOS; plain surface when transparency is reduced or unsupported. */
 .cs-app .cs-bar { background: color-mix(in srgb, var(--color-surface) 82%, transparent); backdrop-filter: saturate(180%) blur(16px); }
 @media (prefers-reduced-transparency: reduce) { .cs-app .cs-bar { background: var(--color-surface); backdrop-filter: none; } }
+@media (min-width: 64rem) { .cs-app .cs-bar { background: var(--color-surface); backdrop-filter: none; } }
 .cs-app :focus-visible {
   outline: 2px solid var(--color-accent-text);
   outline-offset: 2px;
@@ -137,7 +139,7 @@ body {
   width: min(100% - 2rem, var(--dialog-w, 32rem));
   max-height: min(100dvh - 2rem, 48rem);
 }
-.cs-dialog::backdrop { background: rgb(28 28 21 / 0.45); backdrop-filter: blur(2px); }
+.cs-dialog::backdrop { background: rgb(20 22 28 / 0.45); backdrop-filter: blur(2px); }
 @media (max-width: 639px) {
   .cs-dialog {
     margin: auto 0 0;

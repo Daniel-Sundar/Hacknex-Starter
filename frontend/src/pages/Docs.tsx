@@ -16,7 +16,7 @@ export default function Docs() {
             : "empty";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
+    <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start">
       <DocumentsPanel d={d} />
       <AskPanel status={status} limitMb={d.limitMb} onNoDocs={() => void d.load(true)} />
     </div>

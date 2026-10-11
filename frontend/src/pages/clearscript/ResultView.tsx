@@ -77,7 +77,7 @@ export function ResultView(p: Props) {
             {p.isSample && <Badge tone="accent">{t("cs.badge.sample")}</Badge>}
             <Button size="sm" icon={<ClipboardCopy className="size-4" aria-hidden="true" />} onClick={p.onCopy}>{t("common.copy")}</Button>
             <Button size="sm" icon={<Download className="size-4" aria-hidden="true" />} onClick={p.onExport}>{t("cs.export.open")}</Button>
-            {p.canRerun && <Button size="sm" variant="ghost" icon={<RotateCcw className="size-4" aria-hidden="true" />} onClick={p.onRerun}>{t("cs.rerun")}</Button>}
+            {p.canRerun && <Button size="sm" variant="quiet" icon={<RotateCcw className="size-4" aria-hidden="true" />} onClick={p.onRerun}>{t("cs.rerun")}</Button>}
           </>
         }
         bodyClassName="space-y-3 p-4"

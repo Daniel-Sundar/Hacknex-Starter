@@ -52,7 +52,7 @@ export function WordDialog({ open, index, words, models, writer, review, onClose
       description={t("cs.word.keys")}
       footer={review ? (
         <>
-          <Button variant="ghost" onClick={onClose}>{t("cs.review.stop")}</Button>
+          <Button variant="quiet" onClick={onClose}>{t("cs.review.stop")}</Button>
           <Button onClick={onSkip}>{t("cs.review.skip")}</Button>
         </>
       ) : <Button onClick={onClose}>{t("common.cancel")}</Button>}

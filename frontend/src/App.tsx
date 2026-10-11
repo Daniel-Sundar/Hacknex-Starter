@@ -106,20 +106,22 @@ function Shell() {
           {t("shell.skip")}
         </a>
 
-        <header className="cs-bar sticky top-0 z-30 border-b border-line" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 sm:gap-x-8 sm:px-6">
-            <a href="#/clearscript" className="flex min-h-10 items-center gap-2 rounded-md" aria-label={t("shell.home")}>
-              <span aria-hidden="true" className="grid size-7 place-items-center rounded-sm bg-accent text-accent-fg"><ScanText className="size-4" /></span>
-              <span className="cs-wordmark text-base text-ink">ClearScript</span>
+        {/* Phones and tablets: a top bar with a segmented control. Desktop (lg): the same element becomes a left sidebar. */}
+        <header className="cs-bar sticky top-0 z-30 border-b border-line lg:fixed lg:inset-y-0 lg:start-0 lg:w-64 lg:border-b-0 lg:border-e"
+          style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-2 sm:gap-x-8 sm:px-6 lg:h-full lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-y-6 lg:px-4 lg:py-6">
+            <a href="#/clearscript" className="flex min-h-10 items-center gap-2 rounded-md lg:px-2" aria-label={t("shell.home")}>
+              <span aria-hidden="true" className="grid size-7 place-items-center rounded-sm bg-accent lg:size-8 text-accent-fg"><ScanText className="size-4" /></span>
+              <span className="cs-wordmark text-base text-ink lg:text-lg">ClearScript</span>
             </a>
-            <nav aria-label={t("shell.nav")} className="order-last w-full sm:order-none sm:w-auto">
-              <ul className="flex gap-1 rounded-md bg-subtle p-1 sm:bg-transparent sm:p-0">
+            <nav aria-label={t("shell.nav")} className="order-last w-full sm:order-none sm:w-auto lg:w-full">
+              <ul className="flex gap-1 rounded-md bg-subtle p-1 sm:bg-transparent sm:p-0 lg:flex-col">
                 {TABS.map((x) => (
                   <li key={x.id} className="flex-1 sm:flex-none">
                     <a
                       href={`#/${x.id}`}
                       aria-current={!legal && tab === x.id ? "page" : undefined}
-                      className={`flex min-h-10 items-center justify-center gap-2 rounded-sm px-3 text-sm font-medium transition-colors duration-150 ${!legal && tab === x.id ? "bg-surface text-ink shadow-[var(--shadow-card)] sm:bg-accent-soft sm:text-accent-text sm:shadow-none" : "text-muted hover:text-ink sm:hover:bg-subtle"}`}
+                      className={`flex min-h-10 items-center justify-center gap-3 rounded-sm px-3 text-sm font-medium transition-colors duration-150 lg:min-h-11 lg:justify-start lg:rounded-md ${!legal && tab === x.id ? "bg-surface text-ink shadow-[var(--shadow-card)] sm:bg-accent sm:text-accent-fg sm:shadow-none" : "text-body hover:text-ink sm:hover:bg-subtle"}`}
                     >
                       <x.icon className="size-4" aria-hidden="true" /> {t(x.label)}
                     </a>
@@ -127,20 +129,23 @@ function Shell() {
                 ))}
               </ul>
             </nav>
-            <div className="ms-auto flex items-center gap-1 sm:gap-2">
+            <div className="ms-auto flex items-center gap-1 sm:gap-2 lg:ms-0 lg:mt-auto lg:flex-col lg:items-stretch lg:gap-1 lg:border-t lg:border-line lg:pt-4">
               <ServerStatus />
               <LanguagePicker />
-              <IconButton
-                label={light ? t("shell.theme.toDark") : t("shell.theme.toLight")}
-                icon={light ? <Moon className="size-4" /> : <Sun className="size-4" />}
-                onClick={toggleTheme}
-              />
-              <AccountMenu />
+              <div className="flex items-center gap-1 sm:gap-2 lg:justify-between">
+                <IconButton
+                  label={light ? t("shell.theme.toDark") : t("shell.theme.toLight")}
+                  icon={light ? <Moon className="size-4" /> : <Sun className="size-4" />}
+                  onClick={toggleTheme}
+                />
+                <AccountMenu />
+              </div>
             </div>
           </div>
         </header>
 
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 outline-none sm:px-6 sm:py-12">
+        <div className="flex flex-1 flex-col lg:ps-64">
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 outline-none sm:px-6 sm:py-12 lg:px-10">
           {legal && (
             <section aria-labelledby="h-legal">
               <h1 id="h-legal" tabIndex={-1} className="cs-title mx-auto mb-6 max-w-prose outline-none">
@@ -168,7 +173,7 @@ function Shell() {
         </main>
 
         <footer className="border-t border-line">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:px-6 lg:px-10" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}>
             <p className="max-w-prose">{t("shell.footer")}</p>
             <nav aria-label={t("legal.nav")} className="flex flex-wrap items-center gap-1">
               <a href="#/privacy" aria-current={legal === "privacy" ? "page" : undefined}
@@ -182,6 +187,7 @@ function Shell() {
             </nav>
           </div>
         </footer>
+        </div>
       </ToastProvider>
     </div>
   );

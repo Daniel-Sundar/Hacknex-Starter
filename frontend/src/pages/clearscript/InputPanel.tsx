@@ -42,13 +42,13 @@ export function InputPanel(p: Props) {
             <figcaption className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
               <span className="min-w-0 break-all">{p.name} · {formatBytes(p.file.size)}</span>
               <span className="flex flex-wrap gap-1">
-                <Button size="sm" variant="ghost" icon={<RefreshCw className="size-4" aria-hidden="true" />} disabled={p.running} onClick={() => replace.current?.click()}>
+                <Button size="sm" variant="quiet" icon={<RefreshCw className="size-4" aria-hidden="true" />} disabled={p.running} onClick={() => replace.current?.click()}>
                   {t("cs.input.replace")}
                 </Button>
-                <Button size="sm" variant="ghost" icon={<Camera className="size-4" aria-hidden="true" />} disabled={p.running} onClick={p.onCamera}>
+                <Button size="sm" variant="quiet" icon={<Camera className="size-4" aria-hidden="true" />} disabled={p.running} onClick={p.onCamera}>
                   {t("cs.input.retake")}
                 </Button>
-                <Button size="sm" variant="ghost" icon={<Trash2 className="size-4" aria-hidden="true" />} disabled={p.running} onClick={p.onRemove}>
+                <Button size="sm" variant="quiet" icon={<Trash2 className="size-4" aria-hidden="true" />} disabled={p.running} onClick={p.onRemove}>
                   {t("common.remove")}
                 </Button>
               </span>
@@ -120,7 +120,7 @@ export function InputPanel(p: Props) {
             className="pt-2"
           />
           {TOGGLES.some((k) => p.opts[k] !== DEFAULT_OPTIONS[k]) && (
-            <Button size="sm" variant="ghost" disabled={p.running} onClick={() => p.setOpts(DEFAULT_OPTIONS)}>{t("cs.adv.reset")}</Button>
+            <Button size="sm" variant="quiet" disabled={p.running} onClick={() => p.setOpts(DEFAULT_OPTIONS)}>{t("cs.adv.reset")}</Button>
           )}
         </div>
       </details>

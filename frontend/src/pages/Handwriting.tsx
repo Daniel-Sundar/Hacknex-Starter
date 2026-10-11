@@ -24,7 +24,7 @@ import { HistoryList, HistorySidebar, HistoryStatus } from "./clearscript/Histor
 const WRITER_KEY = "cs-writer";
 const readWriter = () => { try { return localStorage.getItem(WRITER_KEY) ?? ""; } catch { return ""; } };
 const DOCK_KEY = "cs-history-dock";
-const WIDE = "(min-width: 80rem)"; // the history sidebar docks beside the page from Tailwind's xl up
+const WIDE = "(min-width: 96rem)"; // the history column docks beside the page from Tailwind's 2xl up (the app sidebar takes 16rem)
 
 function useMedia(q: string) {
   const [match, setMatch] = useState(() => window.matchMedia(q).matches);
@@ -437,22 +437,22 @@ export default function Handwriting({ active }: { active: boolean }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-end gap-2">
-        <Button size="sm" variant="ghost" icon={<Keyboard className="size-4" aria-hidden="true" />} onClick={() => setKeysOpen(true)}>{t("cs.keys.title")}</Button>
+        <Button size="sm" variant="quiet" icon={<Keyboard className="size-4" aria-hidden="true" />} onClick={() => setKeysOpen(true)}>{t("cs.keys.title")}</Button>
         {!showSide && (
-          <Button size="sm" variant="ghost" icon={wide ? <PanelLeftOpen className="size-4" aria-hidden="true" /> : <History className="size-4" aria-hidden="true" />}
+          <Button size="sm" variant="quiet" icon={wide ? <PanelLeftOpen className="size-4" aria-hidden="true" /> : <History className="size-4" aria-hidden="true" />}
             onClick={() => (wide ? dock(true) : setHistoryOpen(true))} title={wide ? t("cs.history.show") : undefined}>
             {t("cs.history.button", { n: history.length })}
           </Button>
         )}
       </div>
 
-      <div className={showSide ? "grid items-start gap-6 xl:grid-cols-[15rem_minmax(0,1fr)]" : ""}>
+      <div className={showSide ? "grid items-start gap-6 2xl:grid-cols-[15rem_minmax(0,1fr)]" : ""}>
       {showSide && (
         <HistorySidebar count={history.length} status={historyStatus} onHide={() => dock(false)} onManage={() => setHistoryOpen(true)}>
           <HistoryList compact entries={history} currentId={shown?.entryId ?? null} onOpen={openEntry} onDelete={(id) => removeEntries([id])} />
         </HistorySidebar>
       )}
-      <div className={`grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] ${showSide ? "" : "xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]"}`}>
+      <div className={`grid gap-6 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] ${showSide ? "" : "2xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]"}`}>
         <div className="min-w-0">
           <InputPanel
             file={file} name={name} preview={preview} kind={kind} problem={problem} isSample={!!shown?.sample}
@@ -464,7 +464,7 @@ export default function Handwriting({ active }: { active: boolean }) {
         </div>
 
         {/* On phones the result (or progress) comes first; the input panel follows for the next page. */}
-        <div ref={workspace} className={`min-w-0 scroll-mt-20 ${run || runError || shown ? "max-lg:order-first" : ""}`} aria-busy={running || undefined}>
+        <div ref={workspace} className={`min-w-0 scroll-mt-20 lg:scroll-mt-8 ${run || runError || shown ? "max-xl:order-first" : ""}`} aria-busy={running || undefined}>
           {run ? (
             <ProcessingView run={run} startedAt={startedAt} headingRef={progressHeading} onStop={() => abort.current?.abort()} />
           ) : runError ? (

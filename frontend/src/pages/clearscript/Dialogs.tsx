@@ -92,7 +92,7 @@ export function CameraDialog({ open, onClose, onUse }: { open: boolean; onClose:
           <Button onClick={onClose}>{t("cs.camera.chooseFile")}</Button>
         ) : (
           <>
-            <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
+            <Button variant="quiet" onClick={onClose}>{t("common.cancel")}</Button>
             <Button variant="primary" icon={<Camera className="size-4" aria-hidden="true" />} disabled={state !== "live"} onClick={capture}>
               {t("cs.camera.capture")}
             </Button>
