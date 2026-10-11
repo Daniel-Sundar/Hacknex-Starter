@@ -67,11 +67,11 @@ export function HistoryList({ entries, currentId, compact, onOpen, onDelete }: L
                       {thumb}
                       <span className="min-w-0 flex-1">
                         <span className={`block truncate text-sm font-medium ${current ? "text-accent-text" : "text-ink"}`}>{e.name}</span>
-                        <span className="flex items-center gap-2 text-xs text-muted">
-                          <time dateTime={new Date(e.ts).toISOString()} title={date(e.ts)}>{when}</time>
+                        <span className="flex min-w-0 items-center gap-2 text-xs text-muted">
+                          <time dateTime={new Date(e.ts).toISOString()} title={date(e.ts)} className="shrink-0 whitespace-nowrap">{when}</time>
                           {s.flagged
-                            ? <span className="truncate text-flag-fg">{tn("cs.history.flagged", s.flagged)}</span>
-                            : <span className="truncate text-ok-fg">{t("cs.history.verified")}</span>}
+                            ? <span className="min-w-0 truncate text-flag-fg">{tn("cs.history.flagged", s.flagged)}</span>
+                            : <span className="min-w-0 truncate text-ok-fg">{t("cs.history.verified")}</span>}
                         </span>
                       </span>
                     </button>
@@ -85,7 +85,7 @@ export function HistoryList({ entries, currentId, compact, onOpen, onDelete }: L
                 <li key={e.id} className="flex items-center gap-3 py-3">
                   {thumb}
                   <div className="min-w-0 flex-1">
-                    <p className="break-all text-sm font-medium text-ink">{e.name}</p>
+                    <p title={e.name} className="line-clamp-2 break-words text-sm font-medium text-ink">{e.name}</p>
                     <p className="text-xs text-muted"><time dateTime={new Date(e.ts).toISOString()}>{date(e.ts)}</time></p>
                     <div className="mt-1 flex flex-wrap gap-1">
                       <Badge>{t(e.result.doc_type === "prescription" ? "cs.doc.prescription" : "cs.doc.note")}</Badge>
