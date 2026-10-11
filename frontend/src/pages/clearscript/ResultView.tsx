@@ -332,7 +332,7 @@ function Readings({ readings, errors }: { readings: Record<string, string>; erro
   const { t } = useT();
   const failed = Object.entries(errors).filter(([k]) => k !== "baseline");
   return (
-    <details className="group rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] shadow-[var(--shadow-card)]">
+    <details className="group rounded-lg border border-line bg-surface shadow-[var(--shadow-card)]">
       <summary className="flex min-h-12 cursor-pointer list-none flex-wrap items-center justify-between gap-2 rounded-lg px-4 text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden">
         <h2 className="text-sm font-semibold">{t("cs.readings.title")}</h2>
         <span className="text-xs font-normal text-muted">

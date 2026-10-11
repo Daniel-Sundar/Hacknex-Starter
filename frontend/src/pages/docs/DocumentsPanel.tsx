@@ -68,6 +68,7 @@ export function DocumentsPanel({ d }: { d: DocumentsState }) {
 
   return (
     <Panel
+      flat
       title={t("docs.files.title")}
       actions={hasDocs && (
         <Button variant="danger" size="sm" icon={<Trash2 className="size-4" aria-hidden="true" />} onClick={() => { setClearError(null); setToClear(d.docs.map((x) => x.source)); setConfirm(true); }}>

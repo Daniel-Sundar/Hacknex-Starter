@@ -3,6 +3,8 @@ export default {
   "shell.skip": "Skip to main content",
   "shell.home": "ClearScript home",
   "shell.nav": "Sections",
+  "shell.menu.open": "Open menu",
+  "shell.menu.close": "Close menu",
   "shell.tab.clearscript": "Handwriting",
   "shell.tab.docs": "Docs Q&A",
   "shell.page.clearscript.title": "Digitize handwriting",

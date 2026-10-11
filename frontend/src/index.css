@@ -24,7 +24,7 @@
   /* 60: Soft White canvas. 30: Graphite text and structure. 10: Indigo for actions and selection only. */
   --color-page: #edeef5;          /* lavender-gray canvas, the 60; one flat colour behind everything */
   --color-surface: #ffffff;
-  --color-subtle: #eef0f4;        /* muted surface */
+  --color-subtle: #f7f8fa;        /* nested neutral surface inside panels */
   --color-line: #e3e4ec;          /* panel borders and dividers (decorative) */
   --color-line-strong: #8a8f98;   /* control borders and disabled text, 3.3:1 on surface */
 
@@ -32,11 +32,11 @@
   --color-ink: #252833;           /* 12.7:1 on page */
   --color-body: #3d414d;
   --color-muted: #646b75;         /* 4.65:1 on page, 5.3:1 on surface */
-  --color-disabled: #8a8f98;
+  --color-disabled: #858b98;       /* muted: placeholders, disabled (3.4:1, not for text people must read) */
 
   /* action: indigo, the 10. White on #5856d6 is 5.7:1. */
   --color-accent: #5856d6;
-  --color-accent-hover: #4b49c8;
+  --color-accent-hover: #4947c6;
   --color-accent-fg: #ffffff;
   --color-accent-text: #4b49c8;   /* links and active labels, 5.9:1 on page */
   --color-accent-soft: #eeeefc;   /* selected chips, 5.9:1 with accent text */
@@ -132,6 +132,11 @@ body {
 @media (min-width: 640px) {
   .cs-app .cs-title { font-size: 1.875rem; line-height: 2.25rem; }
 }
+/* Pane headers: one height and one title style everywhere (workbench panes and stand-alone panels). */
+.cs-app .cs-pane-head { min-height: 3.5rem; }
+.cs-app .cs-pane-title { font-size: 1.0625rem; line-height: 1.5rem; font-weight: 600; letter-spacing: -0.01em; color: var(--color-ink); }
+/* Uppercase micro-labels for pane sub-sections (Page type, Mode, Privacy). */
+.cs-app .cs-label { font-size: 0.75rem; line-height: 1rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-muted); }
 .cs-app .cs-wordmark { font-weight: 600; letter-spacing: -0.01em; }
 /* Sidebar on desktop, top bar on phones: one indigo surface. Native dropdown lists keep normal colours. */
 .cs-app .cs-bar { background: var(--color-side); color: var(--color-side-fg); }

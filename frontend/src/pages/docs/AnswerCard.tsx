@@ -83,7 +83,7 @@ export function AnswerCard({ entry, open, onToggle, collapsible }: {
   const bodyId = `${uid}-body`;
 
   return (
-    <article aria-labelledby={qId} className="min-w-0 rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] shadow-[var(--shadow-card)]">
+    <article aria-labelledby={qId} className="min-w-0 rounded-lg border border-line bg-surface shadow-[var(--shadow-card)]">
       <header className={`flex flex-wrap items-start gap-3 px-4 py-3 ${open ? "border-b border-line" : ""}`}>
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-xs text-muted">{t("docs.answer.asked")}</p>

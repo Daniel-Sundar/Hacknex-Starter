@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { createPortal } from "react-dom";
 import { History, Keyboard, PanelLeftOpen } from "lucide-react";
 import { ApiError, postForm, postJSON, streamNDJSON } from "../lib/api";
-import { Button, Dialog, ErrorState, useToast } from "../components/ui";
+import { Button, Dialog, ErrorState, Workbench, useToast } from "../components/ui";
 import { useT } from "../i18n";
 import { useHealth } from "../lib/health";
 import { checkFile, thumbnail, type Kind } from "../lib/fileCheck";
@@ -25,7 +25,7 @@ import { HistoryList, HistorySidebar, HistoryStatus } from "./clearscript/Histor
 const WRITER_KEY = "cs-writer";
 const readWriter = () => { try { return localStorage.getItem(WRITER_KEY) ?? ""; } catch { return ""; } };
 const DOCK_KEY = "cs-history-dock";
-const WIDE = "(min-width: 90rem)"; // three columns (history, add a page, results) from 1440px; the app sidebar takes 16rem
+const WIDE = "(min-width: 85rem)"; // the history pane joins the workbench from 1360px (the app sidebar takes 16rem)
 
 function useMedia(q: string) {
   const [match, setMatch] = useState(() => window.matchMedia(q).matches);
@@ -95,7 +95,7 @@ export default function Handwriting({ active }: { active: boolean }) {
   const showSide = wide && docked;
   const previous = useRef<Shown | null>(null); // shown again if a re-run is stopped or fails
 
-  const workspace = useRef<HTMLDivElement>(null);
+  const workspace = useRef<HTMLElement>(null);
   const progressHeading = useRef<HTMLHeadingElement>(null);
   const running = run !== null;
   const hasActivity = !!(run || runError || shown); // something is happening or there's a result: the workspace gets the width
@@ -454,16 +454,23 @@ export default function Handwriting({ active }: { active: boolean }) {
         )}
       </div>)}
 
-      {/* Three visible regions on a wide desktop: History (narrow), Add a page (the moderate-width primary
-          task), and How it works / the result (flexible). The input column never grows past 35rem, so it
-          stays the "add a page" workflow rather than swallowing the whole workspace. */}
-      <div className={showSide ? "grid items-start gap-6 min-[90rem]:grid-cols-[16rem_minmax(0,1fr)]" : ""}>
-      {showSide && (
-        <HistorySidebar count={history.length} status={historyStatus} onHide={() => dock(false)} onManage={() => setHistoryOpen(true)}>
-          <HistoryList compact entries={history} currentId={shown?.entryId ?? null} onOpen={openEntry} onDelete={(id) => removeEntries([id])} />
-        </HistorySidebar>
-      )}
-      <div className="grid items-start gap-6 xl:grid-cols-[30rem_minmax(20rem,1fr)]">
+      {/* One workbench window instead of separate cards: History | Add a page (the primary task) | How it works.
+          Below 85rem the history pane folds into the History dialog; below xl the panes stack. Results get
+          the full width underneath (a transcription needs room), and come first on phones. */}
+      <div className="flex flex-col gap-6">
+      <Workbench
+        label={t("cs.input.title")}
+        cols={showSide
+          ? "xl:grid-cols-[minmax(0,32rem)_minmax(18rem,1fr)] min-[85rem]:grid-cols-[minmax(15rem,17rem)_minmax(28rem,34rem)_minmax(20rem,1fr)]"
+          : "xl:grid-cols-[minmax(0,34rem)_minmax(20rem,1fr)]"}
+      >
+        {showSide && (
+          <div className="hidden min-w-0 flex-col border-e border-line min-[85rem]:flex">
+            <HistorySidebar count={history.length} status={historyStatus} onHide={() => dock(false)} onManage={() => setHistoryOpen(true)}>
+              <HistoryList compact entries={history} currentId={shown?.entryId ?? null} onOpen={openEntry} onDelete={(id) => removeEntries([id])} />
+            </HistorySidebar>
+          </div>
+        )}
         <div className="min-w-0">
           <InputPanel
             file={file} name={name} preview={preview} kind={kind} problem={problem} isSample={!!shown?.sample}
@@ -473,16 +480,17 @@ export default function Handwriting({ active }: { active: boolean }) {
             onStop={() => abort.current?.abort()} maxMb={maxMb}
           />
         </div>
+        <div className="min-w-0 border-t border-line xl:border-t-0 xl:border-s">
+          <Guide stage={shown ? 3 : file ? 2 : 1} name={name} readers={health.readers} />
+        </div>
+      </Workbench>
 
-        {/* On phones the result (or progress) comes first; the input panel follows for the next page. */}
-        <div ref={workspace} className={`min-w-0 scroll-mt-20 lg:scroll-mt-8 ${hasActivity ? "max-xl:order-first" : ""}`} aria-busy={running || undefined}>
+      {hasActivity && (
+        <section ref={workspace} aria-label={t("cs.result.region")} className={`min-w-0 scroll-mt-20 lg:scroll-mt-8 ${hasActivity ? "max-xl:order-first" : ""}`} aria-busy={running || undefined}>
           {run ? (
             <ProcessingView run={run} startedAt={startedAt} headingRef={progressHeading} onStop={() => abort.current?.abort()} />
           ) : runError ? (
-            <div className="space-y-4">
-              <ErrorState error={runError} onRetry={file ? digitize : undefined} preserved={!!file} limits={{ maxUploadMb: maxMb }} />
-              <Guide ready={!!file} name={name} readers={health.readers} />
-            </div>
+            <ErrorState error={runError} onRetry={file ? digitize : undefined} preserved={!!file} limits={{ maxUploadMb: maxMb }} />
           ) : shown ? (
             <ResultView
               result={shown.result} words={mode === "auto" ? plainWords(shown.words) : shown.words} auto={mode === "auto"} isSample={shown.sample} fromHistory={shown.fromHistory} canRerun={canRerun}
@@ -492,11 +500,9 @@ export default function Handwriting({ active }: { active: boolean }) {
               onRerun={() => (stats(shown.words, null).human ? setConfirmRerun(true) : digitize())}
               focusWord={focusWord}
             />
-          ) : (
-            <Guide ready={!!file} name={name} readers={health.readers} />
-          )}
-        </div>
-      </div>
+          ) : null}
+        </section>
+      )}
       </div>
 
       <WordDialog

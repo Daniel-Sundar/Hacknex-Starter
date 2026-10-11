@@ -94,6 +94,7 @@ export default {
 
   // before a result
   "cs.guide.title": "How it works",
+  "cs.guide.privacyTitle": "Your pages",
   "cs.guide.step1": "Add a page",
   "cs.guide.step1.hint": "Photo, scan or camera. Prescriptions, forms or notes.",
   "cs.guide.step2": "Digitize",
@@ -130,6 +131,7 @@ export default {
   "cs.review.stop": "Stop reviewing",
   "cs.review.done": "All flagged words are checked.",
   "cs.review.doneSkipped": "Review finished. Skipped words are still flagged.",
+  "cs.result.region": "Result",
   "cs.result.sample": "This is a saved sample result, not a live reading of your page.",
   "cs.result.fromHistory": "Opened from History. The original image isn't stored, so to read the page again, add it again.",
   "cs.result.partial": "{done} of {n} models answered",

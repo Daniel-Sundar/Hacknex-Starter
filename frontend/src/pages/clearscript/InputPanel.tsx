@@ -25,8 +25,9 @@ export function InputPanel(p: Props) {
   const sticky = !!p.file && !p.hasResult; // with a page chosen, the main action stays in reach while scrolling (short laptops too)
 
   return (
-    <div className="space-y-4">
-      <Panel title={t("cs.input.title")} bodyClassName="space-y-4 p-5 sm:p-6">
+    // The primary pane of the workbench: page, options, then a pinned action footer (mode + Digitize).
+    <div className="flex h-full min-w-0 flex-col">
+      <Panel flat title={t("cs.input.title")} bodyClassName="space-y-6 p-5 sm:p-6">
         {p.isSample && !p.file && <Notice tone="info">{t("cs.input.sampleLoaded")}</Notice>}
 
         {p.file ? (
@@ -77,7 +78,7 @@ export function InputPanel(p: Props) {
         {p.problem && <ErrorState error={new ApiError(p.problem, "")} limits={{ maxUploadMb: p.maxMb }} />}
 
         <fieldset className="space-y-2" disabled={p.running}>
-          <legend className="text-sm font-medium text-ink">{t("cs.page.label")}</legend>
+          <legend className="cs-label mb-2">{t("cs.page.label")}</legend>
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("cs.page.label")}>
             {PAGE_TYPES.map((k) => {
               const on = p.opts.page === k;
@@ -92,10 +93,9 @@ export function InputPanel(p: Props) {
           </div>
           <p className="text-xs text-muted">{t(`cs.page.${p.opts.page}.hint`)}</p>
         </fieldset>
-      </Panel>
 
-      <details className="group rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] shadow-[var(--shadow-card)]">
-        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-4 text-sm font-medium text-ink [&::-webkit-details-marker]:hidden">
+      <details className="group rounded-md border border-line">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-md px-4 text-sm font-medium text-ink hover:bg-subtle [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-2"><SlidersHorizontal className="size-4 text-muted" aria-hidden="true" />{t("cs.adv.title")}</span>
           <span className="flex items-center gap-2 text-xs font-normal text-muted">
             {off ? t("cs.adv.someOff", { n: off }) : t("cs.adv.allOn")}
@@ -124,10 +124,11 @@ export function InputPanel(p: Props) {
           )}
         </div>
       </details>
+      </Panel>
 
-      <div className={`space-y-2 ${sticky ? "sticky bottom-0 z-20 -mx-4 border-t border-line bg-page px-4 py-3 sm:-mx-6 sm:px-6 lg:mx-0 lg:border-t-0 lg:px-0" : ""}`}
+      <div className={`mt-auto space-y-3 border-t border-line bg-surface px-5 py-4 sm:px-6 ${sticky ? "sticky bottom-0 z-20" : ""}`}
         style={sticky ? { paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))" } : undefined}>
-        <div role="radiogroup" aria-label={t("cs.mode.label")} className="grid grid-cols-2 gap-1 rounded-md border border-line bg-subtle p-1">
+        <div role="radiogroup" aria-label={t("cs.mode.label")} className="grid grid-cols-2 gap-1 rounded-md bg-[color-mix(in_srgb,var(--color-ink)_6%,transparent)] p-1">
           {(["auto", "review"] as const).map((m) => (
             <button key={m} type="button" role="radio" aria-checked={p.mode === m} disabled={p.running} onClick={() => p.setMode(m)}
               className={`min-h-10 rounded-sm px-2 text-sm font-medium transition-colors duration-150 ${p.mode === m ? "bg-surface font-semibold text-ink shadow-[0_1px_3px_rgb(37_40_51/0.12)]" : "text-muted hover:text-ink"}`}>

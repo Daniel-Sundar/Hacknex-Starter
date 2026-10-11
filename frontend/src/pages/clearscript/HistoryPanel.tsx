@@ -126,21 +126,24 @@ export function HistoryStatus({ account, canSignIn, localCount, importing, onImp
   );
 }
 
-/** The docked "task bar" on wide screens. */
+/** The history pane of the workbench (wide screens). Its list scrolls inside the pane and is laid out
+ *  out of flow, so a long history never makes the whole workbench taller than its main workflow. */
 export function HistorySidebar({ count, status, onHide, onManage, children }: {
   count: number; status: ReactNode; onHide: () => void; onManage: () => void; children: ReactNode;
 }) {
   const { t } = useT();
   return (
-    <aside aria-labelledby="cs-history-side" className="sticky top-8 flex max-h-[calc(100dvh-4rem)] flex-col rounded-lg border border-line bg-surface shadow-[var(--shadow-card)]">
-      <div className="flex min-h-16 items-center gap-1 border-b border-line ps-5 pe-3">
-        <h2 id="cs-history-side" className="me-auto text-lg font-semibold text-ink">{t("cs.history.title")} <span className="text-sm font-normal text-muted">({count})</span></h2>
+    <aside aria-labelledby="cs-history-side" className="flex min-h-[28rem] min-w-0 flex-1 flex-col bg-subtle/60">
+      <div className="cs-pane-head flex items-center gap-1 border-b border-line ps-5 pe-2">
+        <h2 id="cs-history-side" className="cs-pane-title me-auto">{t("cs.history.title")} <span className="font-normal text-muted">{count}</span></h2>
         <IconButton size="sm" label={t("cs.history.manage")} icon={<Maximize2 className="size-4" />} onClick={onManage} />
         <IconButton size="sm" label={t("cs.history.hide")} icon={<PanelLeftClose className="size-4" />} onClick={onHide} />
       </div>
-      <div className="space-y-3 overflow-y-auto p-4">
-        {status}
-        {children}
+      <div className="relative flex-1">
+        <div className="absolute inset-0 space-y-3 overflow-y-auto p-3">
+          {status}
+          {children}
+        </div>
       </div>
     </aside>
   );

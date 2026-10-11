@@ -88,8 +88,8 @@ export function AskPanel({ status, limitMb, onNoDocs }: { status: DocsStatus; li
   const describedBy = [hintId, showCounter ? countId : "", inputError ? errId : ""].filter(Boolean).join(" ");
 
   return (
-    <div ref={root} className="min-w-0 space-y-6">
-      <Panel title={t("docs.ask.title")}>
+    <div ref={root} className="min-w-0">
+      <Panel flat title={t("docs.ask.title")}>
         <form onSubmit={submit} noValidate className="space-y-2">
           <label htmlFor={`${ids}-q`} className="block text-sm font-medium text-ink">{t("docs.ask.label")}</label>
           <textarea
@@ -138,14 +138,14 @@ export function AskPanel({ status, limitMb, onNoDocs }: { status: DocsStatus; li
       </Panel>
 
       {current || answers.length ? (
-        <section aria-labelledby={`${ids}-ah`} className="space-y-3">
+        <section aria-labelledby={`${ids}-ah`} className="space-y-3 border-t border-line bg-subtle/60 p-5 sm:p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <h2 id={`${ids}-ah`} className="text-sm font-semibold text-ink">{t("docs.answers.title")}</h2>
             <p className="text-xs text-muted">{t("docs.answers.note")}</p>
           </div>
 
           {current && (
-            <article aria-labelledby={`${ids}-cq`} aria-busy={pending || undefined} className="min-w-0 rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] shadow-[var(--shadow-card)]">
+            <article aria-labelledby={`${ids}-cq`} aria-busy={pending || undefined} className="min-w-0 rounded-lg border border-line bg-surface">
               <header className="space-y-1 border-b border-line px-4 py-3">
                 <p className="text-xs text-muted">{t("docs.answer.asked")}</p>
                 <h3 id={`${ids}-cq`} className="wrap-break-word text-base font-semibold text-ink">{current.question}</h3>
@@ -178,11 +178,11 @@ export function AskPanel({ status, limitMb, onNoDocs }: { status: DocsStatus; li
           )}
         </section>
       ) : status === "loading" ? null : status === "ready" || status === "unknown" ? (
-        <EmptyState icon={<MessageSquareText className="size-5" />} title={t("docs.noAnswers.title")}>
+        <div className="border-t border-line p-5 sm:p-6"><EmptyState icon={<MessageSquareText className="size-5" />} title={t("docs.noAnswers.title")}>
           {t("docs.noAnswers.body")}
-        </EmptyState>
+        </EmptyState></div>
       ) : (
-        <EmptyState icon={<FileQuestion className="size-5" />} title={t("docs.empty.title")}>
+        <div className="border-t border-line p-5 sm:p-6"><EmptyState icon={<FileQuestion className="size-5" />} title={t("docs.empty.title")}>
           <ol role="list" className="space-y-3 text-start">
             {(["docs.empty.step1", "docs.empty.step2", "docs.empty.step3"] as const).map((k, i) => (
               <li key={k} className="flex items-start gap-3">
@@ -193,7 +193,7 @@ export function AskPanel({ status, limitMb, onNoDocs }: { status: DocsStatus; li
               </li>
             ))}
           </ol>
-        </EmptyState>
+        </EmptyState></div>
       )}
     </div>
   );

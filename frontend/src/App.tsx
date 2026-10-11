@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
-import { FileQuestion, Languages, Loader2, Moon, ScanText, Sun } from "lucide-react";
+import { FileQuestion, Languages, Loader2, Menu, Moon, ScanText, Sun, X } from "lucide-react";
 import { Legal, type LegalPage } from "./pages/Legal";
 import Handwriting from "./pages/Handwriting";
 import { IconButton, ToastProvider } from "./components/ui";
@@ -41,12 +41,20 @@ function Shell() {
   const [legal, setLegal] = useState<LegalPage | null>(legalFromHash);
   const [visited, setVisited] = useState<Set<TabId>>(() => new Set([tabFromHash()]));
   const [light, setLight] = useState(() => document.documentElement.dataset.theme === "light");
+  const [menuOpen, setMenuOpen] = useState(false); // phone/tablet menu; the desktop sidebar is always open
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
   const headings = useRef<Partial<Record<TabId, HTMLHeadingElement | null>>>({});
   const shownTab = useRef<TabId>(tab);
   const firstLoad = useRef(true);
 
   useEffect(() => {
     const onHash = () => {
+      setMenuOpen(false);
       const page = legalFromHash();
       setLegal(page);
       if (!page) setTab(tabFromHash());
@@ -109,40 +117,52 @@ function Shell() {
           {t("shell.skip")}
         </a>
 
-        {/* Phones and tablets: a top bar with a segmented control. Desktop (lg): the same element becomes a left sidebar. */}
+        {/* Desktop (lg): a fixed indigo sidebar. Phones and tablets: the same element is a compact top bar whose
+            navigation and controls fold into a menu, so the page gets the screen. */}
         <header className="cs-bar sticky top-0 z-30 lg:fixed lg:inset-y-0 lg:start-0 lg:w-60"
           style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-2 sm:gap-x-8 sm:px-6 lg:h-full lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-y-6 lg:px-4 lg:py-6">
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2 sm:px-6 lg:h-full lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-6 lg:px-4 lg:py-6">
             <a href="#/clearscript" className="flex min-h-10 items-center gap-2 rounded-md lg:px-2" aria-label={t("shell.home")}>
               <span aria-hidden="true" className="grid size-7 place-items-center rounded-sm bg-white text-[#5856d6] lg:size-8"><ScanText className="size-4" /></span>
               <span className="cs-wordmark text-base text-side-fg lg:text-lg">ClearScript</span>
             </a>
-            <nav aria-label={t("shell.nav")} className="order-last w-full sm:order-none sm:w-auto lg:w-full">
-              <ul className="flex gap-1 rounded-md bg-side-hover p-1 sm:bg-transparent sm:p-0 lg:flex-col">
-                {TABS.map((x) => (
-                  <li key={x.id} className="flex-1 sm:flex-none">
-                    <a
-                      href={`#/${x.id}`}
-                      aria-current={!legal && tab === x.id ? "page" : undefined}
-                      className={`flex min-h-10 items-center justify-center gap-3 rounded-sm px-3 text-sm font-medium transition-colors duration-150 lg:min-h-11 lg:justify-start lg:rounded-md ${!legal && tab === x.id ? "bg-side-active font-semibold text-side-fg" : "text-side-muted hover:bg-side-hover hover:text-side-fg"}`}
-                    >
-                      <x.icon className="size-4" aria-hidden="true" /> {t(x.label)}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            <div className="ms-auto flex items-center gap-1 sm:gap-2 lg:ms-0 lg:mt-auto lg:flex-col lg:items-stretch lg:gap-1 lg:border-t lg:border-side-line lg:pt-4">
-              <ServerStatus />
-              <LanguagePicker />
-              <div className="flex items-center gap-1 sm:gap-2 lg:justify-between">
-                <IconButton
-                  className="!text-side-fg hover:!bg-side-hover"
-                  label={light ? t("shell.theme.toDark") : t("shell.theme.toLight")}
-                  icon={light ? <Moon className="size-4" /> : <Sun className="size-4" />}
-                  onClick={toggleTheme}
-                />
-                <AccountMenu />
+            <IconButton
+              className="ms-auto !text-side-fg hover:!bg-side-hover lg:hidden"
+              label={menuOpen ? t("shell.menu.close") : t("shell.menu.open")}
+              aria-expanded={menuOpen}
+              aria-controls="cs-menu"
+              icon={menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+              onClick={() => setMenuOpen((v) => !v)}
+            />
+            <div id="cs-menu" className={`${menuOpen ? "flex" : "hidden"} w-full flex-col gap-3 pb-3 lg:flex lg:flex-1 lg:gap-6 lg:pb-0`}>
+              <nav aria-label={t("shell.nav")}>
+                <ul className="flex flex-col gap-1">
+                  {TABS.map((x) => (
+                    <li key={x.id}>
+                      <a
+                        href={`#/${x.id}`}
+                        aria-current={!legal && tab === x.id ? "page" : undefined}
+                        onClick={() => setMenuOpen(false)}
+                        className={`flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-150 ${!legal && tab === x.id ? "bg-side-active font-semibold text-side-fg" : "text-side-muted hover:bg-side-hover hover:text-side-fg"}`}
+                      >
+                        <x.icon className="size-4" aria-hidden="true" /> {t(x.label)}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <div className="flex flex-wrap items-center gap-2 border-t border-side-line pt-3 lg:mt-auto lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-1 lg:pt-4">
+                <ServerStatus />
+                <LanguagePicker />
+                <div className="ms-auto flex items-center gap-2 lg:ms-0 lg:justify-between">
+                  <IconButton
+                    className="!text-side-fg hover:!bg-side-hover"
+                    label={light ? t("shell.theme.toDark") : t("shell.theme.toLight")}
+                    icon={light ? <Moon className="size-4" /> : <Sun className="size-4" />}
+                    onClick={toggleTheme}
+                  />
+                  <AccountMenu />
+                </div>
               </div>
             </div>
           </div>

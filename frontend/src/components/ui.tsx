@@ -173,22 +173,35 @@ export function DropZone({ accept, multiple, onFiles, title, hint, icon, disable
 
 // ---------- Panel / Badge / Progress ----------
 
-export function Panel({ title, actions, children, className = "", bodyClassName = "p-5 sm:p-6", level = 2, id }: {
-  title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string; level?: 2 | 3; id?: string;
+/** A titled group. On its own it floats as a white card; `flat` makes it a pane inside a Workbench
+ *  (no border, radius or shadow of its own: the workbench draws one frame and hairline dividers). */
+export function Panel({ title, actions, children, className = "", bodyClassName = "p-5 sm:p-6", level = 2, id, flat = false }: {
+  title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string; level?: 2 | 3; id?: string; flat?: boolean;
 }) {
   const auto = useId();
   const headingId = id ?? auto;
   const H = level === 2 ? "h2" : "h3";
   return (
-    <section aria-labelledby={title ? headingId : undefined} className={`min-w-0 rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] ${className}`}>
+    <section aria-labelledby={title ? headingId : undefined} className={`min-w-0 ${flat ? "" : "rounded-lg border border-line bg-surface shadow-[var(--shadow-card)]"} ${className}`}>
       {(title || actions) && (
-        <header className="flex min-h-16 flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-4 sm:px-6">
-          {title && <H id={headingId} className="text-lg font-semibold text-ink">{title}</H>}
+        <header className="cs-pane-head flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 sm:px-6">
+          {title && <H id={headingId} className="cs-pane-title">{title}</H>}
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </header>
       )}
       <div className={bodyClassName}>{children}</div>
     </section>
+  );
+}
+
+/** One floating window holding several panes side by side (hairline dividers between them), instead of a
+ *  row of separate cards. Columns come from `cols` (Tailwind grid classes per breakpoint). */
+export function Workbench({ cols, className = "", children, label }: { cols: string; className?: string; children: ReactNode; label?: string }) {
+  return (
+    <div role={label ? "group" : undefined} aria-label={label}
+      className={`cs-workbench grid min-w-0 overflow-clip rounded-xl border border-line bg-surface shadow-[var(--shadow-card)] ${cols} ${className}`}>
+      {children}
+    </div>
   );
 }
 

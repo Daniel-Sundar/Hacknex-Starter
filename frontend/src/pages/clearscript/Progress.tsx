@@ -25,7 +25,7 @@ export function ProcessingView({ run, startedAt, headingRef, onStop }: {
           <p className="text-sm text-muted">{t("cs.loading.hint")}</p>
         </div>
       </div>
-      <section aria-labelledby="cs-progress-h" className="rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] shadow-[var(--shadow-card)]">
+      <section aria-labelledby="cs-progress-h" className="rounded-lg border border-line bg-surface shadow-[var(--shadow-card)]">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
           <h2 id="cs-progress-h" ref={headingRef} tabIndex={-1} className="text-sm font-semibold text-ink outline-none">{t("cs.progress.title")}</h2>
           <span className="flex items-center gap-2">

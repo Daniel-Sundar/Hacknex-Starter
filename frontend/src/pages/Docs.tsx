@@ -4,6 +4,7 @@
 import { AskPanel, type DocsStatus } from "./docs/AskPanel";
 import { DocumentsPanel } from "./docs/DocumentsPanel";
 import { useDocuments } from "./docs/useDocuments";
+import { Workbench } from "../components/ui";
 
 export default function Docs() {
   const d = useDocuments();
@@ -16,9 +17,10 @@ export default function Docs() {
             : "empty";
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start">
-      <DocumentsPanel d={d} />
+    // Same workbench as Handwriting: your documents on the left, the conversation with them on the right.
+    <Workbench cols="lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]">
+      <div className="min-w-0 border-b border-line bg-subtle/60 lg:border-e lg:border-b-0"><DocumentsPanel d={d} /></div>
       <AskPanel status={status} limitMb={d.limitMb} onNoDocs={() => void d.load(true)} />
-    </div>
+    </Workbench>
   );
 }
