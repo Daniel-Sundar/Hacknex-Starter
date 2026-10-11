@@ -132,7 +132,7 @@ export function HistorySidebar({ count, status, onHide, onManage, children }: {
 }) {
   const { t } = useT();
   return (
-    <aside aria-labelledby="cs-history-side" className="sticky top-8 flex max-h-[calc(100dvh-4rem)] flex-col rounded-lg border border-line bg-surface">
+    <aside aria-labelledby="cs-history-side" className="sticky top-8 flex max-h-[calc(100dvh-4rem)] flex-col rounded-lg border border-line bg-surface shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-1 border-b border-line px-3 py-2">
         <h2 id="cs-history-side" className="me-auto text-sm font-semibold text-ink">{t("cs.history.title")} <span className="font-normal text-muted">({count})</span></h2>
         <IconButton size="sm" label={t("cs.history.manage")} icon={<Maximize2 className="size-4" />} onClick={onManage} />

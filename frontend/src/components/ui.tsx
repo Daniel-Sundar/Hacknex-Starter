@@ -16,7 +16,7 @@ type Variant = "primary" | "secondary" | "ghost" | "quiet" | "danger";
 type Size = "sm" | "md" | "lg";
 const VARIANT: Record<Variant, string> = {
   primary: "border-transparent bg-accent text-accent-fg hover:bg-accent-hover",
-  secondary: "border-line bg-surface text-ink shadow-[var(--shadow-card)] hover:bg-subtle",
+  secondary: "border-line bg-surface text-ink hover:bg-subtle",
   ghost: "border-transparent bg-transparent text-accent-text hover:bg-accent-soft", // tertiary
   quiet: "border-transparent bg-transparent text-body hover:bg-subtle hover:text-ink", // icon buttons, toolbars
   danger: "border-danger-line bg-surface text-danger-fg hover:bg-danger-bg",

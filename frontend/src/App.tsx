@@ -107,7 +107,7 @@ function Shell() {
         </a>
 
         {/* Phones and tablets: a top bar with a segmented control. Desktop (lg): the same element becomes a left sidebar. */}
-        <header className="cs-bar sticky top-0 z-30 border-b border-line lg:fixed lg:inset-y-0 lg:start-0 lg:w-64 lg:border-b-0 lg:border-e"
+        <header className="cs-bar sticky top-0 z-30 border-b border-line lg:fixed lg:inset-y-0 lg:start-0 lg:w-64 lg:border-b-0"
           style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-2 sm:gap-x-8 sm:px-6 lg:h-full lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-y-6 lg:px-4 lg:py-6">
             <a href="#/clearscript" className="flex min-h-10 items-center gap-2 rounded-md lg:px-2" aria-label={t("shell.home")}>

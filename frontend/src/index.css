@@ -22,23 +22,23 @@
   --radius-xl: 1.25rem;   /* 20: dialogs */
 
   /* 60: Soft White canvas. 30: Graphite text and structure. 10: Indigo for actions and selection only. */
-  --color-page: #f7f8fa;          /* soft white, the 60 */
+  --color-page: #edeef5;          /* lavender-gray canvas, the 60; one flat colour behind everything */
   --color-surface: #ffffff;
   --color-subtle: #eef0f4;        /* muted surface */
-  --color-line: #e5e7eb;          /* dividers (decorative) */
+  --color-line: #e3e4ec;          /* panel borders and dividers (decorative) */
   --color-line-strong: #8a8f98;   /* control borders and disabled text, 3.3:1 on surface */
 
   /* text: graphite, the 30 */
-  --color-ink: #252833;           /* 13.8:1 on page */
+  --color-ink: #252833;           /* 12.7:1 on page */
   --color-body: #3d414d;
-  --color-muted: #646b75;         /* 5.1:1 on page, 4.7:1 on muted surface */
+  --color-muted: #646b75;         /* 4.65:1 on page, 5.3:1 on surface */
   --color-disabled: #8a8f98;
 
   /* action: indigo, the 10. White on #5856d6 is 5.7:1. */
   --color-accent: #5856d6;
   --color-accent-hover: #4b49c8;
   --color-accent-fg: #ffffff;
-  --color-accent-text: #4b49c8;   /* links and active labels, 6.4:1 on page */
+  --color-accent-text: #4b49c8;   /* links and active labels, 5.9:1 on page */
   --color-accent-soft: #eeeefc;   /* selected chips, 5.9:1 with accent text */
   --color-brand: var(--color-accent); /* old name */
 
@@ -51,7 +51,7 @@
   --color-ok-bg: #e8f5ee;     --color-ok-fg: #1e7a4b;     --color-ok-line: #238653;
 
   --shadow-pop: 0 1px 2px rgb(37 40 51 / 0.06), 0 8px 24px -6px rgb(37 40 51 / 0.14);
-  --shadow-card: 0 1px 2px rgb(37 40 51 / 0.04);
+  --shadow-card: 0 4px 18px rgb(37 40 51 / 0.05);  /* floating white panels */
 }
 
 /* dark: graphite surfaces, same indigo; not an inversion */
@@ -106,10 +106,11 @@ body {
 /* Page and section titles: weight, not size, carries the hierarchy. */
 .cs-app .cs-title { font-size: 1.5rem; line-height: 2rem; font-weight: 600; letter-spacing: -0.015em; color: var(--color-ink); }
 .cs-app .cs-wordmark { font-weight: 600; letter-spacing: -0.01em; }
-/* Frosted top bar, as on iOS; plain surface when transparency is reduced or unsupported. */
-.cs-app .cs-bar { background: color-mix(in srgb, var(--color-surface) 82%, transparent); backdrop-filter: saturate(180%) blur(16px); }
-@media (prefers-reduced-transparency: reduce) { .cs-app .cs-bar { background: var(--color-surface); backdrop-filter: none; } }
-@media (min-width: 64rem) { .cs-app .cs-bar { background: var(--color-surface); backdrop-filter: none; } }
+/* Frosted top bar in the page colour, as on iOS; solid when transparency is reduced. */
+.cs-app .cs-bar { background: color-mix(in srgb, var(--color-page) 85%, transparent); backdrop-filter: saturate(180%) blur(16px); }
+@media (prefers-reduced-transparency: reduce) { .cs-app .cs-bar { background: var(--color-page); backdrop-filter: none; } }
+/* Desktop sidebar sits on the same canvas as the page: no separate strip. */
+@media (min-width: 64rem) { .cs-app .cs-bar { background: var(--color-page); backdrop-filter: none; } }
 .cs-app :focus-visible {
   outline: 2px solid var(--color-accent-text);
   outline-offset: 2px;

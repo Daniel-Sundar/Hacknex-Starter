@@ -94,7 +94,7 @@ export function InputPanel(p: Props) {
         </fieldset>
       </Panel>
 
-      <details className="group rounded-lg border border-line bg-surface">
+      <details className="group rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] shadow-[var(--shadow-card)]">
         <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-4 text-sm font-medium text-ink [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-2"><SlidersHorizontal className="size-4 text-muted" aria-hidden="true" />{t("cs.adv.title")}</span>
           <span className="flex items-center gap-2 text-xs font-normal text-muted">

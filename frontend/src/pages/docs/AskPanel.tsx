@@ -145,7 +145,7 @@ export function AskPanel({ status, limitMb, onNoDocs }: { status: DocsStatus; li
           </div>
 
           {current && (
-            <article aria-labelledby={`${ids}-cq`} aria-busy={pending || undefined} className="min-w-0 rounded-lg border border-line bg-surface">
+            <article aria-labelledby={`${ids}-cq`} aria-busy={pending || undefined} className="min-w-0 rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] shadow-[var(--shadow-card)]">
               <header className="space-y-1 border-b border-line px-4 py-3">
                 <p className="text-xs text-muted">{t("docs.answer.asked")}</p>
                 <h3 id={`${ids}-cq`} className="wrap-break-word text-base font-semibold text-ink">{current.question}</h3>
